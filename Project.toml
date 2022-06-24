@@ -1,0 +1,4 @@
+name = "SIRUS"
+uuid = "9113e207-2504-4b06-8eee-d78e288bee65"
+authors = ["Rik Huijzer <rikhuijzer@pm.me>"]
+version = "0.1.0"
