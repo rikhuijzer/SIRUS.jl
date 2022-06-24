@@ -2,6 +2,8 @@
 
 Interpretable Ensemble Rule Learning (PERL) or maybe LIBRE?
 
+**DOUBLE CHECK WHETHER STABLE**
+
 **S**table and **I**nterpretable **RU**le **S**ets (SIRUS) for classification and regression problems.
 
 This package implements the SIRUS algorithm as presented by Bénard et al. in 2020 and 2021.
