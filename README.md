@@ -1,6 +1,6 @@
 # DecisionRules.jl
 
-Interpretable Ensemble Rule Learning (PERL).
+Interpretable Ensemble Rule Learning (PERL) or maybe LIBRE?
 
 **S**table and **I**nterpretable **RU**le **S**ets (SIRUS) for classification and regression problems.
 
