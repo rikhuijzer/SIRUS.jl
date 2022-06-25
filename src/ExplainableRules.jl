@@ -1,4 +1,4 @@
-module SIRUS
+module ExplainableRules
 
 greet() = print("Hello World!")
 

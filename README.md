@@ -1,8 +1,4 @@
-# DecisionRules.jl
-
-Interpretable Ensemble Rule Learning (PERL) or maybe LIBRE?
-
-**DOUBLE CHECK WHETHER STABLE**
+# ExplainableRules.jl
 
 **S**table and **I**nterpretable **RU**le **S**ets (SIRUS) for classification and regression problems.
 
