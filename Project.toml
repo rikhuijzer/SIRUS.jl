@@ -2,3 +2,12 @@ name = "ExplainableRules"
 uuid = "9113e207-2504-4b06-8eee-d78e288bee65"
 authors = ["Rik Huijzer <t.h.huijzer@rug.nl>"]
 version = "1.0.0"
+
+[compat]
+julia = "1.6"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
