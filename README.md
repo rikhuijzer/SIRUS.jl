@@ -1,8 +1,8 @@
 # ExplainableRules.jl
 
-**S**table and **I**nterpretable **RU**le **S**ets (SIRUS) for classification and regression problems.
+This package implements the **S**table and **I**nterpretable **RU**le **S**ets (SIRUS) for classification and regression problems.
 
-This package implements the SIRUS algorithm as presented by Bénard et al. in 2020 and 2021.
+The SIRUS algorithm was presented by Bénard et al. in 2020 and 2021.
 In short, SIRUS combines the predictive accuracy of random forests with the explainability of decision trees while remaining stable.
 Decision trees are easily interpretable but are unstable, meaning that small changes in the dataset can change the model drastically.
 Random forests have solved this by fitting multiple trees.

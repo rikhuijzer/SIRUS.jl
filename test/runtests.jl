@@ -1,3 +1,7 @@
+using ExplainableRules
 using Test
 
-@test true
+const ER = ExplainableRules
+const Float = ExplainableRules.Float
+
+@test ER.gini([1, 1, 1], [1]) == 0.0f0
