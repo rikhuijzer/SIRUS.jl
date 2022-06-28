@@ -72,7 +72,7 @@ const Cutpoints = Matrix{Float}
 
 """
 Return the split for which the gini index is minimized.
-This function is called recursively, so that's why it receives the cutpoints for the whole dataset.
+This function receives the cutpoints for the whole dataset `D` because `X` can be a subset of `D`.
 """
 function _find_split(
         X,
@@ -82,10 +82,11 @@ function _find_split(
     )
     best_score = Float(999)
     best_score_feature = 0
-    best_score_cutpoint = eltype(X)(0)
+    best_score_cutpoint = Float(0)
     for feature in 1:_p(X)
         data = view(X, :, feature)
-        for cutpoint in _cutpoints(V, q)
+        feature_cutpoints = view(cutpoints, :, feature)
+        for cutpoint in feature_cutpoints
             gini_left = gini(_view_y(X, y, feature, <, cutpoint), classes)
             gini_right = gini(_view_y(X, y, feature, ≥, cutpoint), classes)
             score = gini_left + gini_right
