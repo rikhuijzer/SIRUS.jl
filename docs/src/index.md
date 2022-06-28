@@ -56,3 +56,21 @@ H_L = \{ x \in H \: : \: \bold{x}^{(j)} < \hat{q}_{n,r}^{(j)} \}, \: \: \: H_R =
 
 Or in other words, the node splits are restricted to to the $q$-empirical quantiles of the marginals $X^{(1)},...,X^{(p)}$, with typically $q = 10$ (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html)).
 Setting $q = 10$ causes more stable trees because it splits the input space in a grid of $10^p$ hyperrectangles for $p$ features and this number has empirically been found to be accurate.
+
+## Empirical quantiles
+
+The empirical distribution is defined as (Hartmann, [2022](https://www.heinrichhartmann.com/archive/quantiles.html#empirical-quantiles))
+
+```math
+P_{emp} = \frac{1}{n} \sum_{i=1}^n \delta_{x_i}.
+```
+
+where $x_i$ is contained in the dataset $D = (x_i, ...., x_n)$ of real numbers with $1 \leq n$.
+
+"So a random variable $X_{emp} \sim P_{emp}$ takes values that are uniformly randomly chosen from $D$."
+
+For each empirical $q$-quantile, the following conditions should be met
+
+```math
+\frac{\# \{ x \in D \: : \: x < y\}}{n} \leq q \: \: \: \text{and} \: \: \: \frac{\#\{x \in D \: : \: x > y\}}{n} \leq 1 - q.
+```

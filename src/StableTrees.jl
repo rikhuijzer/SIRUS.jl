@@ -22,12 +22,6 @@ function gini(y::AbstractVector, classes::AbstractVector)
     return sum(proportions .* (1 .- proportions))
 end
 
-struct Score{T}
-    feature::Int
-    cutpoint::T
-    value::Float
-end
-
 """
 Return a view on all `y` for which the `comparison` holds in `X[:, feature]`.
 """
@@ -36,18 +30,23 @@ function _view_y(X, y, feature::Int, comparison, cutpoint)
     return view(y, indexes_in_region)
 end
 
-"Return the best split by picking the lowest score."
-function _best_split(scores::Vector{Score{T}})::Tuple{Int,T} where T
-    best_score_index = 0
-    best_score_value = 999.0f0
-    for i in 1:length(scores)
-        score = scores[i]
-        if score.value < best_score_value
-            best_score_index = i
-        end
+function _empirical_quantile(V::AbstractVector, quantile::Real)
+    @assert 0.0 ≤ quantile ≤ 1.0
+    n = length(V)
+    index = Int(floor(quantile * (n + 1)))
+    if index == 0
+        index = 1
     end
-    best_score = scores[best_score_index]
-    return (best_score.feature, best_score.cutpoint)
+    if index == n + 1
+        index = n
+    end
+    sorted = sort(V)
+    return sorted[index]
+end
+
+function _cutpoints(V::AbstractVector, q::Int)
+    quantiles = range(; start=0.0, stop=1.0, length=q)
+    return _empirical_quantile.(Ref(V), quantiles)
 end
 
 "Return the split for which the gini index is minimized."
