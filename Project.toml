@@ -1,4 +1,4 @@
-name = "ExplainableRules"
+name = "StableTrees"
 uuid = "9113e207-2504-4b06-8eee-d78e288bee65"
 authors = ["Rik Huijzer <t.h.huijzer@rug.nl>"]
 version = "1.0.0"

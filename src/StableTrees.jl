@@ -1,4 +1,4 @@
-module ExplainableRules
+module StableTrees
 
 using Random: AbstractRNG, default_rng
 

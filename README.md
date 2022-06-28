@@ -1,4 +1,4 @@
-# ExplainableRules.jl
+# StableTrees.jl
 
 This package implements the **S**table and **I**nterpretable **RU**le **S**ets (SIRUS) for classification and regression problems.
 
