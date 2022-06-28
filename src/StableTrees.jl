@@ -42,7 +42,7 @@ end
 "Return a vector of `q` cutpoints taken from the empirical distribution from data `V`."
 function _cutpoints(V::AbstractVector, q::Int)
     @assert 2 ≤ q
-    quantiles = range(; start=0.0, stop=1.0, length=q)
+    quantiles = range(0.0; stop=1.0, length=q)
     return Float[_empirical_quantile(V, quantile) for quantile in quantiles]
 end
 
