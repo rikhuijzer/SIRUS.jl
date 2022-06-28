@@ -1,0 +1,6 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+StableTrees = "9113e207-2504-4b06-8eee-d78e288bee65"
+
+[compat]
+Documenter = "0.27"

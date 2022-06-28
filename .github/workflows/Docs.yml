@@ -1,0 +1,27 @@
+name: Docs
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  BuildAndDeploy:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Instantiate docs/
+        shell: julia --project=docs --color=yes {0}
+        run: |
+          using Pkg
+          Pkg.develop(; path=pwd())
+          Pkg.instantiate()
+      - name: Build docs and deploy to the docs branch
+        run: julia --project=docs --color=yes docs/make.jl
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
