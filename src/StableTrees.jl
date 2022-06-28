@@ -22,6 +22,44 @@ function gini(y::AbstractVector, classes::AbstractVector)
     return sum(proportions .* (1 .- proportions))
 end
 
+_rough_cutpoint_index_estimate(n::Int, quantile::Real) = Int(floor(quantile * (n + 1)))
+
+"Return the empirical `quantile` for data `V`."
+function _empirical_quantile(V::AbstractVector, quantile::Real)
+    @assert 0.0 ≤ quantile ≤ 1.0
+    n = length(V)
+    index = _rough_cutpoint_index_estimate(n, quantile)
+    if index == 0
+        index = 1
+    end
+    if index == n + 1
+        index = n
+    end
+    sorted = sort(V)
+    return Float(sorted[index])
+end
+
+"Return a vector of `q` cutpoints taken from the empirical distribution from data `V`."
+function _cutpoints(V::AbstractVector, q::Int)
+    @assert 2 ≤ q
+    quantiles = range(; start=0.0, stop=1.0, length=q)
+    return Float[_empirical_quantile(V, quantile) for quantile in quantiles]
+end
+
+"Return the number of features `p` in a dataset `X`."
+_p(X) = size(X, 2)
+
+"Return a matrix containing `q` rows and one column for each feature in the dataset."
+function _cutpoints(X, q::Int)
+    p = _p(X)
+    cutpoints = Matrix{Float}(undef, q, p)
+    for feature in 1:p
+        V = view(X, :, feature)
+        cutpoints[:, feature] = _cutpoints(V, q)
+    end
+    return cutpoints
+end
+
 """
 Return a view on all `y` for which the `comparison` holds in `X[:, feature]`.
 """
@@ -30,34 +68,24 @@ function _view_y(X, y, feature::Int, comparison, cutpoint)
     return view(y, indexes_in_region)
 end
 
-function _empirical_quantile(V::AbstractVector, quantile::Real)
-    @assert 0.0 ≤ quantile ≤ 1.0
-    n = length(V)
-    index = Int(floor(quantile * (n + 1)))
-    if index == 0
-        index = 1
-    end
-    if index == n + 1
-        index = n
-    end
-    sorted = sort(V)
-    return sorted[index]
-end
+const Cutpoints = Matrix{Float}
 
-function _cutpoints(V::AbstractVector, q::Int)
-    quantiles = range(; start=0.0, stop=1.0, length=q)
-    return _empirical_quantile.(Ref(V), quantiles)
-end
-
-"Return the split for which the gini index is minimized."
-function _find_split(X, y::AbstractVector, classes::AbstractVector)
+"""
+Return the split for which the gini index is minimized.
+This function is called recursively, so that's why it receives the cutpoints for the whole dataset.
+"""
+function _find_split(
+        X,
+        y::AbstractVector,
+        classes::AbstractVector,
+        cutpoints::Cutpoints
+    )
     best_score = Float(999)
     best_score_feature = 0
     best_score_cutpoint = eltype(X)(0)
-    for feature in 1:size(X, 2)
-        U = unique(X[:, feature])
-        for value in U
-            cutpoint = value
+    for feature in 1:_p(X)
+        data = view(X, :, feature)
+        for cutpoint in _cutpoints(V, q)
             gini_left = gini(_view_y(X, y, feature, <, cutpoint), classes)
             gini_right = gini(_view_y(X, y, feature, ≥, cutpoint), classes)
             score = gini_left + gini_right
