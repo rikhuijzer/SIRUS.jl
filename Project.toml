@@ -4,9 +4,11 @@ authors = ["Rik Huijzer <t.h.huijzer@rug.nl>"]
 version = "1.0.0"
 
 [deps]
+AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [compat]
+AbstractTrees = "0.4"
 julia = "1.6"
 
 [extras]

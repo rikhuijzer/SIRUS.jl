@@ -1,5 +1,7 @@
 module StableTrees
 
+import AbstractTrees
+
 using Random: AbstractRNG, default_rng
 
 const Float = Float32
@@ -49,10 +51,12 @@ end
 "Return the number of features `p` in a dataset `X`."
 _p(X) = size(X, 2)
 
+const Cutpoints = Matrix{Float}
+
 "Return a matrix containing `q` rows and one column for each feature in the dataset."
 function _cutpoints(X, q::Int)
     p = _p(X)
-    cutpoints = Matrix{Float}(undef, q, p)
+    cutpoints = Cutpoints(undef, q, p)
     for feature in 1:p
         V = view(X, :, feature)
         cutpoints[:, feature] = _cutpoints(V, q)
@@ -67,8 +71,6 @@ function _view_y(X, y, feature::Int, comparison, cutpoint)
     indexes_in_region = comparison.(X[:, feature], cutpoint)
     return view(y, indexes_in_region)
 end
-
-const Cutpoints = Matrix{Float}
 
 """
 Return the split for which the gini index is minimized.
