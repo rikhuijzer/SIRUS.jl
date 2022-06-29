@@ -24,7 +24,15 @@ function gini(y::AbstractVector, classes::AbstractVector)
     return sum(proportions .* (1 .- proportions))
 end
 
-_rough_cutpoint_index_estimate(n::Int, quantile::Real) = Int(floor(quantile * (n + 1)))
+"""
+Return a rough estimate for the index of the cutpoint.
+Choose the highest suitable index if there is more than one suitable index.
+The reason is that this will split the data nicely in combination with the `<` used later on.
+For example, for [1, 2, 3, 4], both 2 and 3 satisfy the 0.5 quantile.
+In this case, we pick the ceil, so 3.
+Next, the tree will split on 3, causing left (<) to contain 1 and 2 and right (≥) to contain 3 and 4.
+"""
+_rough_cutpoint_index_estimate(n::Int, quantile::Real) = Int(ceil(quantile * (n + 1)))
 
 "Return the empirical `quantile` for data `V`."
 function _empirical_quantile(V::AbstractVector, quantile::Real)
@@ -91,7 +99,6 @@ function _split(
     best_score_feature = 0
     best_score_cutpoint = Float(0)
     for feature in 1:_p(X)
-        data = view(X, :, feature)
         feature_cutpoints = view(cutpoints, :, feature)
         for cutpoint in feature_cutpoints
             gini_left = gini(_view_y(X, y, feature, <, cutpoint), classes)
@@ -134,9 +141,9 @@ function _mode(y::AbstractVector{<:Real})
     return max_counted_value
 end
 
-function Leaf(X, y::AbstractVector{<:Real})
+function Leaf(y::AbstractVector{<:Real})
     majority = _mode(y)
-    return Leaf{eltype(X)}(majority, y)
+    return Leaf{eltype(y)}(majority, y)
 end
 
 struct Node{T}
@@ -156,6 +163,14 @@ function _view_X_y(X, y, splitpoint::SplitPoint, comparison)
     return (X_view, y_view)
 end
 
+function _verify_lengths(X, y)
+    l1 = size(X, 1)
+    l2 = length(y)
+    if l1 != l2
+        error("Expected X and y to have the same number of rows, but got $l1 and $l2 rows")
+    end
+end
+
 function _tree(
         rng::AbstractRNG,
         X,
@@ -167,12 +182,13 @@ function _tree(
         classes=unique(y),
         min_data_in_leaf=5
     )
+    _verify_lengths(X, y)
     if depth == max_depth
-        return Leaf(X, y)
+        return Leaf(y)
     end
     splitpoint = _split(X, y, classes, cutpoints)
     if isnothing(splitpoint)
-        return Leaf(X, y)
+        return Leaf(y)
     end
     depth += 1
     left = let
@@ -183,7 +199,7 @@ function _tree(
         _X, _y = _view_X_y(X, y, splitpoint, ≥)
         _tree(rng, _X, _y; cutpoints, classes, depth)
     end
-    node = Node{eltype(X)}(splitpoint, left, right)
+    node = Node{eltype(y)}(splitpoint, left, right)
     return node
 end
 _tree(X, y::AbstractVector; kwargs...) = _tree(default_rng(), X, y; kwargs...)
