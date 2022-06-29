@@ -5,14 +5,18 @@ version = "1.0.0"
 
 [deps]
 AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
+MLJModelInterface = "e80e1ace-859a-464e-9ed9-23947d8ae3ea"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [compat]
 AbstractTrees = "0.4"
+MLJModelInterface = "1.4"
 julia = "1.6"
 
 [extras]
+MLJBase = "a7f614a8-145f-11e9-1d2a-a57a1082229d"
+StableRNGs = "860ef19b-820b-49d6-a774-d7a799459cd3"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["MLJBase", "StableRNGs", "Test"]
