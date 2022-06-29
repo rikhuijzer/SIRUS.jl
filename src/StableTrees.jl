@@ -204,4 +204,20 @@ function _tree(
 end
 _tree(X, y::AbstractVector; kwargs...) = _tree(default_rng(), X, y; kwargs...)
 
+_predict(leaf::Leaf, x::AbstractVector) = leaf.majority
+
+"""
+Predict `y` for a data vector defined by `x`.
+Also pass a vector if the data has only one feature.
+"""
+function _predict(node::Node, x::AbstractVector)
+    feature = node.splitpoint.feature
+    value = node.splitpoint.value
+    if x[feature] < value
+        return _predict(node.left, x)
+    else
+        return _predict(node.right, x)
+    end
+end
+
 end # module

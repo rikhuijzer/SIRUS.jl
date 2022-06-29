@@ -78,4 +78,7 @@ let
     @test node.left.splitpoint == ST.SplitPoint(1, Float(5))
     # All datapoints are [3] here, 4 was already part of an earlier leaf.
     @test node.left.right.values == [3]
+
+    @test ST._predict(node, [7, 2]) == 4
+    @test ST._predict(node, [5, 2]) == 3
 end
