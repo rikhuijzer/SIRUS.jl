@@ -1,3 +1,5 @@
+import Base
+
 using StableTrees
 using Test
 
@@ -30,4 +32,32 @@ let
     @test splitpoint.feature == 2
     # Given that the split does < and ≥, then 3 is the best place since it separates 1 (left) and 3 (right).
     @test splitpoint.value == Float(3)
+end
+
+@test ST._mode([1, 2, 3, 4, 4]) == 4
+@test ST._mode([1, 2, 3, 1]) == 1
+@test ST._mode([1]) == 1
+@test ST._mode([1, 2]) in [1, 2]
+
+function Base.:(==)(a::ST.SplitPoint, b::ST.SplitPoint)
+    return a.feature == b.feature && a.value == b.value
+end
+
+function Base.:(==)(a::ST.Leaf, b::ST.Leaf)
+    return a.majority == b.majority && a.values == b.values
+end
+
+let
+    node = ST._tree([1 2; 3 3], [1, 2]; min_data_in_leaf=1, q=2)
+    @test node.splitpoint == ST.SplitPoint(1, Float(3))
+    let
+        majority = 1
+        data = [1]
+        @test node.left == ST.Leaf{Int}(majority, data)
+    end
+    let
+        majority = 2
+        data = [2]
+        @test node.right == ST.Leaf{Int}(majority, data)
+    end
 end

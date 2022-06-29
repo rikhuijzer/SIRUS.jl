@@ -65,9 +65,7 @@ function _cutpoints(X, q::Int)
     return cutpoints
 end
 
-"""
-Return a view on all `y` for which the `comparison` holds in `X[:, feature]`.
-"""
+"Return a view on all `y` for which the `comparison` holds in `X[:, feature]`."
 function _view_y(X, y, feature::Int, comparison, cutpoint)
     indexes_in_region = comparison.(X[:, feature], cutpoint)
     return view(y, indexes_in_region)
@@ -106,12 +104,39 @@ function _split(
             end
         end
     end
+    if best_score == Float(999)
+        return nothing
+    end
     return SplitPoint(best_score_feature, best_score_cutpoint)
 end
 
 struct Leaf{T}
     majority::T
     values::AbstractVector{T}
+end
+
+function _mode(y::AbstractVector{<:Real})
+    @assert !isempty(y)
+    U = unique(y)
+    counts = Dict(zip(U, zeros(Int, length(U))))
+    for value in y
+        counts[value] += 1
+    end
+    max_counted_value = y[1]
+    max_count = 0
+    for key in keys(counts)
+        count = counts[key]
+        if max_count < count
+            max_counted_value = key
+            max_count = count
+        end
+    end
+    return max_counted_value
+end
+
+function Leaf(X, y::AbstractVector{<:Real})
+    majority = _mode(y)
+    return Leaf{eltype(X)}(majority, y)
 end
 
 struct Node{T}
@@ -123,16 +148,44 @@ end
 children(node::Node) = [node.left, node.right]
 nodevalue(node::Node) = node.splitpoint
 
-function tree(
+"Return a view on all rows in `X` and `y` for which the `comparison` holds in `X[:, feature]`."
+function _view_X_y(X, y, splitpoint::SplitPoint, comparison)
+    indexes_in_region = comparison.(X[:, splitpoint.feature], splitpoint.value)
+    X_view = view(X, indexes_in_region, :)
+    y_view = view(y, indexes_in_region)
+    return (X_view, y_view)
+end
+
+function _tree(
         rng::AbstractRNG,
         X,
         y::AbstractVector;
+        depth=0,
         max_depth=2,
-        q=10
+        q=10,
+        cutpoints::Cutpoints=_cutpoints(X, q),
+        classes=unique(y),
+        min_data_in_leaf=5
     )
-    classes = unique(y)
-    cutpoints = _cutpoints(X, q)
+    if depth == max_depth
+        return Leaf(X, y)
+    end
+    splitpoint = _split(X, y, classes, cutpoints)
+    if isnothing(splitpoint)
+        return Leaf(X, y)
+    end
+    depth += 1
+    left = let
+        _X, _y = _view_X_y(X, y, splitpoint, <)
+        _tree(rng, _X, _y; cutpoints, classes, depth)
+    end
+    right = let
+        _X, _y = _view_X_y(X, y, splitpoint, ≥)
+        _tree(rng, _X, _y; cutpoints, classes, depth)
+    end
+    node = Node{eltype(X)}(splitpoint, left, right)
+    return node
 end
-tree(X, y::AbstractVector; kwargs...) = tree(default_rng(), X, y; kwargs...)
+_tree(X, y::AbstractVector; kwargs...) = _tree(default_rng(), X, y; kwargs...)
 
 end # module
