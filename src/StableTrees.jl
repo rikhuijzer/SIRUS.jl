@@ -1,6 +1,6 @@
 module StableTrees
 
-import AbstractTrees
+import AbstractTrees: children, nodevalue
 
 using Random: AbstractRNG, default_rng
 
@@ -51,6 +51,7 @@ end
 "Return the number of features `p` in a dataset `X`."
 _p(X) = size(X, 2)
 
+"Set of possible cutpoints, that is, numbers from the empirical quantiles."
 const Cutpoints = Matrix{Float}
 
 "Return a matrix containing `q` rows and one column for each feature in the dataset."
@@ -72,11 +73,17 @@ function _view_y(X, y, feature::Int, comparison, cutpoint)
     return view(y, indexes_in_region)
 end
 
+"Location where the tree splits for some split."
+struct SplitPoint
+    feature::Int
+    value::Float
+end
+
 """
 Return the split for which the gini index is minimized.
 This function receives the cutpoints for the whole dataset `D` because `X` can be a subset of `D`.
 """
-function _find_split(
+function _split(
         X,
         y::AbstractVector,
         classes::AbstractVector,
@@ -99,13 +106,33 @@ function _find_split(
             end
         end
     end
-    return best_score_feature, best_score_cutpoint
+    return SplitPoint(best_score_feature, best_score_cutpoint)
 end
 
-function build_tree(rng::AbstractRNG, X, y::AbstractVector)
-    classes = unique(y)
-    
+struct Leaf{T}
+    majority::T
+    values::AbstractVector{T}
 end
-build_tree(X, y::AbstractVector) = build_tree(default_rng(), X, y)
+
+struct Node{T}
+    splitpoint::SplitPoint
+    left::Union{Node{T}, Leaf{T}}
+    right::Union{Node{T}, Leaf{T}}
+end
+
+children(node::Node) = [node.left, node.right]
+nodevalue(node::Node) = node.splitpoint
+
+function tree(
+        rng::AbstractRNG,
+        X,
+        y::AbstractVector;
+        max_depth=2,
+        q=10
+    )
+    classes = unique(y)
+    cutpoints = _cutpoints(X, q)
+end
+tree(X, y::AbstractVector; kwargs...) = tree(default_rng(), X, y; kwargs...)
 
 end # module
