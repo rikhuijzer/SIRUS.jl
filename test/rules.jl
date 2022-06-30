@@ -10,5 +10,5 @@ right = ST.Node{T}(splitpoint, ST.Leaf{T}(2, l), ST.Leaf{T}(3, l))
 splitpoint = ST.SplitPoint(1, ST.Float(4))
 node = ST.Node{T}(splitpoint, left, right)
 
-paths = Set(ST._paths(node))
+paths = Set(ST._paths!(node))
 
