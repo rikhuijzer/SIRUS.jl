@@ -9,6 +9,7 @@ If all values in the region have the same class, then gini is zero.
 function gini(y::AbstractVector, classes::AbstractVector)
     proportions = Vector{Float}(undef, length(classes))
     len_y = length(y)
+    len_y == 0 && return Float(NaN)
     for (i, class) in enumerate(classes)
         proportion = count(y .== class) / len_y
         proportions[i] = proportion
@@ -24,7 +25,7 @@ For example, for [1, 2, 3, 4], both 2 and 3 satisfy the 0.5 quantile.
 In this case, we pick the ceil, so 3.
 Next, the tree will split on 3, causing left (<) to contain 1 and 2 and right (≥) to contain 3 and 4.
 """
-_rough_cutpoint_index_estimate(n::Int, quantile::Real) = Int(ceil(quantile * (n + 1)))
+_rough_cutpoint_index_estimate(n::Int, quantile::Real) = Int(ceil(quantile * n))
 
 "Return the empirical `quantile` for data `V`."
 function _empirical_quantile(V::AbstractVector, quantile::Real)
@@ -97,11 +98,12 @@ function _split(
     for feature in 1:_p(X)
         feature_cutpoints = view(cutpoints, :, feature)
         for cutpoint in feature_cutpoints
-            gini_left = gini(_view_y(X, y, feature, <, cutpoint), classes)
-            gini_right = gini(_view_y(X, y, feature, ≥, cutpoint), classes)
-            score = gini_left + gini_right
-            if score < best_score
-                best_score = score
+            impurity_left = gini(_view_y(X, y, feature, <, cutpoint), classes)
+            impurity_right = gini(_view_y(X, y, feature, ≥, cutpoint), classes)
+            isnan(impurity_left) || isnan(impurity_right) && continue
+            total_impurity = impurity_left + impurity_right
+            if total_impurity < best_score
+                best_score = total_impurity
                 best_score_feature = feature
                 best_score_cutpoint = cutpoint
             end
@@ -196,7 +198,7 @@ function _tree(
         return Leaf(y)
     end
     splitpoint = _split(X, y, classes, cutpoints)
-    if isnothing(splitpoint)
+    if isnothing(splitpoint) || length(y) < min_data_in_leaf
         return Leaf(y)
     end
     depth += 1
