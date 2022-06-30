@@ -13,6 +13,10 @@ Float = ST.Float
     include("forest.jl")
 end
 
+@testset "rules" begin
+    include("rules.jl")
+end
+
 @testset "interface" begin
     include("mlj.jl")
 end
