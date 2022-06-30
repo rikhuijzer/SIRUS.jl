@@ -1,11 +1,10 @@
-module Interface
+module MLJImplementation
 
 import MLJModelInterface: fit, metadata_model, metadata_pkg
 
 using MLJModelInterface: MLJModelInterface, Continuous, Finite, Probabilistic, Table
 using Random: AbstractRNG, default_rng
-
-export StableForestClassifier
+using StableTrees: _forest
 
 """
     StableForestClassifier <: MLJModelInterface.Probabilistic

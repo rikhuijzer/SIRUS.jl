@@ -49,17 +49,21 @@ function _cutpoints(V::AbstractVector, q::Int)
 end
 
 "Return the number of features `p` in a dataset `X`."
-_p(X) = size(X, 2)
+_p(X::AbstractMatrix) = size(X, 2)
+_p(X) = length(Tables.columnnames(X))
 
 "Set of possible cutpoints, that is, numbers from the empirical quantiles."
 const Cutpoints = Matrix{Float}
+
+_view_feature(X::AbstractMatrix, feature::Int) = view(X, :, feature)
+_view_feature(X, feature::Int) = X[feature]
 
 "Return a matrix containing `q` rows and one column for each feature in the dataset."
 function _cutpoints(X, q::Int)
     p = _p(X)
     cutpoints = Cutpoints(undef, q, p)
     for feature in 1:p
-        V = view(X, :, feature)
+        V = _view_feature(X, feature)
         cutpoints[:, feature] = _cutpoints(V, q)
     end
     return cutpoints
@@ -85,7 +89,7 @@ function _split(
         X,
         y::AbstractVector,
         classes::AbstractVector,
-        cutpoints::Cutpoints
+        cutpoints::AbstractMatrix{Float}
     )
     best_score = Float(999)
     best_score_feature = 0
@@ -109,12 +113,18 @@ function _split(
     return SplitPoint(best_score_feature, best_score_cutpoint)
 end
 
-struct Leaf{T}
-    majority::T
-    values::AbstractVector{T}
+"""
+    Leaf{S}
+
+Leaf of a decision tree.
+In this leaf, `n` outcomes fall within the region of this leaf and have a `majority`.
+"""
+struct Leaf{S}
+    majority::S
+    n::Int
 end
 
-function _mode(y::AbstractVector{<:Real})
+function _mode(y::AbstractVector)
     @assert !isempty(y)
     U = unique(y)
     counts = Dict(zip(U, zeros(Int, length(U))))
@@ -133,9 +143,9 @@ function _mode(y::AbstractVector{<:Real})
     return max_counted_value
 end
 
-function Leaf(y::AbstractVector{<:Real})
+function Leaf(y)
     majority = _mode(y)
-    return Leaf{eltype(y)}(majority, y)
+    return Leaf(majority, length(y))
 end
 
 struct Node{T}
@@ -163,13 +173,21 @@ function _verify_lengths(X, y)
     end
 end
 
+# _eltype(y::AbstractCategoricalArray) = typeof(unwrap(first(y)))
+# _eltype(y::AbstractArray{AbstractCategoricalArray}) = typeof(unwrap(first(y)))
+
+_y_type(x::CategoricalValue) = typeof(unwrap(x))
+_y_type(x) = typeof(x)
+# Using first because I couldn't find a type matching a view of an CategoricalArray.
+_y_eltype(y) = _y_type(first(y))
+
 function _tree(
         X,
         y::AbstractVector;
         depth=0,
         max_depth=2,
         q=10,
-        cutpoints::Cutpoints=_cutpoints(X, q),
+        cutpoints::AbstractMatrix{Float}=_cutpoints(X, q),
         classes=unique(y),
         min_data_in_leaf=5
     )
@@ -190,7 +208,8 @@ function _tree(
         _X, _y = _view_X_y(X, y, splitpoint, ≥)
         _tree(_X, _y; cutpoints, classes, depth)
     end
-    node = Node{eltype(y)}(splitpoint, left, right)
+    T = _y_eltype(y)
+    node = Node{T}(splitpoint, left, right)
     return node
 end
 
@@ -235,16 +254,23 @@ function _forest(
         q::Int=10,
         min_data_in_leaf::Int=5
     )
+    if !Tables.istable(X)
+        error("Input `X` doesn't satisfy the Tables.jl interface.")
+    end
+    # Tables doesn't assume the data fits in memory so that complicates things a lot.
+    # Implementing out-of-memory trees is a problem for later.
+    X = Tables.matrix(X)
+
     # It is essential for the stability to determine the cutpoints over the whole dataset.
     cutpoints = _cutpoints(X, q)
     classes = unique(y)
 
-    n_features = round(Int, sqrt(size(X, 2)))
+    n_features = round(Int, sqrt(_p(X)))
     n_samples = floor(Int, partial_sampling * length(y))
 
-    T = eltype(X)
+    T = _y_eltype(y)
     trees = Vector{Union{Node{T},Leaf{T}}}(undef, n_trees)
-    Threads.@threads for i in 1:n_trees
+    for i in 1:n_trees
         _rng = copy(rng)
         _change_rng_state!(rng, i)
         cols = rand(_rng, 1:_p(X), n_features)
