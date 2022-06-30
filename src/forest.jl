@@ -228,6 +228,7 @@ function _predict(node::Node, x::AbstractVector)
     end
 end
 _predict(node::Node, x::Tables.MatrixRow) = _predict(node, collect(x))
+_predict(node::Node, x::Tables.ColumnsRow) = _predict(node, collect(x))
 
 struct Forest{T}
     trees::Vector{Union{Node{T},Leaf{T}}}
