@@ -1,3 +1,7 @@
+<div align="center">
+    <b>WORK IN PROGRESS</b>
+</div>
+
 # StableTrees.jl
 
 This package implements the **S**table and **I**nterpretable **RU**le **S**ets (SIRUS) for classification.
