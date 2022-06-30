@@ -1,10 +1,12 @@
 module MLJImplementation
 
-import MLJModelInterface: fit, metadata_model, metadata_pkg
+import MLJModelInterface: fit, predict, metadata_model, metadata_pkg
 
+using CategoricalArrays: CategoricalValue, categorical, unwrap
 using MLJModelInterface: MLJModelInterface, Continuous, Finite, Probabilistic, Table
 using Random: AbstractRNG, default_rng
-using StableTrees: _forest
+using StableTrees: _forest, _predict, _mode
+using Tables: Tables
 
 """
     StableForestClassifier <: MLJModelInterface.Probabilistic
@@ -55,6 +57,19 @@ function fit(model::StableForestClassifier, verbosity::Int, X, y)
     cache = nothing
     report = nothing
     return fitresult, cache, report
+end
+
+function predict(model::StableForestClassifier, fitresult, Xnew)
+    forest = fitresult
+    preds = map(Tables.rows(Xnew)) do row
+        preds = map(tree -> _predict(tree, row), forest.trees)
+        prediction = _mode(preds)
+    end
+    if preds isa AbstractVector{<:CategoricalValue}
+        return categorical(unwrap.(preds))
+    else
+        return preds
+    end
 end
 
 end # module

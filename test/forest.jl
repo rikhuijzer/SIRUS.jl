@@ -32,6 +32,11 @@ end
 @test ST._mode([1]) == 1
 @test ST._mode([1, 2]) in [1, 2]
 
+c = categorical([1, 2, 2])
+# Otherwise the type of y isn't the same as the type for predictions for y.
+@test ST._mode(c) isa CategoricalValue
+@test ST._mode(c) == c[2]
+
 function Base.:(==)(a::ST.SplitPoint, b::ST.SplitPoint)
     return a.feature == b.feature && a.value == b.value
 end

@@ -1,5 +1,6 @@
 import Base
 
+using CategoricalArrays: CategoricalValue, categorical
 using MLJBase
 using StableRNGs: StableRNG
 using StableTrees

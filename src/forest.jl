@@ -126,21 +126,29 @@ end
 
 function _mode(y::AbstractVector)
     @assert !isempty(y)
-    U = unique(y)
-    counts = Dict(zip(U, zeros(Int, length(U))))
-    for value in y
-        counts[value] += 1
+    # The number of occurences for each unique element in y.
+    counts = Dict{Any,Int}()
+    # The first index of each unique element in y.
+    # This ensures that the return type is the same as input type.
+    indexes = Dict{Any,Int}()
+    for (i, e) in enumerate(y)
+        if e in keys(counts)
+            counts[e] += 1
+        else
+            counts[e] = 0
+            indexes[e] = i
+        end
     end
-    max_counted_value = y[1]
+    max_counted_index = 1
     max_count = 0
-    for key in keys(counts)
-        count = counts[key]
+    for e in keys(counts)
+        count = counts[e]
         if max_count < count
-            max_counted_value = key
+            max_counted_index = indexes[e]
             max_count = count
         end
     end
-    return max_counted_value
+    return y[max_counted_index]
 end
 
 function Leaf(y)
@@ -173,14 +181,6 @@ function _verify_lengths(X, y)
     end
 end
 
-# _eltype(y::AbstractCategoricalArray) = typeof(unwrap(first(y)))
-# _eltype(y::AbstractArray{AbstractCategoricalArray}) = typeof(unwrap(first(y)))
-
-_y_type(x::CategoricalValue) = typeof(unwrap(x))
-_y_type(x) = typeof(x)
-# Using first because I couldn't find a type matching a view of an CategoricalArray.
-_y_eltype(y) = _y_type(first(y))
-
 function _tree(
         X,
         y::AbstractVector;
@@ -208,8 +208,7 @@ function _tree(
         _X, _y = _view_X_y(X, y, splitpoint, ≥)
         _tree(_X, _y; cutpoints, classes, depth)
     end
-    T = _y_eltype(y)
-    node = Node{T}(splitpoint, left, right)
+    node = Node{eltype(y)}(splitpoint, left, right)
     return node
 end
 
@@ -228,6 +227,7 @@ function _predict(node::Node, x::AbstractVector)
         return _predict(node.right, x)
     end
 end
+_predict(node::Node, x::Tables.MatrixRow) = _predict(node, collect(x))
 
 struct Forest{T}
     trees::Vector{Union{Node{T},Leaf{T}}}
@@ -268,7 +268,7 @@ function _forest(
     n_features = round(Int, sqrt(_p(X)))
     n_samples = floor(Int, partial_sampling * length(y))
 
-    T = _y_eltype(y)
+    T = eltype(y)
     trees = Vector{Union{Node{T},Leaf{T}}}(undef, n_trees)
     for i in 1:n_trees
         _rng = copy(rng)

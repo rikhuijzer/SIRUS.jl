@@ -6,5 +6,5 @@ model = StableForestClassifier(; rng)
 mach = machine(model, X, y)
 fit!(mach)
 
-# preds = predict(mach)
-
+preds = predict(mach)
+@test 0.6 < accuracy(y, preds)
