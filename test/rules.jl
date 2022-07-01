@@ -1,5 +1,5 @@
 text = " X[i, 1] < 1.0 & X[i, 1] ≥ 4.0 "
-@test repr(ST.Path(text)) == "Path(\"$text\")"
+@test repr(TreePath(text)) == "TreePath(\"$text\")"
 
 l = 1
 T = Int

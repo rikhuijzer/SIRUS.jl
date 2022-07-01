@@ -11,6 +11,7 @@ const Float = Float32
 
 include("forest.jl")
 include("rules.jl")
+export TreePath
 
 include("mlj.jl")
 const StableForestClassifier = MLJImplementation.StableForestClassifier
