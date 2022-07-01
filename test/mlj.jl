@@ -13,4 +13,4 @@ preds = predict(mach)
 
 rng = StableRNG(1)
 resampling = CV(; shuffle=true, rng)
-@show evaluate(model, X, y; resampling, measure=auc)
+@show evaluate(model, X, y; verbosity=0, resampling, measure=auc)

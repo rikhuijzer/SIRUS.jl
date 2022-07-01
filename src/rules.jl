@@ -27,8 +27,8 @@ end
 
 struct Rule
     path::TreePath
-    then_probs::Vector{Float}
-    else_probs::Vector{Float}
+    then_probs::Vector{Float64}
+    else_probs::Vector{Float64}
 end
 
 function TreePath(text::String)

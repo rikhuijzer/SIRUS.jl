@@ -122,7 +122,7 @@ Leaf of a decision tree.
 The probabilities are based on the `y`'s falling into the region associated with this leaf.
 """
 struct Leaf
-    probabilities::Vector{Float}
+    probabilities::Vector{Float64}
 end
 
 function Leaf(classes, y)

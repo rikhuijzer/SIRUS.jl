@@ -35,8 +35,8 @@ let
     classes = y
     node = ST._tree(X, y, classes; min_data_in_leaf=1, q=2)
     @test node.splitpoint == ST.SplitPoint(1, Float(3))
-    @test node.left.probabilities == Float[1, 0]
-    @test node.right.probabilities == Float[0, 1]
+    @test node.left.probabilities == [1.0, 0.0]
+    @test node.right.probabilities == [0.0, 1.0]
 end
 
 let
