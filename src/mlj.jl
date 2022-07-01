@@ -15,8 +15,7 @@ using MLJModelInterface:
     Probabilistic,
     Table
 using Random: AbstractRNG, default_rng
-using StableTrees: _forest, _predict
-using Statistics: mean
+using StableTrees: _forest, _predict, _mean_probabilities
 using Tables: Tables
 
 """
@@ -75,7 +74,7 @@ function predict(model::StableForestClassifier, fitresult, Xnew)
     forest = fitresult
     probs = map(Tables.rows(Xnew)) do row
         probs = [_predict(tree, row) for tree in forest.trees]
-        only(mean(probs; dims=1))
+        _mean_probabilities(probs)
     end
     P = reduce(hcat, probs)'
     return UnivariateFinite(forest.classes, P; pool=missing)

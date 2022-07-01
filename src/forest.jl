@@ -115,6 +115,8 @@ function _split(
     return SplitPoint(best_score_feature, best_score_cutpoint)
 end
 
+const Probabilities = Vector{Float64}
+
 """
     Leaf
 
@@ -122,7 +124,7 @@ Leaf of a decision tree.
 The probabilities are based on the `y`'s falling into the region associated with this leaf.
 """
 struct Leaf
-    probabilities::Vector{Float64}
+    probabilities::Probabilities
 end
 
 function Leaf(classes, y)

@@ -5,7 +5,7 @@ X, y = make_moons(n; rng, shuffle=true)
 rng = StableRNG(1)
 model = StableForestClassifier(; rng)
 mach = machine(model, X, y)
-fit!(mach)
+fit!(mach; verbosity=0)
 
 preds = predict(mach)
 @show auc(preds, y)

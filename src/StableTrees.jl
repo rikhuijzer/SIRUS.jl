@@ -5,6 +5,7 @@ import Base
 
 using CategoricalArrays: CategoricalValue, unwrap
 using Random: AbstractRNG
+using Statistics: mean
 using Tables: Tables
 
 const Float = Float32

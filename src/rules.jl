@@ -25,12 +25,6 @@ struct TreePath
     splits::Vector{Split}
 end
 
-struct Rule
-    path::TreePath
-    then_probs::Vector{Float64}
-    else_probs::Vector{Float64}
-end
-
 function TreePath(text::String)
     try
         comparisons = split(strip(text), '&')
@@ -67,41 +61,91 @@ function Base.show(io::IO, path::TreePath)
     print(io, text)
 end
 
-function _paths!(leaf::Leaf, splits::Vector{Split}, paths::Vector{TreePath})
+struct Rule
+    path::TreePath
+    then_probs::Probabilities
+    else_probs::Probabilities
+end
+
+function _rules!(leaf::Leaf, splits::Vector{Split}, rules::Vector{Rule})
     path = TreePath(splits)
-    push!(paths, path)
+    # This assumes that the opposite of a combined rules is the opposite of the last comparison.
+    then_probs = leaf.probabilities
+    else_probs = 1
+    push!(rules, rule)
     return nothing
 end
 
+const Probs = Vector{Probabilities}
+
+_then_output!(leaf::Leaf, probs::Probs=Probs()) = push!(probs, leaf.probabilities)
+
+"Return the output average of the training points which satisfy the rule."
+function _then_output!(node::Node, probs::Probs=Probs())
+    _then_output!(node.left, probs)
+    _then_output!(node.right, probs)
+    return probs
+end
+
+_else_output!(_, leaf::Leaf, probs::Probs) = push!(probs, leaf.probabilities)
+
+"Return the output average of the training points not covered by the rule."
+function _else_output!(not_node::Union{Node,Leaf}, node::Node, probs::Probs=Probs())
+    if node == not_node
+        return probs
+    end
+    _else_output!(not_node, node.left, probs)
+    _else_output!(not_node, node.right, probs)
+    return probs
+end
+
+_mean_probabilities(V::AbstractVector) = round.(only(mean(V; dims=1)); digits=3)
+
+function Rule(root::Node, node::Union{Node, Leaf}, splits::Vector{Split})
+    path = TreePath(splits)
+    then_output = _then_output!(node)
+    then_probs = _mean_probabilities(then_output)
+    else_output = _else_output!(node, root)
+    else_probs = _mean_probabilities(else_output)
+    return Rule(path, then_probs, else_probs)
+end
+
+function _rules!(leaf::Leaf, splits::Vector{Split}; rules::Vector{Rule}, root::Node)
+    rule = Rule(root, leaf, splits)
+    push!(rules, rule)
+end
+
 """
-Return a all the paths in a tree.
+Return a all the rules for all paths in a tree.
 This is the rule generation step of SIRUS.
 There will be a path for each node and leaf in the tree.
 In the paper, for a random free Θ, the list of extracted paths is defined as T(Θ, Dn).
+Note that the rules are also created for internal nodes as can be seen from supplement Table 3.
 """
-function _paths!(
+function _rules!(
         node::Node,
-        splits::Vector{Split}=Split[],
-        paths::Vector{TreePath}=TreePath[]
+        splits::Vector{Split}=Split[];
+        rules::Vector{Rule}=Rule[],
+        root::Node=node
     )
     if !isempty(splits)
-        path = TreePath(splits)
-        push!(paths, path)
+        rule = Rule(root, node, splits)
+        push!(rules, rule)
     end
 
     let
         split = Split(node.splitpoint, :L)
         _splits = [split; splits]
-        _paths!(node.left, _splits, paths)
+        _rules!(node.left, _splits; rules, root)
     end
 
     let
         split = Split(node.splitpoint, :R)
         _splits = [split; splits]
-        _paths!(node.right, _splits, paths)
+        _rules!(node.right, _splits; rules, root)
     end
 
-    return paths
+    return rules
 end
 
 function _paths(forest::Forest)
@@ -123,6 +167,10 @@ end
 
 function Base.:(==)(a::TreePath, b::TreePath)
     return all(a.splits .== b.splits)
+end
+
+function Base.:(==)(a::Rule, b::Rule)
+    return a.path == b.path && a.then_probs == b.then_probs && a.else_probs == b.else_probs
 end
 
 function _count_unique(V::AbstractVector{T}) where {T}
@@ -148,7 +196,7 @@ Select rules based on frequency of occurence.
 Below this threshold, the rule is removed.
 The default value is based on Figure 4 and 5 of the SIRUS paper.
 """
-function _select_rules(paths::Vector{TreePath}; p0=20)
+function _select_rules(paths::Vector{Rule}; p0=20)
     unique_counts = _count_unique(paths)
     for path in keys(unique_counts)
         if unique_counts[path] < p0
@@ -156,4 +204,26 @@ function _select_rules(paths::Vector{TreePath}; p0=20)
         end
     end
     return collect(keys(unique_counts))
+end
+
+"Filter all rules that have one constraint and are identical to a previous rule with the sign reversed."
+function _filter_reversed(rules::Vector{Rule})
+    out = copy(rules)
+    for rule in rules
+        path = rule.path
+        splits = path.splits
+        if length(splits) == 1
+            split = splits[1]
+            rev_direction = split.direction == :L ? :R : :L
+            rev_split = SplitPoint(split.splitpoint, rev_direction)
+            rev_path = TreePath(rev_split)
+            rev_rule = Rule(rev_path, rule.else_probs, rule.then_probs)
+            out = filter!(r -> !=(rev_rule), out)
+        end
+    end
+end
+
+"Return post-treated rules."
+function _treat_rules(rules::Vector{Rule})
+    _filter_reversed(rules)
 end
