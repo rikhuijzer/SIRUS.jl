@@ -116,52 +116,26 @@ function _split(
 end
 
 """
-    Leaf{S}
+    Leaf
 
 Leaf of a decision tree.
-In this leaf, `n` outcomes fall within the region of this leaf and have a `majority`.
+The probabilities are based on the `y`'s falling into the region associated with this leaf.
 """
-struct Leaf{S}
-    majority::S
-    n::Int
+struct Leaf
+    probabilities::Vector{Float}
 end
 
-function _mode(y::AbstractVector)
-    @assert !isempty(y)
-    # The number of occurences for each unique element in y.
-    counts = Dict{Any,Int}()
-    # The first index of each unique element in y.
-    # This ensures that the return type is the same as input type.
-    indexes = Dict{Any,Int}()
-    for (i, e) in enumerate(y)
-        if e in keys(counts)
-            counts[e] += 1
-        else
-            counts[e] = 0
-            indexes[e] = i
-        end
-    end
-    max_counted_index = 1
-    max_count = 0
-    for e in keys(counts)
-        count = counts[e]
-        if max_count < count
-            max_counted_index = indexes[e]
-            max_count = count
-        end
-    end
-    return y[max_counted_index]
+function Leaf(classes, y)
+    l = length(y)
+    probabilities = [count(y .== class) / l for class in classes]
+    # Not creating a UnivariateFinite because it requires MLJBase
+    return Leaf(probabilities)
 end
 
-function Leaf(y)
-    majority = _mode(y)
-    return Leaf(majority, length(y))
-end
-
-struct Node{T}
+struct Node
     splitpoint::SplitPoint
-    left::Union{Node{T}, Leaf{T}}
-    right::Union{Node{T}, Leaf{T}}
+    left::Union{Node, Leaf}
+    right::Union{Node, Leaf}
 end
 
 children(node::Node) = [node.left, node.right]
@@ -185,36 +159,36 @@ end
 
 function _tree(
         X,
-        y::AbstractVector;
+        y::AbstractVector,
+        classes::AbstractVector=unique(y);
         depth=0,
         max_depth=2,
         q=10,
         cutpoints::AbstractMatrix{Float}=_cutpoints(X, q),
-        classes=unique(y),
         min_data_in_leaf=5
     )
     _verify_lengths(X, y)
     if depth == max_depth
-        return Leaf(y)
+        return Leaf(classes, y)
     end
     splitpoint = _split(X, y, classes, cutpoints)
     if isnothing(splitpoint) || length(y) < min_data_in_leaf
-        return Leaf(y)
+        return Leaf(classes, y)
     end
     depth += 1
     left = let
         _X, _y = _view_X_y(X, y, splitpoint, <)
-        _tree(_X, _y; cutpoints, classes, depth)
+        _tree(_X, _y, classes; cutpoints, depth)
     end
     right = let
         _X, _y = _view_X_y(X, y, splitpoint, ≥)
-        _tree(_X, _y; cutpoints, classes, depth)
+        _tree(_X, _y, classes; cutpoints, depth)
     end
-    node = Node{eltype(y)}(splitpoint, left, right)
+    node = Node(splitpoint, left, right)
     return node
 end
 
-_predict(leaf::Leaf, x::AbstractVector) = leaf.majority
+_predict(leaf::Leaf, x::AbstractVector) = leaf.probabilities
 
 """
 Predict `y` for a data vector defined by `x`.
@@ -229,11 +203,13 @@ function _predict(node::Node, x::AbstractVector)
         return _predict(node.right, x)
     end
 end
-_predict(node::Node, x::Tables.MatrixRow) = _predict(node, collect(x))
-_predict(node::Node, x::Tables.ColumnsRow) = _predict(node, collect(x))
+function _predict(node::Node, x::Union{Tables.MatrixRow, Tables.ColumnsRow})
+    return _predict(node, collect(x))
+end
 
 struct Forest{T}
-    trees::Vector{Union{Node{T},Leaf{T}}}
+    trees::Vector{Union{Node,Leaf}}
+    classes::Vector{T}
 end
 
 "Increase the state of `rng` by `i`."
@@ -271,8 +247,7 @@ function _forest(
     n_features = round(Int, sqrt(_p(X)))
     n_samples = floor(Int, partial_sampling * length(y))
 
-    T = eltype(y)
-    trees = Vector{Union{Node{T},Leaf{T}}}(undef, n_trees)
+    trees = Vector{Union{Node,Leaf}}(undef, n_trees)
     for i in 1:n_trees
         _rng = copy(rng)
         _change_rng_state!(rng, i)
@@ -281,8 +256,16 @@ function _forest(
         _X = view(X, rows, cols)
         _y = view(y, rows)
         _cutpoints = view(cutpoints, :, cols)
-        tree = _tree(_X, _y; max_depth, q, cutpoints=_cutpoints, classes, min_data_in_leaf)
+        tree = _tree(
+            _X,
+            _y,
+            classes;
+            max_depth,
+            q,
+            cutpoints=_cutpoints,
+            min_data_in_leaf
+        )
         trees[i] = tree
     end
-    return Forest{T}(trees)
+    return Forest(trees, classes)
 end

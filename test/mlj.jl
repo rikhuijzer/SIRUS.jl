@@ -8,7 +8,9 @@ mach = machine(model, X, y)
 fit!(mach)
 
 preds = predict(mach)
-@show round(accuracy(y, preds); digits=2)
-@test 0.5 < accuracy(y, preds)
+@show auc(preds, y)
+@test 0.0 < auc(preds, y)
 
-# evaluate(model, X, y; measure=auc)
+rng = StableRNG(1)
+resampling = CV(; shuffle=true, rng)
+@show evaluate(model, X, y; resampling, measure=auc)

@@ -25,6 +25,12 @@ struct TreePath
     splits::Vector{Split}
 end
 
+struct Rule
+    path::TreePath
+    then_probs::Vector{Float}
+    else_probs::Vector{Float}
+end
+
 function TreePath(text::String)
     try
         comparisons = split(strip(text), '&')

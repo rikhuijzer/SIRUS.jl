@@ -28,33 +28,26 @@ let
     @test splitpoint.value == Float(3)
 end
 
-@test ST._mode([1, 2, 3, 4, 4]) == 4
-@test ST._mode([1, 2, 3, 1]) == 1
-@test ST._mode([1]) == 1
-@test ST._mode([1, 2]) in [1, 2]
+_mode = ST.MLJImplementation._mode
+@test _mode([1, 2, 3, 4, 4]) == 4
+@test _mode([1, 2, 3, 1]) == 1
+@test _mode([1]) == 1
+@test _mode([1, 2]) in [1, 2]
 
 c = categorical([1, 2, 2])
 # Otherwise the type of y isn't the same as the type for predictions for y.
-@test ST._mode(c) isa CategoricalValue
-@test ST._mode(c) == c[2]
-
-function Base.:(==)(a::ST.Leaf, b::ST.Leaf)
-    return a.majority == b.majority && a.n == b.n
-end
+@test _mode(c) isa CategoricalValue
+@test _mode(c) == c[2]
 
 let
-    node = ST._tree([1 2; 3 3], [1, 2]; min_data_in_leaf=1, q=2)
+    X = [1 2; # 1
+         3 4] # 2
+    y = [1, 2]
+    classes = y
+    node = ST._tree(X, y, classes; min_data_in_leaf=1, q=2)
     @test node.splitpoint == ST.SplitPoint(1, Float(3))
-    let
-        majority = 1
-        l = 1
-        @test node.left == ST.Leaf(majority, l)
-    end
-    let
-        majority = 2
-        l = 1
-        @test node.right == ST.Leaf(majority, l)
-    end
+    @test node.left.probabilities == Float[1, 0]
+    @test node.right.probabilities == Float[0, 1]
 end
 
 let
@@ -62,7 +55,8 @@ let
                 3 2; # 2
                 5 2; # 3
                 7 2] # 4
-    node = ST._tree(X, [1, 2, 3, 4]; min_data_in_leaf=1, q=3)
+    y = [1, 2, 3, 4]
+    node = ST._tree(X, y; min_data_in_leaf=1, q=3)
     # This looks a bit weird at first sight but makes sense due to greedy recursive binary splitting.
     # When retaining only one element, the gini index of one side is 0 because the node predicts one class perfectly.
     # See "An introduction to Statistical Learning" for details.
