@@ -38,10 +38,6 @@ c = categorical([1, 2, 2])
 @test ST._mode(c) isa CategoricalValue
 @test ST._mode(c) == c[2]
 
-function Base.:(==)(a::ST.SplitPoint, b::ST.SplitPoint)
-    return a.feature == b.feature && a.value == b.value
-end
-
 function Base.:(==)(a::ST.Leaf, b::ST.Leaf)
     return a.majority == b.majority && a.n == b.n
 end

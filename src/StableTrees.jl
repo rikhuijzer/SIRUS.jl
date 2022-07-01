@@ -1,7 +1,7 @@
 module StableTrees
 
 import AbstractTrees: children, nodevalue
-import Base: show
+import Base
 
 using CategoricalArrays: CategoricalValue, unwrap
 using Random: AbstractRNG
