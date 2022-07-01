@@ -28,17 +28,6 @@ let
     @test splitpoint.value == Float(3)
 end
 
-_mode = ST.MLJImplementation._mode
-@test _mode([1, 2, 3, 4, 4]) == 4
-@test _mode([1, 2, 3, 1]) == 1
-@test _mode([1]) == 1
-@test _mode([1, 2]) in [1, 2]
-
-c = categorical([1, 2, 2])
-# Otherwise the type of y isn't the same as the type for predictions for y.
-@test _mode(c) isa CategoricalValue
-@test _mode(c) == c[2]
-
 let
     X = [1 2; # 1
          3 4] # 2

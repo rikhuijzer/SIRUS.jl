@@ -71,33 +71,6 @@ function fit(model::StableForestClassifier, verbosity::Int, X, y)
     return fitresult, cache, report
 end
 
-function _mode(y::AbstractVector)
-    @assert !isempty(y)
-    # The number of occurences for each unique element in y.
-    counts = Dict{Any,Int}()
-    # The first index of each unique element in y.
-    # This ensures that the return type is the same as input type.
-    indexes = Dict{Any,Int}()
-    for (i, e) in enumerate(y)
-        if e in keys(counts)
-            counts[e] += 1
-        else
-            counts[e] = 0
-            indexes[e] = i
-        end
-    end
-    max_counted_index = 1
-    max_count = 0
-    for e in keys(counts)
-        count = counts[e]
-        if max_count < count
-            max_counted_index = indexes[e]
-            max_count = count
-        end
-    end
-    return y[max_counted_index]
-end
-
 function predict(model::StableForestClassifier, fitresult, Xnew)
     forest = fitresult
     probs = map(Tables.rows(Xnew)) do row
