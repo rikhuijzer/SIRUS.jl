@@ -230,6 +230,10 @@ end
 
 _n_comparisons(rule::Rule) = length(rule.path.splits)
 
+function _contains(a::Rule, b::Split)
+    return any(split -> split.splitpoint == b.splitpoint, a.path.splits)
+end
+
 """
 Return `true` if rule `a` and `b` involve the same variables and thresholds.
 The sign constraints may be reversed.
@@ -237,6 +241,11 @@ The sign constraints may be reversed.
 function _equal_variables_thresholds(a::Rule, b::Rule)
     if _n_comparisons(a) != _n_comparisons(b)
         return false
+    end
+    if _n_comparisons(a) == 1 && _n_comparisons(b) == 1
+        a_split = a.path.splits[1]
+        b_split = b.path.splits[1]
+        return a_split.splitpoint == b_split.splitpoint
     end
     @assert _n_comparisons(a) == 2 && _n_comparisons(b) == 2
     matches = map(a.path.splits) do split
@@ -249,23 +258,35 @@ function _equal_variables_thresholds(a::Rule, b::Rule)
     end
 end
 
+
 "Return a collection of rules that are linearly dependent."
 function _linearly_dependent_rules(rule::Rule, rules::Vector{Rule})
-    first_comparison = rule.paths.splits[1]
-    second_comparison = rule.paths.splits[2]
-    
+    first_comparison = rule.path.splits[1]
+    second_comparison = rule.path.splits[2]
+    first_matches = filter(r -> _contains(r, first_comparison), rules)
+    isempty(first_matches) && return Rule[]
+    second_matches = filter(r -> _contains(r, second_comparison), rules)
+    isempty(second_matches) && return Rule[]
+    third_matches = filter(r -> _equal_variables_thresholds(r, rule), rules)
+    return third_matches
 end
 
-function _filter_linearly_dependent(rule::Rule, rules::Vector{Rule})
-    if _n_comparisons(rule) != 2
+"Return the Euclidian distance between the `then_probs` and `else_probs`."
+_gap_width(rule::Rule) = norm(rule.then_probs .- rule.else_probs)
+
+"Return true for rules that are a linear duplicate of another more important rule."
+function _is_linearly_redundant(rule::Rule, rules::Vector{Rule})
+    if _n_comparisons(rule) == 1
         return false
     end
     dependent_rules = _linearly_dependent_rules(rule, rules)
+    gap_width = _gap_width(rule)
+    return any(r -> gap_width ≤ _gap_width(r) && rule != r, dependent_rules)
 end
 
 "Filter all rules that are a linear combination of another rule and have a smaller output gap."
 function _filter_linearly_dependent(rules::Vector{Rule})
-    return filter(rule -> _is_linearly_dependent(rule, rules), rules)
+    return filter(r -> !_is_linearly_redundant(r, rules), rules)
 end
 
 "Return post-treated rules."

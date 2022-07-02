@@ -44,7 +44,11 @@ r7 = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 & X[i, 3] ≥ 64 "), [0.517], [0.67
 r12 = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 & X[i, 3] < 64 "), [0.192], [0.102])
 r15 = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 & X[i, 4] < 12 "), [0.192], [0.102])
 
+@test ST._equal_variables_thresholds(r1, r2) == true
+@test ST._equal_variables_thresholds(r1, r5) == false
 @test ST._equal_variables_thresholds(r5, r12) == false
 @test ST._equal_variables_thresholds(r7, r12) == true
 @test ST._equal_variables_thresholds(r12, r15) == false
-# @test ST._filter_linearly_dependent([r1, r5, r7, r12]) == [r1, r5, r7]
+
+@test ST._gap_width(r12) < ST._gap_width(r7)
+@test ST._filter_linearly_dependent([r1, r5, r7, r12]) == [r1, r5, r7]
