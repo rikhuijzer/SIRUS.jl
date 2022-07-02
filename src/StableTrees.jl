@@ -18,5 +18,7 @@ export TreePath
 include("mlj.jl")
 const StableForestClassifier = MLJImplementation.StableForestClassifier
 export StableForestClassifier
+const StableRulesClassifier = MLJImplementation.StableRulesClassifier
+export StableRulesClassifier
 
 end # module

@@ -15,7 +15,12 @@ using MLJModelInterface:
     Probabilistic,
     Table
 using Random: AbstractRNG, default_rng
-using StableTrees: _forest, _predict, _mean_probabilities
+using StableTrees:
+    _forest,
+    _mean_probabilities,
+    _predict,
+    _rules,
+    _treat_rules
 using Tables: Tables
 
 """

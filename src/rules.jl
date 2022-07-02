@@ -316,5 +316,5 @@ function _predict(rules::Vector{Rule}, row::AbstractVector)
     return only(mean(preds; dims=1))
 end
 function _predict(rules::Vector{Rule}, x::Union{Tables.MatrixRow, Tables.ColumnsRow})
-    return _predict(node, collect(x))
+    return _predict(rules, collect(x))
 end
