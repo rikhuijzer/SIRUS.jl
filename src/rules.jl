@@ -291,5 +291,30 @@ end
 
 "Return post-treated rules."
 function _treat_rules(rules::Vector{Rule})
-    _filter_reversed(rules)
+    return _filter_linearly_dependent(_filter_reversed(rules))
+end
+
+function _predict(rule::Rule, row::AbstractVector)
+    constraints = map(rule.path.splits) do split
+        splitpoint = split.splitpoint
+        direction = split.direction
+        comparison = direction == :L ? (<) : (≥)
+        feature = splitpoint.feature
+        value = splitpoint.value
+        satisfies_constraint = comparison(row[feature], value)
+    end
+    return all(constraints) ? rule.then_probs : rule.else_probs
+end
+
+"""
+Predict `y` for a data `row`.
+Also returns a vector if the data has only one feature.
+"""
+function _predict(rules::Vector{Rule}, row::AbstractVector)
+    preds = [_predict(rule, row) for rule in rules]
+    # For classification, take the average of the rules.
+    return only(mean(preds; dims=1))
+end
+function _predict(rules::Vector{Rule}, x::Union{Tables.MatrixRow, Tables.ColumnsRow})
+    return _predict(node, collect(x))
 end

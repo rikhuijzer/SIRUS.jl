@@ -34,6 +34,16 @@ Base.@kwdef mutable struct StableForestClassifier <: Probabilistic
     min_data_in_leaf::Int=5
 end
 
+Base.@kwdef mutable struct StableRulesClassifier <: Probabilistic
+    rng::AbstractRNG=default_rng()
+    partial_sampling::Real=0.7
+    n_trees::Int=1_000
+    max_depth::Int=2
+    q::Int=10
+    min_data_in_leaf::Int=5
+    max_rules::Int=10
+end
+
 metadata_model(
     StableForestClassifier;
     input_scitype=Table(Continuous),
@@ -43,8 +53,17 @@ metadata_model(
     path="StableTrees.StableForestClassifier"
 )
 
+metadata_model(
+    StableRulesClassifier;
+    input_scitype=Table(Continuous),
+    target_scitype=AbstractVector{<:Finite},
+    supports_weights=false,
+    docstring="Stable rule-based classifier",
+    path="StableTrees.StableForestClassifier"
+)
+
 metadata_pkg.(
-    [StableForestClassifier];
+    [StableForestClassifier, StableRulesClassifier];
     name="StableTrees",
     uuid="9113e207-2504-4b06-8eee-d78e288bee65",
     url="https://github.com/rikhuijzer/StableTrees.jl",
@@ -78,6 +97,33 @@ function predict(model::StableForestClassifier, fitresult, Xnew)
     end
     P = reduce(hcat, probs)'
     return UnivariateFinite(forest.classes, P; pool=missing)
+end
+
+function fit(model::StableRulesClassifier, verbosity::Int, X, y)
+    forest = _forest(
+        model.rng,
+        X,
+        y;
+        model.partial_sampling,
+        model.n_trees,
+        model.max_depth,
+        model.q,
+        model.min_data_in_leaf
+    )
+    rules = _rules(forest)
+    treated = _treat_rules(rules)
+    cache = nothing
+    report = nothing
+    return (treated, forest.classes), cache, report
+end
+
+function predict(model::StableRulesClassifier, fitresult, Xnew)
+    rules, classes = fitresult
+    probs = map(Tables.rows(Xnew)) do row
+        probs = _predict(rules, row)
+    end
+    P = reduce(hcat, probs)'
+    return UnivariateFinite(classes, P; pool=missing)
 end
 
 end # module
