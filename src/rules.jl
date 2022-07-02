@@ -228,6 +228,46 @@ function _filter_reversed(rules::Vector{Rule})
     return out
 end
 
+_n_comparisons(rule::Rule) = length(rule.path.splits)
+
+"""
+Return `true` if rule `a` and `b` involve the same variables and thresholds.
+The sign constraints may be reversed.
+"""
+function _equal_variables_thresholds(a::Rule, b::Rule)
+    if _n_comparisons(a) != _n_comparisons(b)
+        return false
+    end
+    @assert _n_comparisons(a) == 2 && _n_comparisons(b) == 2
+    matches = map(a.path.splits) do split
+        any(b_split -> b_split.splitpoint == split.splitpoint, b.path.splits)
+    end
+    if all(matches)
+        return true
+    else
+        return false
+    end
+end
+
+"Return a collection of rules that are linearly dependent."
+function _linearly_dependent_rules(rule::Rule, rules::Vector{Rule})
+    first_comparison = rule.paths.splits[1]
+    second_comparison = rule.paths.splits[2]
+    
+end
+
+function _filter_linearly_dependent(rule::Rule, rules::Vector{Rule})
+    if _n_comparisons(rule) != 2
+        return false
+    end
+    dependent_rules = _linearly_dependent_rules(rule, rules)
+end
+
+"Filter all rules that are a linear combination of another rule and have a smaller output gap."
+function _filter_linearly_dependent(rules::Vector{Rule})
+    return filter(rule -> _is_linearly_dependent(rule, rules), rules)
+end
+
 "Return post-treated rules."
 function _treat_rules(rules::Vector{Rule})
     _filter_reversed(rules)

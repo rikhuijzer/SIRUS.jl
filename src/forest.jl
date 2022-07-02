@@ -235,6 +235,9 @@ function _forest(
         q::Int=10,
         min_data_in_leaf::Int=5
     )
+    if 2 < max_depth
+        error("Tree depth is too high. Rule filtering for a higher depth is not implemented.")
+    end
     if !Tables.istable(X)
         error("Input `X` doesn't satisfy the Tables.jl interface.")
     end

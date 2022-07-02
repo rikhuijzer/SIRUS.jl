@@ -38,3 +38,13 @@ r1 = ST.Rule(ST.TreePath(" X[i, 1] < 32000 "), [0.61], [0.408])
 r2 = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 "), [0.408], [0.61])
 
 @test ST._filter_reversed([r1, r2]) == [r1]
+
+r5 = ST.Rule(ST.TreePath(" X[i, 3] < 64 "), [0.56], [334])
+r7 = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 & X[i, 3] ≥ 64 "), [0.517], [0.67])
+r12 = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 & X[i, 3] < 64 "), [0.192], [0.102])
+r15 = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 & X[i, 4] < 12 "), [0.192], [0.102])
+
+@test ST._equal_variables_thresholds(r5, r12) == false
+@test ST._equal_variables_thresholds(r7, r12) == true
+@test ST._equal_variables_thresholds(r12, r15) == false
+# @test ST._filter_linearly_dependent([r1, r5, r7, r12]) == [r1, r5, r7]
