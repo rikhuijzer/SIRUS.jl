@@ -55,7 +55,8 @@ function Base.show(io::IO, path::TreePath)
     texts = map(path.splits) do split
         splitpoint = split.splitpoint
         comparison = split.direction == :L ? '<' : '≥'
-        text = "X[i, $(splitpoint.feature)] $comparison $(splitpoint.value)"
+        val = round(splitpoint.value; sigdigits=3)
+        text = "X[i, $(splitpoint.feature)] $comparison $val"
     end
     text = string("TreePath(\" ", join(texts, " & "), " \")")::String
     print(io, text)
@@ -148,13 +149,13 @@ function _rules!(
     return rules
 end
 
-function _paths(forest::Forest)
-    paths = TreePath[]
+function _rules(forest::Forest)
+    rules = Rule[]
     for tree in forest.trees
-        tree_paths = _paths!(tree)
-        paths = [paths; tree_paths]
+        tree_rules = _rules!(tree)
+        rules = [rules; tree_rules]
     end
-    return paths
+    return rules
 end
 
 function Base.:(==)(a::SplitPoint, b::SplitPoint)
@@ -173,7 +174,7 @@ function Base.:(==)(a::Rule, b::Rule)
     return a.path == b.path && a.then_probs == b.then_probs && a.else_probs == b.else_probs
 end
 
-function _count_unique(V::AbstractVector{T}) where {T}
+function _count_unique_paths(V::Vector{Rule})
     U = unique(V)
     l = length(U)
     counts = Vector{Int}(undef, l)
@@ -181,13 +182,13 @@ function _count_unique(V::AbstractVector{T}) where {T}
         u = U[i]
         count = 0
         for v in V
-            if v == u
+            if v.path == u.path
                 count += 1
             end
         end
         counts[i] = count
     end
-    return Dict{T,Int}(zip(U, counts))
+    return Dict{Rule,Int}(zip(U, counts))
 end
 
 """
@@ -196,11 +197,11 @@ Select rules based on frequency of occurence.
 Below this threshold, the rule is removed.
 The default value is based on Figure 4 and 5 of the SIRUS paper.
 """
-function _select_rules(paths::Vector{Rule}; p0=20)
-    unique_counts = _count_unique(paths)
-    for path in keys(unique_counts)
-        if unique_counts[path] < p0
-            delete!(unique_counts, path)
+function _select_rules(rules::Vector{Rule}; p0=20)
+    unique_counts = _count_unique_paths(rules)
+    for rule in keys(unique_counts)
+        if unique_counts[rule] < p0
+            delete!(unique_counts, rule)
         end
     end
     return collect(keys(unique_counts))
@@ -214,13 +215,17 @@ function _filter_reversed(rules::Vector{Rule})
         splits = path.splits
         if length(splits) == 1
             split = splits[1]
-            rev_direction = split.direction == :L ? :R : :L
-            rev_split = SplitPoint(split.splitpoint, rev_direction)
-            rev_path = TreePath(rev_split)
-            rev_rule = Rule(rev_path, rule.else_probs, rule.then_probs)
-            out = filter!(r -> !=(rev_rule), out)
+            # Keep the rule with the sign "<" and filter "≥".
+            if split.direction == :L
+                rev_direction = :R
+                rev_split = Split(split.splitpoint, rev_direction)
+                rev_path = TreePath([rev_split])
+                rev_rule = Rule(rev_path, rule.else_probs, rule.then_probs)
+                out = filter!(!=(rev_rule), out)
+            end
         end
     end
+    return out
 end
 
 "Return post-treated rules."
