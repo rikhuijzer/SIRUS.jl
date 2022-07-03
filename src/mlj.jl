@@ -20,6 +20,7 @@ using StableTrees:
     _mean_probabilities,
     _predict,
     _rules,
+    _select_rules,
     _treat_rules
 using Tables: Tables
 
@@ -116,7 +117,9 @@ function fit(model::StableRulesClassifier, verbosity::Int, X, y)
         model.min_data_in_leaf
     )
     rules = _rules(forest)
-    treated = _treat_rules(rules)
+    selected = _select_rules(rules)
+    U = unique(selected)
+    treated = _treat_rules(U)
     cache = nothing
     report = nothing
     return (treated, forest.classes), cache, report

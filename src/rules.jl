@@ -313,7 +313,7 @@ Also returns a vector if the data has only one feature.
 function _predict(rules::Vector{Rule}, row::AbstractVector)
     preds = [_predict(rule, row) for rule in rules]
     # For classification, take the average of the rules.
-    return only(mean(preds; dims=1))
+    return _mean_probabilities(preds)
 end
 function _predict(rules::Vector{Rule}, x::Union{Tables.MatrixRow, Tables.ColumnsRow})
     return _predict(rules, collect(x))
