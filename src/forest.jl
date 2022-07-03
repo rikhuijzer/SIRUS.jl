@@ -1,20 +1,24 @@
 """
-    gini(y::AbstractVector, classes::AbstractVector)
+    _gini(y::AbstractVector, classes::AbstractVector)
 
 Return the Gini index for a vector outcomes `y` and `classes`.
 Here, `y` is usually a view on the outcome values in some region.
 Inside that region, `gini` is a measure of node purity.
 If all values in the region have the same class, then gini is zero.
+The equation is mentioned on Wikipedia as
+``1 - \\sum{class \\in classes} p_i^2``
+for ``p_i`` be the fraction (proportion) of items labeled with class ``i`` in the set.
 """
-function gini(y::AbstractVector, classes::AbstractVector)
-    proportions = Vector{Float}(undef, length(classes))
+function _gini(y::AbstractVector, classes::AbstractVector)
     len_y = length(y)
     len_y == 0 && return Float(NaN)
-    for (i, class) in enumerate(classes)
+    proportions = Vector{Float}(undef, length(classes))
+    impurity = 1.0
+    for class in classes
         proportion = count(y .== class) / len_y
-        proportions[i] = proportion
+        impurity -= proportion^2
     end
-    return sum(proportions .* (1 .- proportions))
+    return impurity
 end
 
 """
@@ -98,8 +102,8 @@ function _split(
     for feature in 1:_p(X)
         feature_cutpoints = view(cutpoints, :, feature)
         for cutpoint in feature_cutpoints
-            impurity_left = gini(_view_y(X, y, feature, <, cutpoint), classes)
-            impurity_right = gini(_view_y(X, y, feature, ≥, cutpoint), classes)
+            impurity_left = _gini(_view_y(X, y, feature, <, cutpoint), classes)
+            impurity_right = _gini(_view_y(X, y, feature, ≥, cutpoint), classes)
             isnan(impurity_left) || isnan(impurity_right) && continue
             total_impurity = impurity_left + impurity_right
             if total_impurity < best_score
