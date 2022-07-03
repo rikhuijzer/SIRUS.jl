@@ -96,24 +96,29 @@ function _split(
         classes::AbstractVector,
         cutpoints::AbstractMatrix{Float}
     )
-    best_score = Float(999)
+    best_score = Float(0)
     best_score_feature = 0
     best_score_cutpoint = Float(0)
     for feature in 1:_p(X)
         feature_cutpoints = view(cutpoints, :, feature)
         for cutpoint in feature_cutpoints
-            impurity_left = _gini(_view_y(X, y, feature, <, cutpoint), classes)
-            impurity_right = _gini(_view_y(X, y, feature, ≥, cutpoint), classes)
+            starting_impurity = _gini(y, classes)
+            y_left = _view_y(X, y, feature, <, cutpoint)
+            impurity_left = _gini(y_left, classes)
+            y_right = _view_y(X, y, feature, ≥, cutpoint)
+            impurity_right = _gini(y_right, classes)
             isnan(impurity_left) || isnan(impurity_right) && continue
-            total_impurity = impurity_left + impurity_right
-            if total_impurity < best_score
-                best_score = total_impurity
+            p = length(y_left) / length(y)
+            weighted_impurity = (p * impurity_left + (1 - p) * impurity_right) / 2
+            information_gain = starting_impurity - weighted_impurity
+            if best_score ≤ information_gain
+                best_score = information_gain
                 best_score_feature = feature
                 best_score_cutpoint = cutpoint
             end
         end
     end
-    if best_score == Float(999)
+    if best_score == Float(0)
         return nothing
     end
     return SplitPoint(best_score_feature, best_score_cutpoint)
