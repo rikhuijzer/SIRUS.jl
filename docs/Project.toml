@@ -1,6 +1,8 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+PlutoStaticHTML = "359b1769-a58e-495b-9770-312e911026ad"
 StableTrees = "9113e207-2504-4b06-8eee-d78e288bee65"
 
 [compat]
 Documenter = "0.27"
+PlutoStaticHTML = "5"

@@ -4,6 +4,7 @@ using Documenter:
     asset,
     deploydocs,
     makedocs
+using PlutoStaticHTML
 using StableTrees
 
 DocMeta.setdocmeta!(
@@ -14,8 +15,24 @@ DocMeta.setdocmeta!(
 )
 
 sitename = "StableTrees.jl"
+tutorials_dir = joinpath(pkgdir(StableTrees), "docs", "src")
+
+function build()
+    println("Building notebooks")
+    use_distributed = false
+    output_format = documenter_output
+    bopts = BuildOptions(tutorials_dir; use_distributed, output_format)
+    build_notebooks(bopts)
+    return nothing
+end
+
+# Build the notebooks; defaults to "true".
+if get(ENV, "BUILD_DOCS_NOTEBOOKS", "true") == "true"
+    build()
+end
+
 pages = [
-    "StableTrees" => "index.md"
+    "StableTrees" => "stabletrees.md"
 ]
 
 prettyurls = get(ENV, "CI", nothing) == "true"

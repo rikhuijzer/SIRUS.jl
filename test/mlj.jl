@@ -8,7 +8,9 @@ function _evaluate(rng, model)
 end
 
 rng = StableRNG(1)
-@show _evaluate(rng, LGBMClassifier(; max_depth=2))
+# n = 1000 with CV gives an AUC of 0.98.
+# @show _evaluate(rng, RandomForestClassifier(; max_depth=2))
+# @show _evaluate(rng, LGBMClassifier(; max_depth=2))
 
 rng = StableRNG(1)
 model = StableForestClassifier(; rng)
