@@ -1,6 +1,7 @@
 using Documenter:
     DocMeta,
     HTML,
+    MathJax3,
     asset,
     deploydocs,
     makedocs
@@ -29,14 +30,17 @@ end
 # Build the notebooks; defaults to "true".
 if get(ENV, "BUILD_DOCS_NOTEBOOKS", "true") == "true"
     build()
+    cd(tutorials_dir) do
+        mv("stabletrees.md", "index.md"; force=true)
+    end
 end
 
 pages = [
-    "StableTrees" => "stabletrees.md"
+    "StableTrees" => "index.md"
 ]
 
 prettyurls = get(ENV, "CI", nothing) == "true"
-format = HTML(; prettyurls)
+format = HTML(; mathengine=MathJax3(), prettyurls)
 modules = [StableTrees]
 strict = true
 checkdocs = :none
