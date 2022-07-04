@@ -6,7 +6,7 @@ import Base
 using CategoricalArrays: CategoricalValue, unwrap
 using LinearAlgebra: norm
 using MLJModelInterface: UnivariateFinite
-using Random: AbstractRNG
+using Random: AbstractRNG, default_rng, shuffle
 using Statistics: mean
 using Tables: Tables
 

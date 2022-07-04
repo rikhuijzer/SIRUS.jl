@@ -52,7 +52,3 @@ for each rule
 
 - Although I fitted the model on correlated data with possibly different distributions (non i.i.d.), the model seems to work quite okay.
     Probably because of Lasso which can handle correlated features in the linear setting.
-
-## TODO
-
-- Let's start by stabilizing the forest structure and verify that that is able to make accurate predictions.

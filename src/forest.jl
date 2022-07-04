@@ -95,21 +95,31 @@ function _information_gain(y, y_left, y_right)
     return starting_impurity - impurity_change
 end
 
+"Return a random subset of `V` sampled without replacement."
+function _rand_subset(rng::AbstractRNG, V::AbstractVector, n::Int)
+    return view(shuffle(rng, V), 1:n)
+end
+
 """
 Return the split for which the gini index is maximized.
 This function receives the cutpoints for the whole dataset `D` because `X` can be a subset of `D`.
 For a walkthrough of the CART algorithm, see https://youtu.be/LDRbO9a6XPU.
 """
 function _split(
+        rng,
         X,
         y::AbstractVector,
         classes::AbstractVector,
-        cutpoints::AbstractMatrix{Float}
+        cutpoints::AbstractMatrix{Float};
+        max_split_candidates::Int=_p(X)
     )
     best_score = Float(0)
     best_score_feature = 0
     best_score_cutpoint = Float(0)
-    for feature in 1:_p(X)
+    p = _p(X)
+    mc = max_split_candidates
+    possible_features = mc == p ? (1:p) : _rand_subset(rng, 1:p, mc)
+    for feature in possible_features
         feature_cutpoints = view(cutpoints, :, feature)
         for cutpoint in feature_cutpoints
             y_left = _view_y(X, y, feature, <, cutpoint)
@@ -174,10 +184,20 @@ function _verify_lengths(X, y)
     end
 end
 
+"""
+Return the root node of a stable decision tree fitted on `X` and `y`.
+
+Arguments:
+- `max_split_candidates`:
+    During random forest creation, the number of split candidates is limited to make the trees less correlated.
+    See Section 8.2.2 of https://doi.org/10.1007/978-1-0716-1418-1 for details.
+"""
 function _tree(
+        rng::AbstractRNG,
         X,
         y::AbstractVector,
         classes::AbstractVector=unique(y);
+        max_split_candidates=_p(X),
         depth=0,
         max_depth=2,
         q=10,
@@ -191,7 +211,7 @@ function _tree(
     if depth == max_depth
         return Leaf(classes, y)
     end
-    splitpoint = _split(X, y, classes, cutpoints)
+    splitpoint = _split(rng, X, y, classes, cutpoints; max_split_candidates)
     if isnothing(splitpoint) || length(y) ≤ min_data_in_leaf
         return Leaf(classes, y)
     end
@@ -207,6 +227,7 @@ function _tree(
     node = Node(splitpoint, left, right)
     return node
 end
+_tree(X, y, classes; kwargs...) = _tree(default_rng(), X, y, classes; kwargs...)
 
 _predict(leaf::Leaf, x::AbstractVector) = leaf.probabilities
 
@@ -274,25 +295,26 @@ function _forest(
     cutpoints = _cutpoints(X, q)
     classes = unique(y)
 
-    n_features = round(Int, sqrt(_p(X)))
+    max_split_candidates = round(Int, sqrt(_p(X)))
     n_samples = floor(Int, partial_sampling * length(y))
 
     trees = Vector{Union{Node,Leaf}}(undef, n_trees)
     for i in 1:n_trees
         _rng = copy(rng)
         _change_rng_state!(_rng, i)
-        cols = rand(_rng, 1:_p(X), n_features)
+        # Don't change this to sampling without replacement.
+        # When doing that at DecisionTree.jl, the accuracy decreases.
         rows = rand(_rng, 1:length(y), n_samples)
-        _X = view(X, rows, cols)
+        _X = view(X, rows, :)
         _y = view(y, rows)
-        _cutpoints = view(cutpoints, :, cols)
         tree = _tree(
             _X,
             _y,
             classes;
+            max_split_candidates,
             max_depth,
             q,
-            cutpoints=_cutpoints,
+            cutpoints,
             min_data_in_leaf
         )
         trees[i] = tree

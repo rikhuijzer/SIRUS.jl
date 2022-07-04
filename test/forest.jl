@@ -23,7 +23,7 @@ let
          1 3]
     classes = unique(y)
     cutpoints = Float.(X)
-    splitpoint = ST._split(X, y, classes, cutpoints)
+    splitpoint = ST._split(StableRNG(1), X, y, classes, cutpoints)
     # Obviously, feature (column) 2 is more informative to split on than feature 1.
     @test splitpoint.feature == 2
     # Given that the split does < and ≥, then 3 is the best place since it separates 1 (left) and 3 (right).
@@ -87,10 +87,10 @@ dforest = let
     max_depth = 2
     DecisionTree.build_forest(unwrap.(y), data, n_subfeatures, n_trees, partial_sampling, max_depth)
 end
-# DecisionTree.print_tree.(dforest.trees)
+# DecisionTree.print_tree.(dforest.trees);
 
 sforest = ST._forest(StableRNG(1), data, y; n_trees=10, max_depth=2)
-# AbstractTrees.print_tree.(sforest.trees)
+# AbstractTrees.print_tree.(sforest.trees);
 
 @testset "trees in forest are capable" begin
     dtree_accuracies = [accuracy(DecisionTree.apply_tree(tree, data), y) for tree in dforest.trees]
@@ -106,4 +106,4 @@ fpreds = DecisionTree.apply_forest(dforest, data)
 
 sfpreds = ST._predict(sforest, data)
 @show accuracy(mode.(sfpreds), y)
-# @test 0.95 < accuracy(mode.(sfpreds), y)
+@test 0.95 < accuracy(mode.(sfpreds), y)
