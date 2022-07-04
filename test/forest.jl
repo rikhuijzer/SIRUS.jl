@@ -10,13 +10,13 @@ feature = 1
 @test collect(ST._view_y(X, [1 2], feature, <, 2)) == [1]
 @test collect(ST._view_y(X, [1 2], feature, >, 2)) == [2]
 
-@test ST._cutpoints([3, 1, 2], 2) == Float[1, 3]
-@test ST._cutpoints(1:9, 3) == Float[1, 5, 9]
-@test ST._cutpoints(1:4, 3) == Float[1, 2, 4]
-@test ST._cutpoints([1, 3, 5, 7], 4) == Float[1, 3, 5, 7]
+@test ST._cutpoints([3, 1, 2], 2) == Float[1, 2]
+@test ST._cutpoints(1:9, 3) == Float[3, 5, 7]
+@test ST._cutpoints(1:4, 3) == Float[1, 2, 3]
+@test ST._cutpoints([1, 3, 5, 7], 2) == Float[3, 5]
 
 @test ST._cutpoints(X, 2) == Float[1 2; 3 4]
-@test ST._cutpoints([3 4; 1 5; 2 6], 2) == Float[1 4; 3 6]
+@test ST._cutpoints([3 4; 1 5; 2 6], 2) == Float[1 4; 2 5]
 
 let
     X = [1 1;

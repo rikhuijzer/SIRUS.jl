@@ -48,7 +48,10 @@ end
 "Return a vector of `q` cutpoints taken from the empirical distribution from data `V`."
 function _cutpoints(V::AbstractVector, q::Int)
     @assert 2 ≤ q
-    quantiles = range(0.0; stop=1.0, length=q)
+    # Taking 2 extra to avoid getting minimum(V) and maximum(V) becoming cutpoints.
+    # Tree on left and right have always respectively length 0 and 1 then anyway.
+    length = q + 2
+    quantiles = range(0.0; stop=1.0, length)[2:end-1]
     return Float[_empirical_quantile(V, quantile) for quantile in quantiles]
 end
 
