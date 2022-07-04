@@ -53,11 +53,32 @@ dtree = DecisionTree.build_tree(unwrap.(y), data, n_subfeatures, max_depth)
 dpreds = DecisionTree.apply_tree(dtree, data)
 @test 0.95 < accuracy(dpreds, y)
 
+function _binary_accuracy(stree::ST.Node, classes, data, y)
+    spreds = ST._predict(stree, data)
+    binary = [x[1] < 0.5 ? classes[2] : classes[1] for x in spreds]
+    return accuracy(binary, y)
+end
+
 classes = unique(y)
 stree = ST._tree(data, y, classes, min_data_in_leaf=1, q=10)
-spreds = ST._predict(stree, data)
-spreds = [x[1] < 0.5 ? classes[2] : classes[1] for x in spreds]
-@test 0.95 < accuracy(spreds, y)
+@test 0.95 < _binary_accuracy(stree, classes, data, y)
+
+@testset "data_subset" begin
+    n_features = round(Int, sqrt(p))
+    n_samples = round(Int, n/2)
+    rng = StableRNG(2)
+    cols = rand(rng, 1:ST._p(data), n_features)
+    rows = rand(rng, 1:length(y), n_samples)
+    _data = view(data, rows, cols)
+    _y = view(y, rows)
+
+    dtree = DecisionTree.build_tree(unwrap.(_y), _data, n_subfeatures, max_depth)
+    dpreds = DecisionTree.apply_tree(dtree, _data)
+    @test 0.95 < accuracy(dpreds, _y)
+
+    stree = ST._tree(_data, _y, classes, q=10)
+    @test 0.95 < _binary_accuracy(stree, classes, _data, _y)
+end
 
 dforest = let
     n_subfeatures = -1
@@ -66,11 +87,16 @@ dforest = let
     max_depth = 2
     DecisionTree.build_forest(unwrap.(y), data, n_subfeatures, n_trees, partial_sampling, max_depth)
 end
+# DecisionTree.print_tree.(dforest.trees)
 fpreds = DecisionTree.apply_forest(dforest, data)
 @show accuracy(fpreds, y)
 @test 0.95 < accuracy(fpreds, y)
 
 sforest = ST._forest(StableRNG(1), data, y; n_trees=10, max_depth=2)
+tree_accuracies = [_binary_accuracy(tree, classes, data, y) for tree in sforest.trees]
+# @test all(>(0.95), tree_accuracies)
+
+# AbstractTrees.print_tree.(sforest.trees)
 sfpreds = ST._predict(sforest, data)
 @show accuracy(mode.(sfpreds), y)
 # @test 0.95 < accuracy(mode.(sfpreds), y)

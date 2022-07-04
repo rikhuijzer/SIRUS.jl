@@ -192,7 +192,7 @@ function _tree(
         return Leaf(classes, y)
     end
     splitpoint = _split(X, y, classes, cutpoints)
-    if isnothing(splitpoint) || length(y) < min_data_in_leaf
+    if isnothing(splitpoint) || length(y) ≤ min_data_in_leaf
         return Leaf(classes, y)
     end
     depth += 1
@@ -238,8 +238,19 @@ end
 "Increase the state of `rng` by `i`."
 _change_rng_state!(rng::AbstractRNG, i::Int) = rand(rng, i)
 
+const PARTIAL_SAMPLING_DEFAULT = 0.7
+const N_TREES_DEFAULT = 1_000
+const MAX_DEPTH_DEFAULT = 2
+
 """
 Return a random forest.
+
+Arguments:
+
+- `partial_sampling::Real=$PARTIAL_SAMPLING_DEFAULT`:
+    Proportion of samples to use per tree fit.
+- `n_trees=$N_TREES_DEFAULT`: Number of trees to fit.
+- `max_depth=$MAX_DEPTH_DEFAULT`: Max depth of each tree.
 
 !!! note
     Each tree in a random forest is built by taking a random sample from the dataset (bootstrapped sample).
@@ -250,9 +261,9 @@ function _forest(
         rng::AbstractRNG,
         X::AbstractMatrix,
         y::AbstractVector;
-        partial_sampling::Real=0.7,
-        n_trees::Int=1_000,
-        max_depth::Int=2,
+        partial_sampling::Real=PARTIAL_SAMPLING_DEFAULT,
+        n_trees::Int=N_TREES_DEFAULT,
+        max_depth::Int=MAX_DEPTH_DEFAULT,
         q::Int=10,
         min_data_in_leaf::Int=5
     )
@@ -269,7 +280,7 @@ function _forest(
     trees = Vector{Union{Node,Leaf}}(undef, n_trees)
     for i in 1:n_trees
         _rng = copy(rng)
-        _change_rng_state!(rng, i)
+        _change_rng_state!(_rng, i)
         cols = rand(_rng, 1:_p(X), n_features)
         rows = rand(_rng, 1:length(y), n_samples)
         _X = view(X, rows, cols)
