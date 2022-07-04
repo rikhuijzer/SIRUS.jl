@@ -97,12 +97,7 @@ end
 
 function predict(model::StableForestClassifier, fitresult, Xnew)
     forest = fitresult
-    probs = map(Tables.rows(Xnew)) do row
-        probs = [_predict(tree, row) for tree in forest.trees]
-        _mean_probabilities(probs)
-    end
-    P = reduce(hcat, probs)'
-    return UnivariateFinite(forest.classes, P; pool=missing)
+    return _predict(forest, Xnew)
 end
 
 function fit(model::StableRulesClassifier, verbosity::Int, X, y)
@@ -129,7 +124,6 @@ function predict(model::StableRulesClassifier, fitresult, Xnew)
     rules, classes = fitresult
     probs = map(Tables.rows(Xnew)) do row
         probs = _predict(rules, row)
-        @show probs
     end
     P = reduce(hcat, probs)'
     return UnivariateFinite(classes, P; pool=missing)

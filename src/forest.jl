@@ -245,7 +245,7 @@ Return a random forest.
 """
 function _forest(
         rng::AbstractRNG,
-        X,
+        X::AbstractMatrix,
         y::AbstractVector;
         partial_sampling::Real=0.7,
         n_trees::Int=1_000,
@@ -256,13 +256,6 @@ function _forest(
     if 2 < max_depth
         error("Tree depth is too high. Rule filtering for a higher depth is not implemented.")
     end
-    if !Tables.istable(X)
-        error("Input `X` doesn't satisfy the Tables.jl interface.")
-    end
-    # Tables doesn't assume the data fits in memory so that complicates things a lot.
-    # Implementing out-of-memory trees is a problem for later.
-    X = Tables.matrix(X)
-
     # It is essential for the stability to determine the cutpoints over the whole dataset.
     cutpoints = _cutpoints(X, q)
     classes = unique(y)
@@ -291,4 +284,30 @@ function _forest(
         trees[i] = tree
     end
     return Forest(trees, classes)
+end
+function _forest(rng::AbstractRNG, X, y; kwargs...)
+    if !(X isa AbstractMatrix || Tables.istable(X))
+        error("Input `X` doesn't satisfy the Tables.jl interface.")
+    end
+    # Tables doesn't assume the data fits in memory so that complicates things a lot.
+    # Implementing out-of-memory trees is a problem for later.
+    return _forest(rng, Tables.matrix(X), y; kwargs...)
+end
+
+function _predict(forest::Forest, row::AbstractVector)
+    probs = [_predict(tree, row) for tree in forest.trees]
+    return _mean_probabilities(probs)
+end
+
+function _predict(forest::Forest, X::AbstractMatrix)
+    probs = _predict.(Ref(forest), eachrow(X))
+    P = reduce(hcat, probs)'
+    return UnivariateFinite(forest.classes, P; pool=missing)
+end
+
+function _predict(forest::Forest, X)
+    if !Tables.istable(X)
+        error("Expected a Table")
+    end
+    return _predict(forest, Tables.matrix(X))
 end

@@ -46,17 +46,31 @@ p = 70
 rng = StableRNG(1)
 X, y = make_blobs(n, p; centers=2, rng, shuffle=true)
 
-let
-    n_subfeatures = 0
-    max_depth = 2
-    data = Tables.matrix(X)
-    dtree = DecisionTree.build_tree(unwrap.(y), data, n_subfeatures, max_depth)
-    dpreds = DecisionTree.apply_tree(tree, data)
-    @test 0.95 < accuracy(dpreds, y)
+n_subfeatures = 0
+max_depth = 2
+data = Tables.matrix(X)
+dtree = DecisionTree.build_tree(unwrap.(y), data, n_subfeatures, max_depth)
+dpreds = DecisionTree.apply_tree(dtree, data)
+@test 0.95 < accuracy(dpreds, y)
 
-    classes = unique(y)
-    stree = ST._tree(data, y, classes, min_data_in_leaf=1, q=10)
-    spreds = ST._predict(stree, data)
-    spreds = [x[1] < 0.5 ? classes[2] : classes[1] for x in spreds]
-    @test 0.95 < accuracy(spreds, y)
+classes = unique(y)
+stree = ST._tree(data, y, classes, min_data_in_leaf=1, q=10)
+spreds = ST._predict(stree, data)
+spreds = [x[1] < 0.5 ? classes[2] : classes[1] for x in spreds]
+@test 0.95 < accuracy(spreds, y)
+
+dforest = let
+    n_subfeatures = -1
+    n_trees = 10
+    partial_sampling = 0.7
+    max_depth = 2
+    DecisionTree.build_forest(unwrap.(y), data, n_subfeatures, n_trees, partial_sampling, max_depth)
 end
+fpreds = DecisionTree.apply_forest(dforest, data)
+@show accuracy(fpreds, y)
+@test 0.95 < accuracy(fpreds, y)
+
+sforest = ST._forest(StableRNG(1), data, y; n_trees=10, max_depth=2)
+sfpreds = ST._predict(sforest, data)
+@show accuracy(mode.(sfpreds), y)
+# @test 0.95 < accuracy(mode.(sfpreds), y)

@@ -6,6 +6,7 @@ using MLJBase
 using LightGBM.MLJInterface: LGBMClassifier
 using StableRNGs: StableRNG
 using StableTrees
+using Tables: Tables
 using Test
 
 ST = StableTrees
