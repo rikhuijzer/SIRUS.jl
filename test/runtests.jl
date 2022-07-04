@@ -1,9 +1,9 @@
 import Base
 
-using CategoricalArrays: CategoricalValue, categorical
+using CategoricalArrays: CategoricalValue, categorical, unwrap
+using DecisionTree: DecisionTree
 using MLJBase
 using LightGBM.MLJInterface: LGBMClassifier
-# using MLJDecisionTreeInterface: RandomForestClassifier
 using StableRNGs: StableRNG
 using StableTrees
 using Test

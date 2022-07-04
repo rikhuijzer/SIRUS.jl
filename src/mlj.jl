@@ -129,6 +129,7 @@ function predict(model::StableRulesClassifier, fitresult, Xnew)
     rules, classes = fitresult
     probs = map(Tables.rows(Xnew)) do row
         probs = _predict(rules, row)
+        @show probs
     end
     P = reduce(hcat, probs)'
     return UnivariateFinite(classes, P; pool=missing)

@@ -100,7 +100,9 @@ function _else_output!(not_node::Union{Node,Leaf}, node::Node, probs::Probs=Prob
     return probs
 end
 
-_mean_probabilities(V::AbstractVector) = round.(only(mean(V; dims=1)); digits=3)
+function _mean_probabilities(V::AbstractVector{T}) where {T}
+    return round.(only(mean(V; dims=1)); digits=3)
+end
 
 function Rule(root::Node, node::Union{Node, Leaf}, splits::Vector{Split})
     path = TreePath(splits)

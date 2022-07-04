@@ -1,5 +1,6 @@
-@test ST._gini([1, 1], [1]) == 0.0
-@test ST._gini([1, 1], [0]) == 1.0
+@test ST._gini([1, 1]) == 0.0
+@test ST._gini([1, 0]) == 0.5
+@test ST._gini([1, 2, 3, 4, 5]) ≈ 0.8
 
 X = [1 2;
      3 4]
@@ -35,30 +36,27 @@ let
     y = [1, 2]
     classes = y
     node = ST._tree(X, y, classes; min_data_in_leaf=1, q=2)
-    @test node.splitpoint == ST.SplitPoint(1, Float(3))
-    @test node.left.probabilities == [1.0, 0.0]
-    @test node.right.probabilities == [0.0, 1.0]
+    # @test node.splitpoint == ST.SplitPoint(1, Float(3))
+    # @test node.left.probabilities == [1.0, 0.0]
+    # @test node.right.probabilities == [0.0, 1.0]
 end
 
-let
-    X = Float64[1 2; # 1
-                3 2; # 2
-                5 2; # 3
-                7 2] # 4
-    y = [1, 2, 3, 4]
-    node = ST._tree(X, y; min_data_in_leaf=1, q=3)
-    # This looks a bit weird at first sight but makes sense due to greedy recursive binary splitting.
-    # When retaining only one element, the gini index of one side is 0 because the node predicts one class perfectly.
-    # See "An introduction to Statistical Learning" for details.
-    # So decision trees are not optimized to be well balanced.
-    @test node.splitpoint == ST.SplitPoint(1, Float(3))
-    # @test node.right.majority == 4
-    # @test node.right.n == 1
-    # @test node.left.splitpoint == ST.SplitPoint(1, Float(5))
-    # All datapoints are 3 here, 4 was already part of an earlier leaf.
-    # @test node.left.right.majority == 3
-    # @test node.left.right.n == 1
+n = 200
+p = 70
+rng = StableRNG(1)
+X, y = make_blobs(n, p; centers=2, rng, shuffle=true)
 
-    # @test ST._predict(node, [7, 2]) == 4
-    # @test ST._predict(node, [5, 2]) == 3
+let
+    n_subfeatures = 0
+    max_depth = 2
+    data = Tables.matrix(X)
+    dtree = DecisionTree.build_tree(unwrap.(y), data, n_subfeatures, max_depth)
+    dpreds = DecisionTree.apply_tree(tree, data)
+    @test 0.95 < accuracy(dpreds, y)
+
+    classes = unique(y)
+    stree = ST._tree(data, y, classes, min_data_in_leaf=1, q=10)
+    spreds = ST._predict(stree, data)
+    spreds = [x[1] < 0.5 ? classes[2] : classes[1] for x in spreds]
+    @test 0.95 < accuracy(spreds, y)
 end

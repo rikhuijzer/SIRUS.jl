@@ -9,10 +9,9 @@ The equation is mentioned on Wikipedia as
 ``1 - \\sum{class \\in classes} p_i^2``
 for ``p_i`` be the fraction (proportion) of items labeled with class ``i`` in the set.
 """
-function _gini(y::AbstractVector, classes::AbstractVector)
+function _gini(y::AbstractVector)
+    classes = unique(y)
     len_y = length(y)
-    len_y == 0 && return Float(NaN)
-    proportions = Vector{Float}(undef, length(classes))
     impurity = 1.0
     for class in classes
         proportion = count(y .== class) / len_y
@@ -86,9 +85,17 @@ struct SplitPoint
     value::Float
 end
 
+function _information_gain(y, y_left, y_right)
+    p = length(y_left) / length(y)
+    starting_impurity = _gini(y)
+    impurity_change = p * _gini(y_left) + (1 - p) * _gini(y_right)
+    return starting_impurity - impurity_change
+end
+
 """
-Return the split for which the gini index is minimized.
+Return the split for which the gini index is maximized.
 This function receives the cutpoints for the whole dataset `D` because `X` can be a subset of `D`.
+For a walkthrough of the CART algorithm, see https://youtu.be/LDRbO9a6XPU.
 """
 function _split(
         X,
@@ -102,17 +109,13 @@ function _split(
     for feature in 1:_p(X)
         feature_cutpoints = view(cutpoints, :, feature)
         for cutpoint in feature_cutpoints
-            starting_impurity = _gini(y, classes)
             y_left = _view_y(X, y, feature, <, cutpoint)
-            impurity_left = _gini(y_left, classes)
+            length(y_left) == 0 && continue
             y_right = _view_y(X, y, feature, ≥, cutpoint)
-            impurity_right = _gini(y_right, classes)
-            isnan(impurity_left) || isnan(impurity_right) && continue
-            p = length(y_left) / length(y)
-            weighted_impurity = (p * impurity_left + (1 - p) * impurity_right) / 2
-            information_gain = starting_impurity - weighted_impurity
-            if best_score ≤ information_gain
-                best_score = information_gain
+            length(y_right) == 0 && continue
+            gain = _information_gain(y, y_left, y_right)
+            if best_score ≤ gain
+                best_score = gain
                 best_score_feature = feature
                 best_score_cutpoint = cutpoint
             end
@@ -178,6 +181,9 @@ function _tree(
         cutpoints::AbstractMatrix{Float}=_cutpoints(X, q),
         min_data_in_leaf=5
     )
+    if X isa Tables.MatrixTable
+        error("Not implemented for arbitrary tables yet. Pass a matrix instead")
+    end
     _verify_lengths(X, y)
     if depth == max_depth
         return Leaf(classes, y)
@@ -216,6 +222,9 @@ function _predict(node::Node, x::AbstractVector)
 end
 function _predict(node::Node, x::Union{Tables.MatrixRow, Tables.ColumnsRow})
     return _predict(node, collect(x))
+end
+function _predict(node::Node, X::AbstractMatrix)
+    return _predict.(Ref(node), eachrow(X))
 end
 
 struct Forest{T}

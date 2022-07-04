@@ -1,6 +1,7 @@
-n = 1000
+n = 200
+p = 70
 rng = StableRNG(1)
-X, y = make_moons(n; rng, shuffle=true)
+X, y = make_blobs(n, p; centers=2, rng, shuffle=true)
 
 function _evaluate(rng, model)
     resampling = CV(; shuffle=true, rng)
@@ -8,9 +9,7 @@ function _evaluate(rng, model)
 end
 
 rng = StableRNG(1)
-# n = 1000 with CV gives an AUC of 0.98.
-# @show _evaluate(rng, RandomForestClassifier(; max_depth=2))
-# @show _evaluate(rng, LGBMClassifier(; max_depth=2))
+@show _evaluate(rng, LGBMClassifier(; max_depth=2))
 
 rng = StableRNG(1)
 model = StableForestClassifier(; rng)
@@ -28,9 +27,10 @@ rng = StableRNG(1)
 rulesmodel = StableRulesClassifier(; rng)
 rulesmach = machine(rulesmodel, X, y)
 fit!(rulesmach; verbosity=0)
+# preds = predict(rulesmach)
 
-@show auc(preds, y)
-@test 0.0 < auc(preds, y)
+# @show auc(preds, y)
+# @test 0.0 < auc(preds, y)
 
-rng = StableRNG(1)
+# rng = StableRNG(1)
 # @show _evaluate(rng, StableRulesClassifier(; rng))
