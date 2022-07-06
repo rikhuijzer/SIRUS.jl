@@ -24,21 +24,19 @@ r15 = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 & X[i, 4] < 12 "), [0.192], [0.102
 r16 = ST.Rule(ST.TreePath(" X[i, 2] ≥ 8000 & X[i, 4] ≥ 12 "), [0.586], [0.76])
 r17 = ST.Rule(ST.TreePath(" X[i, 2] ≥ 8000 & X[i, 4] < 12 "), [0.236], [0.94])
 
+
+
+allrules = [r1, r2, r3, r5, r7, r8, r10, r12, r13, r14, r15, r16, r17]
+let
+    expected = filter(r -> !(r in [r12, r15, r17]), allrules)
+    # @test ST._filter_linearly_dependent(allrules) == expected
+end
 @test ST._unique_features([r1, r7, r12]) == [1, 3]
 @test sort(ST._unique_features([r1, r7, r12, r17])) == [1, 2, 3, 4]
 
-@test ST._point(r1, [1], true) == [31999.0]
-@test ST._point(r1, [1, 2], true) == [31999.0, 0.0]
-@test ST._point(r7, [1, 3], true) == [32000.0, 64.0]
-@test ST._point(r17, [2, 4], true) == [8000.0, 11.0]
-@test ST._point(r1, [1], false) == [32000.0]
-@test ST._point(r17, [2, 4], false) == [7999.0, 12.0]
+ST._filter_linearly_dependent([r1, r2, r3, r5]) == [r1, r3, r5]
 
-@test ST._satisfies([1], [31999.0], r1)
-@test !ST._satisfies([1], [32000.0], r1)
-@test ST._satisfies([1, 3], [32000.0, 64.0], r7)
-@test !ST._satisfies([1, 3], [31999.0, 64.0], r7)
-@test !ST._satisfies([1, 3], [31999.0, 63.0], r7)
+
 
 let
     A = ST.Split(1, 32000f0, :L)
@@ -49,7 +47,7 @@ let
                     1 0 1 0 1;
                     1 0 0 1 0]
     @test ST._feature_space(rules, A, B) == expected
-    @test ST._linearly_redundant(rules, A, B) == Bool[0, 0, 0, 1]
+    @test ST._linearly_dependent(rules, A, B) == Bool[0, 0, 0, 1]
 end
 
 let
@@ -61,7 +59,7 @@ let
                     1 0 0 1;
                     1 0 1 0]
     @test ST._feature_space(rules, A, B) == expected
-    @test ST._linearly_redundant(rules, A, B) == Bool[0, 0, 1]
+    @test ST._linearly_dependent(rules, A, B) == Bool[0, 0, 1]
 end
 
 let
@@ -73,18 +71,32 @@ let
                     1 0 0 1;
                     1 0 1 0]
     @test ST._feature_space(rules, A, B) == expected
-    @test ST._linearly_redundant(rules, A, B) == Bool[0, 0, 1]
+    @test ST._linearly_dependent(rules, A, B) == Bool[0, 0, 1]
 end
 
-@test ST._equal_variables_thresholds(r1, r2) == true
-@test ST._equal_variables_thresholds(r1, r5) == false
-@test ST._equal_variables_thresholds(r5, r12) == false
-@test ST._equal_variables_thresholds(r7, r12) == true
-@test ST._equal_variables_thresholds(r12, r15) == false
+@test ST._unique_left_splits([r1, r2]) == [ST.Split(1, 32000f0, :L)]
+let
+    expected = [ST.Split(1, 32000f0, :L), ST.Split(3, 64f0, :L)]
+    @test ST._unique_left_splits([r1, r5, r7, r12]) == expected
+end
+
+@test ST._left_triangular_product([1, 2]) == [(1, 2)]
+@test ST._left_triangular_product([1, 2, 3]) == [(1, 2), (1, 3), (2, 3)]
+
+let
+    A = ST.Split(2, 8000f0, :L)
+    B = ST.Split(4, 12f0, :L)
+    @test ST._related_rule(r3, A, B)
+    @test ST._related_rule(r16, A, B)
+    @test ST._related_rule(r17, A, B)
+    @test !ST._related_rule(r1, A, B)
+end
 
 @test ST._gap_width(r12) < ST._gap_width(r7)
-ST._linearly_redundant([r1, r3]) == Bool[0, 0]
-@test ST._linearly_redundant([r1, r5, r7, r12]) == Bool[0, 0, 0, 1]
+@test ST._linearly_dependent([r1, r3]) == Bool[0, 0]
+@test ST._linearly_dependent([r1, r5, r7, r12]) == Bool[0, 0, 0, 1]
+@test ST._filter_linearly_dependent([r1, r5, r7, r12]) == [r1, r5, r7]
 
-# @test ST._linearly_redundant([r3, r16, r17]) == Bool[0, 0, 1]
+@test ST._linearly_dependent([r3, r16, r17]) == Bool[0, 0, 1]
+@test ST._linearly_dependent([r3, r16, r13]) == Bool[0, 0, 0]
 

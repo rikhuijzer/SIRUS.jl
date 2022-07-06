@@ -3,32 +3,9 @@ _unique_features(rule::Rule) = unique(_unique_features.(rule.path.splits))
 _unique_features(rules::Vector{Rule}) = unique(reduce(vcat, _unique_features.(rules)))
 
 """
-Return some point which satisifies `rule` and has data for each `unique_features`.
-It would also be possible to evaluate whether rules hold without generating points, but it is then tricky to answer constraints consistently.
-So, basically, this point generation is a way to encode the information such that the constraints can be consistently answered.
-"""
-function _point(rule::Rule, unique_features::Vector{Int}, satisfies::Bool)
-    point = zeros(length(unique_features))
-    prev_f = 0
-    for split in _splits(rule)
-        threshold = _value(split)
-        value = if satisfies
-            _direction(split) == :L ? threshold - 1 : threshold
-        else
-            _direction(split) == :L ? threshold : threshold - 1
-        end
-        f = _feature(split)
-        @assert prev_f != f "The constraints in $rule are on the same feature"
-        prev_f = f
-        index = findfirst(==(f), unique_features)
-        point[index] = value
-    end
-    return point
-end
-
-"""
 Return a point which satisifies `A` and `B`.
 This assumes that `A` and `B` contain the features in the same order as `_unique_features`.
+Basically, this point generation is a way to encode the information such that the constraints can be consistently answered.
 """
 function _point(A::Split, B::Split)
     va = _value(A)
@@ -63,7 +40,7 @@ In each column, answer whether the rule holds for some point that satisifies the
 This trick of taking specifically these rows is briliant.
 Credits go to D.W. on StackExchange (https://cs.stackexchange.com/a/152819/98402).
 """
-function _feature_space(rules::Vector{Rule}, A::Split, B::Split)
+function _feature_space(rules::AbstractVector{Rule}, A::Split, B::Split)
     l = length(rules)
     data = BitArray(undef, 4, l + 1)
     for i in 1:4
@@ -88,7 +65,7 @@ Return a vector of booleans with a true for every rule in `rules` that is linear
 To find rules for this method, collect all rules containing some feature for each pair of features.
 That should be a fairly quick way to find subsets that are easy to process.
 """
-function _linearly_redundant(rules::Vector{Rule}, A::Split, B::Split)
+function _linearly_dependent(rules::AbstractVector{Rule}, A::Split, B::Split)
     data = _feature_space(rules, A, B)
     l = length(rules)
     results = BitArray(undef, l)
@@ -104,4 +81,86 @@ function _linearly_redundant(rules::Vector{Rule}, A::Split, B::Split)
         end
     end
     return results
+end
+
+"""
+Return a vector of unique left splits for `rules`.
+These splits are required to form `[A, B]` pairs in the next step.
+"""
+function _unique_left_splits(rules::Vector{Rule})
+    splits = Split[]
+    for rule in rules
+        for split in _splits(rule)
+            left_split = _direction(split) == :L ? split : _reverse(split)
+            if !(left_split in splits)
+                push!(splits, left_split)
+            end
+        end
+    end
+    return splits
+end
+
+"Return the product of `V` and `V` for all pairs (v_i, v_j) where i < j."
+function _left_triangular_product(V::Vector{T}) where {T}
+    l = length(V)
+    nl = l - 1
+    product = Tuple{T,T}[]
+    for i in 1:l
+        left = V[i]
+        for j in 1:l
+            right = V[j]
+            if i < j
+                push!(product, (left, right))
+            end
+        end
+    end
+    return product
+end
+
+"""
+Return whether some rule is either related to `A` or `B` or both.
+I'm not sure whether some rule is related to `A` and not to `B` should be considered too.
+I'd say not, but I'm not sure so let's include them too.
+"""
+function _related_rule(rule::Rule, A::Split, B::Split)
+    splits = _splits(rule)
+    fa = _feature(A)
+    fb = _feature(B)
+    if length(splits) == 1
+        f = _feature(splits[1])
+        return fa == f || fb == f
+    else
+        f1 = _feature(splits[1])
+        f2 = _feature(splits[2])
+        return (fa == f1 && fb == f2) || (fb == f1 && fa == f2)
+    end
+end
+
+function _linearly_dependent(rules::Vector{Rule})
+    S = _unique_left_splits(rules)
+    P = _left_triangular_product(S)
+    dependent = BitVector(undef, length(rules))
+    for (A, B) in P
+        indexes = filter(i -> _related_rule(rules[i], A, B), 1:length(rules))
+        subset = view(rules, indexes)
+        dependent_subset = _linearly_dependent(subset, A, B)
+        # Only allow setting true to avoid setting things to false.
+        for i in 1:length(dependent_subset)
+            if dependent_subset[i]
+                dependent[indexes[i]] = true
+            end
+        end
+    end
+    return dependent
+end
+
+function _filter_linearly_dependent(rules::Vector{Rule})
+    dependent = _linearly_dependent(rules)
+    out = Rule[]
+    for i in 1:length(dependent)
+        if !dependent[i]
+            push!(out, rules[i])
+        end
+    end
+    return out
 end

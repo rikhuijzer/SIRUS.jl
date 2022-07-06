@@ -239,74 +239,8 @@ function _filter_reversed(rules::Vector{Rule})
     return out
 end
 
-_n_comparisons(rule::Rule) = length(rule.path.splits)
-
-function _contains(a::Rule, b::Split)
-    return any(split -> split.splitpoint == b.splitpoint, a.path.splits)
-end
-
-"""
-Return `true` if rule `a` and `b` involve the same variables and thresholds.
-The sign constraints may be reversed.
-"""
-function _equal_variables_thresholds(a::Rule, b::Rule)
-    if _n_comparisons(a) != _n_comparisons(b)
-        return false
-    end
-    if _n_comparisons(a) == 1 && _n_comparisons(b) == 1
-        a_split = a.path.splits[1]
-        b_split = b.path.splits[1]
-        return a_split.splitpoint == b_split.splitpoint
-    end
-    @assert _n_comparisons(a) == 2 && _n_comparisons(b) == 2
-    matches = map(a.path.splits) do split
-        any(b_split -> b_split.splitpoint == split.splitpoint, b.path.splits)
-    end
-    if all(matches)
-        return true
-    else
-        return false
-    end
-end
-
-"""
-Return whether rule `a` implies `b`.
-This is a shortcut for finding a point that satisifies `a` and then checking whether it satisifes `b` too.
-The latter could be either true or false, but here we just always return false.
-It shouldn't matter for the rank.
-"""
-function _implies(a::Rule, b::Rule)
-    sa = a.path.splits
-    sb = b.path.splits
-    la = length(sa)
-    lb = length(sb)
-    la < lb && return false
-    if la == lb
-        if la == 1
-            return sa[1] == sb[1]
-        else # la == lb == 2
-            return (sa[1] == sb[1] && sa[2] == sb[2]) ||
-                (sa[1] == sb[2] && sa[2] == sb[1])
-        end
-    else
-        @assert la == 2
-        s = sb[1]
-        return sa[1] == s || sa[2] == s
-    end
-end
-
 "Return the Euclidian distance between the `then_probs` and `else_probs`."
 _gap_width(rule::Rule) = norm(rule.then_probs .- rule.else_probs)
-
-"Return true for rules that are a linear duplicate of another more important rule."
-function _is_linearly_redundant(rule::Rule, rules::Vector{Rule})
-    if _n_comparisons(rule) == 1
-        return false
-    end
-    dependent_rules = _linearly_dependent_rules(rule, rules)
-    gap_width = _gap_width(rule)
-    return any(r -> gap_width ≤ _gap_width(r) && rule != r, dependent_rules)
-end
 
 "Filter all rules that are a linear combination of another rule and have a smaller output gap."
 function _filter_linearly_dependent(rules::Vector{Rule})
