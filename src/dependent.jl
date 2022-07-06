@@ -117,22 +117,27 @@ function _left_triangular_product(V::Vector{T}) where {T}
     return product
 end
 
+_left_split(s::Split) = _direction(s) == :L ? s : _reverse(s)
+
 """
 Return whether some rule is either related to `A` or `B` or both.
-I'm not sure whether some rule is related to `A` and not to `B` should be considered too.
-I'd say not, but I'm not sure so let's include them too.
+Here, it is very important to get rid of rules which are about the same feature but different thresholds.
+Otherwise, rules will be wrongly classified as linearly dependent in the next step.
+
+Assumes that both `_direction(A)` and `_direction(B)` are `:L`.
 """
 function _related_rule(rule::Rule, A::Split, B::Split)
     splits = _splits(rule)
     fa = _feature(A)
     fb = _feature(B)
     if length(splits) == 1
-        f = _feature(splits[1])
-        return fa == f || fb == f
+        split = splits[1]
+        left_split = _left_split(split)
+        return left_split == A || left_split == B
     else
-        f1 = _feature(splits[1])
-        f2 = _feature(splits[2])
-        return (fa == f1 && fb == f2) || (fb == f1 && fa == f2)
+        l1 = _left_split(splits[1])
+        l2 = _left_split(splits[2])
+        return (l1 == A && l2 == B) || (l1 == B && l2 == A)
     end
 end
 
