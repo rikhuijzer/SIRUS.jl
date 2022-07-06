@@ -12,10 +12,14 @@ r2 = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 "), [0.408], [0.61])
 @test ST._filter_reversed([r1, r2]) == [r1]
 
 r3 = ST.Rule(ST.TreePath(" X[i, 2] < 8000 "), [0.62], [0.386])
+r4 = ST.Rule(ST.TreePath(" X[i, 2] ≥ 8000 "), [0.386], [0.62])
 r5 = ST.Rule(ST.TreePath(" X[i, 3] < 64 "), [0.56], [0.334])
+r6 = ST.Rule(ST.TreePath(" X[i, 3] ≥ 64 "), [0.334], [0.56])
 r7 = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 & X[i, 3] ≥ 64 "), [0.517], [0.67])
 r8 = ST.Rule(ST.TreePath(" X[i, 4] < 8 "), [0.50], [0.312])
+r9 = ST.Rule(ST.TreePath(" X[i, 4] ≥ 8 "), [0.312], [0.50])
 r10 = ST.Rule(ST.TreePath(" X[i, 5] < 50 "), [0.335], [0.58])
+r11 = ST.Rule(ST.TreePath(" X[i, 5] ≥ 50 "), [0.58], [0.335])
 r12 = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 & X[i, 3] < 64 "), [0.192], [0.102])
 r13 = ST.Rule(ST.TreePath(" X[i, 1] < 32000 & X[i, 4] ≥ 8 "), [0.554], [0.73])
 # First constraint is updated based on a comment from Clément via email.
@@ -93,7 +97,7 @@ end
 @test ST._linearly_dependent([r3, r16, r13]) == Bool[0, 0, 0]
 
 let
-    allrules = [r1, r2, r3, r5, r7, r8, r10, r12, r13, r14, r15, r16, r17]
+    allrules = [r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17]
     expected = [r1, r3, r5, r7, r8, r10, r13, r14, r16]
     @test ST._filter_linearly_dependent(allrules) == expected
 end
