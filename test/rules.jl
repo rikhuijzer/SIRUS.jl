@@ -39,10 +39,18 @@ r2 = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 "), [0.408], [0.61])
 
 @test ST._filter_reversed([r1, r2]) == [r1]
 
+r3 = ST.Rule(ST.TreePath(" X[i, 2] < 8000 "), [0.62], [0.386])
 r5 = ST.Rule(ST.TreePath(" X[i, 3] < 64 "), [0.56], [0.334])
 r7 = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 & X[i, 3] ≥ 64 "), [0.517], [0.67])
+r8 = ST.Rule(ST.TreePath(" X[i, 4] < 8 "), [0.50], [0.312])
+r10 = ST.Rule(ST.TreePath(" X[i, 5] < 50 "), [0.335], [0.58])
 r12 = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 & X[i, 3] < 64 "), [0.192], [0.102])
+r13 = ST.Rule(ST.TreePath(" X[i, 1] < 32000 & X[i, 4] ≥ 12 "), [0.554], [0.73])
+# First constraint is updated based on a comment from Clément via email.
+r14 = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 & X[i, 4] ≥ 12 "), [0.192], [0.102])
 r15 = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 & X[i, 4] < 12 "), [0.192], [0.102])
+r16 = ST.Rule(ST.TreePath(" X[i, 2] ≥ 8000 & X[i, 4] ≥ 12 "), [0.586], [0.76])
+r17 = ST.Rule(ST.TreePath(" X[i, 2] ≥ 8000 & X[i, 4] < 12 "), [0.236], [0.94])
 
 @test ST._equal_variables_thresholds(r1, r2) == true
 @test ST._equal_variables_thresholds(r1, r5) == false
@@ -51,10 +59,9 @@ r15 = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 & X[i, 4] < 12 "), [0.192], [0.102
 @test ST._equal_variables_thresholds(r12, r15) == false
 
 @test ST._gap_width(r12) < ST._gap_width(r7)
-@test ST._filter_linearly_dependent([r1, r5, r7, r12]) == [r1, r5, r7]
+@test ST._linearly_redundant([r1, r5, r7, r12]) == Bool[0, 0, 0, 1]
 
-# The other two examples, I don't understand.
-# Either I'm wrong or the examples are wrong. CHMIN < 12 is not a stand-alone rule.
+# @test ST._linearly_redundant([r3, r16, r17]) == Bool[0, 0, 1]
 
 @test ST._predict([r1], [31000]) == [0.61]
 @test ST._predict([r1], [33000]) == [0.408]

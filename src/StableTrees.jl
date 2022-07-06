@@ -4,7 +4,7 @@ import AbstractTrees: children, nodevalue
 import Base
 
 using CategoricalArrays: CategoricalValue, unwrap
-using LinearAlgebra: norm
+using LinearAlgebra: norm, rank
 using MLJModelInterface: UnivariateFinite
 using Random: AbstractRNG, default_rng, shuffle
 using Statistics: mean
