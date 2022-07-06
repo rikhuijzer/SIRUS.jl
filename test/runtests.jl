@@ -20,6 +20,10 @@ end
     include("rules.jl")
 end
 
+@testset "dependent" begin
+    include("dependent.jl")
+end
+
 @testset "interface" begin
     include("mlj.jl")
 end

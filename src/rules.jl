@@ -13,6 +13,13 @@ function Split(feature::Int, splitval::Float, direction::Symbol)
     return Split(SplitPoint(feature, splitval), direction)
 end
 
+_feature(splitpoint::SplitPoint) = splitpoint.feature
+_feature(split::Split) = _feature(split.splitpoint)
+_value(splitpoint::SplitPoint) = splitpoint.value
+_value(split::Split) = _value(split.splitpoint)
+_direction(split::Split) = split.direction
+_reverse(split::Split) = Split(split.splitpoint, split.direction == :L ? :R : :L)
+
 """
     TreePath
 
@@ -67,6 +74,8 @@ struct Rule
     then_probs::Probabilities
     else_probs::Probabilities
 end
+
+_splits(rule::Rule) = rule.path.splits
 
 function _rules!(leaf::Leaf, splits::Vector{Split}, rules::Vector{Rule})
     path = TreePath(splits)
@@ -284,65 +293,6 @@ function _implies(a::Rule, b::Rule)
         s = sb[1]
         return sa[1] == s || sa[2] == s
     end
-end
-
-"""
-Return whether each rule in `rules` is linearly dependent on a combination of rules before it.
-This works by iteratively calculating the rank and seeing whether the rank increases.
-The rank is calculated by generating fictional datapoints with a column for each rule and in each column the rule is satisified at least once.
-The first column contains only ones.
-
-Doing this only for rules which contain similar features shouldn't be too expensive.
-
-!!! warn
-    This function assumes that generating at least one satisfying row for each rule is sufficient to detect linearly dependent rules.
-"""
-function _rank_data(rules::Vector{Rule})
-    l = length(rules)
-    data = BitArray(undef, l, l + 1)
-    for i in 1:l
-        data[i, 1] = 1
-    end
-    for row in 1:l
-        rule = rules[row]
-        for col in 2:l+1
-            if row == col-1
-                data[row, col] = 1
-            else
-                other_rule = rules[col-1]
-                data[row, col] = _implies(rule, other_rule)
-            end
-        end
-    end
-    return data
-end
-
-"""
-
-Return a vector of booleans with a true for every rule in `rules` that is linearly dependent on a combination of the previous rules.
-To find rules for this method, collect all rules containing some feature for each pair of features.
-That should be a fairly quick way to find subsets that are easy to process.
-"""
-function _linearly_redundant(rules::Vector{Rule})
-    data = _rank_data(rules)
-    l = length(rules)
-    results = BitArray(undef, l)
-    result = 1
-    for i in 1:l
-        if i == 1
-            results[i] = 0
-        else
-            new_result = rank(view(data, :, 1:i))
-            if new_result == result + 1
-                result = new_result
-                results[i] = 0
-            else
-                result = new_result
-                results[i] = 1
-            end
-        end
-    end
-    return results
 end
 
 "Return the Euclidian distance between the `then_probs` and `else_probs`."
