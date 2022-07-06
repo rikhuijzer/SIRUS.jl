@@ -164,3 +164,4 @@ function _filter_linearly_dependent(rules::Vector{Rule})
     end
     return out
 end
+

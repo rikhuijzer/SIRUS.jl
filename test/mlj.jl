@@ -26,7 +26,7 @@ rng = StableRNG(1)
 rng = StableRNG(1)
 rulesmodel = StableRulesClassifier(; rng)
 rulesmach = machine(rulesmodel, X, y)
-fit!(rulesmach; verbosity=0)
+# fit!(rulesmach; verbosity=0)
 # preds = predict(rulesmach)
 
 # @show auc(preds, y)

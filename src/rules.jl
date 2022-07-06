@@ -242,14 +242,10 @@ end
 "Return the Euclidian distance between the `then_probs` and `else_probs`."
 _gap_width(rule::Rule) = norm(rule.then_probs .- rule.else_probs)
 
-"Filter all rules that are a linear combination of another rule and have a smaller output gap."
-function _filter_linearly_dependent(rules::Vector{Rule})
-    return filter(r -> !_is_linearly_redundant(r, rules), rules)
-end
-
 "Return post-treated rules."
 function _treat_rules(rules::Vector{Rule})
-    return _filter_linearly_dependent(_filter_reversed(rules))
+    return error()
+    # return _filter_linearly_dependent(_filter_reversed(rules))
 end
 
 function _predict(rule::Rule, row::AbstractVector)

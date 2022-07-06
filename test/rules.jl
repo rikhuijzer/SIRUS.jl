@@ -26,6 +26,8 @@ selected_rules = ST._select_rules(rules; p0=20)
 @test eltype(rules) == eltype(selected_rules)
 @test length(selected_rules) < length(rules)
 
+r1 = ST.Rule(ST.TreePath(" X[i, 1] < 32000 "), [0.61], [0.408])
+r5 = ST.Rule(ST.TreePath(" X[i, 3] < 64 "), [0.56], [0.334])
 @test ST._predict([r1], [31000]) == [0.61]
 @test ST._predict([r1], [33000]) == [0.408]
 @test ST._predict([r1, r5], [33000, 0, 61]) == [mean([0.408, 0.56])]
