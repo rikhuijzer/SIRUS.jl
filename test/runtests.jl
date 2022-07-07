@@ -1,6 +1,10 @@
 import Base
 
+ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
+
 using CategoricalArrays: CategoricalValue, categorical, unwrap
+using MLDatasets: Titanic
+using DataFrames: DataFrames, select, dropmissing!
 using DecisionTree: DecisionTree
 using MLJBase
 using LightGBM.MLJInterface: LGBMClassifier

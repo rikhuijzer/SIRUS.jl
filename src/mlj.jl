@@ -2,6 +2,7 @@ module MLJImplementation
 
 import MLJModelInterface:
     fit,
+    matrix,
     predict,
     metadata_model,
     metadata_pkg
@@ -11,6 +12,7 @@ using MLJModelInterface:
     MLJModelInterface,
     UnivariateFinite,
     Continuous,
+    Count,
     Finite,
     Probabilistic,
     Table
@@ -52,7 +54,7 @@ end
 
 metadata_model(
     StableForestClassifier;
-    input_scitype=Table(Continuous),
+    input_scitype=Table(Continuous, Count),
     target_scitype=AbstractVector{<:Finite},
     supports_weights=false,
     docstring="Random forest classifier with a stabilized forest structure",
@@ -61,7 +63,7 @@ metadata_model(
 
 metadata_model(
     StableRulesClassifier;
-    input_scitype=Table(Continuous),
+    input_scitype=Table(Continuous, Count),
     target_scitype=AbstractVector{<:Finite},
     supports_weights=false,
     docstring="Stable rule-based classifier",
@@ -81,8 +83,8 @@ metadata_pkg.(
 function fit(model::StableForestClassifier, verbosity::Int, X, y)
     forest = _forest(
         model.rng,
-        X,
-        y;
+        matrix(X),
+        float(y);
         model.partial_sampling,
         model.n_trees,
         model.max_depth,
@@ -97,14 +99,14 @@ end
 
 function predict(model::StableForestClassifier, fitresult, Xnew)
     forest = fitresult
-    return _predict(forest, Xnew)
+    return _predict(forest, matrix(Xnew))
 end
 
 function fit(model::StableRulesClassifier, verbosity::Int, X, y)
     forest = _forest(
         model.rng,
-        X,
-        y;
+        matrix(X),
+        float(y);
         model.partial_sampling,
         model.n_trees,
         model.max_depth,
@@ -121,9 +123,8 @@ end
 function predict(model::StableRulesClassifier, fitresult, Xnew)
     rules, classes = fitresult
     isempty(rules) && error("Zero rules")
-    probs = map(Tables.rows(Xnew)) do row
-        probs = _predict(rules, row)
-    end
+    M = matrix(Xnew)
+    probs = _predict.(Ref(rules), eachrow(M))
     P = reduce(hcat, probs)'
     return UnivariateFinite(classes, P; pool=missing)
 end

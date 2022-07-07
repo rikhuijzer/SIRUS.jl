@@ -1,0 +1,19 @@
+[deps]
+CategoricalArrays = "324d7699-5711-5eae-9e2f-1d82baa6b597"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+DecisionTree = "7806a523-6efd-50cb-b5f6-3fa6f1930dbb"
+LightGBM = "7acf609c-83a4-11e9-1ffb-b912bcd3b04a"
+MLDatasets = "eb30cadb-4394-5ae3-aed4-317e484a6458"
+MLJBase = "a7f614a8-145f-11e9-1d2a-a57a1082229d"
+StableRNGs = "860ef19b-820b-49d6-a774-d7a799459cd3"
+Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+DecisionTree = "0.11.1"
+DataFrames = "1.3"
+LightGBM = "0.5"
+MLDatasets = "0.7"
+MLJBase = "0.20"
+StableRNGs = "1"
+Tables = "1.7"
