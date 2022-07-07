@@ -15,6 +15,7 @@ using Test
 
 ST = StableTrees
 Float = ST.Float
+_rng() = StableRNG(1)
 
 @testset "forest" begin
     include("forest.jl")

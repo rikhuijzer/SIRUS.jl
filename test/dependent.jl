@@ -106,5 +106,11 @@ let
     # Calling this without pre-filtering is non-deterministic.
     # The rank calculation probably takes shortcuts for large matrices?
     @test ST._filter_linearly_dependent(repeat(allrules, 600)) == expected
+
+    @test length(ST._process_rules(allrules, 9)) == 9
+    @test length(ST._process_rules(allrules, 10)) == 9
+    @test length(ST._process_rules([r1], 9)) == 1
+    @test length(ST._process_rules(repeat(allrules, 200), 9)) == 9
 end
+
 

@@ -47,7 +47,7 @@ Base.@kwdef mutable struct StableRulesClassifier <: Probabilistic
     n_trees::Int=1_000
     max_depth::Int=2
     q::Int=10
-    p0::Float64=0.01
+    num_rules::Int=10
     min_data_in_leaf::Int=5
     max_rules::Int=10
 end
@@ -114,7 +114,7 @@ function fit(model::StableRulesClassifier, verbosity::Int, X, y)
         model.min_data_in_leaf
     )
     rules = _rules(forest)
-    processed = _process_rules(rules, model.p0)
+    processed = _process_rules(rules, model.num_rules)
     cache = nothing
     report = nothing
     return (processed, forest.classes), cache, report

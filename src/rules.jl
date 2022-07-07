@@ -183,7 +183,7 @@ function _rules(forest::Forest)
 end
 
 function Base.:(==)(a::SplitPoint, b::SplitPoint)
-    return a.feature == b.feature && a.value == b.value
+    return a.feature == b.feature && a.value ≈ b.value
 end
 
 function Base.:(==)(a::Split, b::Split)
@@ -202,7 +202,7 @@ function Base.hash(rule::Rule)
     hash([rule.path.splits, rule.then_probs, rule.else_probs])
 end
 
-function _count_unique(V::Vector{T}) where T
+function _count_unique(V::AbstractVector{T}) where T
     U = unique(V)
     l = length(U)
     counts = Dict{T,Int}(zip(U, zeros(l)))
@@ -213,30 +213,38 @@ function _count_unique(V::Vector{T}) where T
 end
 
 """
-Select rules based on frequency of occurence.
-`p0` sets a threshold on the minimum occurence frequency of a rule.
-Below this threshold, the rule is removed.
+Return a vector containing the unique elements of `V` sorted by order of occurence in `V` (most frequent to least frequent).
 """
-function _select_rules(rules::Vector{Rule}; p0=0.01)
-    @assert 0 ≤ p0 ≤ 1
-    counts = _count_unique(rules)
-    l = length(rules)
-    for rule in keys(counts)
-        frequency = counts[rule] / l
-        if frequency < p0
-            delete!(counts, rule)
-        end
-    end
-    return collect(keys(counts))
+function _frequency_sort(V::AbstractVector)
+    counts = _count_unique(V)
+    sorted = sort(collect(counts); by=last, rev=true)
+    return first.(sorted)
 end
 
 "Return the Euclidian distance between the `then_probs` and `else_probs`."
 _gap_width(rule::Rule) = norm(rule.then_probs .- rule.else_probs)
 
-function _process_rules(rules::Vector{Rule}, p0)
-    selected = _select_rules(rules; p0)
-    filtered = _filter_linearly_dependent(selected)
-    return filtered
+"""
+Return a subset of `rules` of length `num_rules`.
+
+!!! note
+    This doesn't use p0 like is done in the paper.
+    The problem, IMO, with p0 is that it is very difficult to decide beforehand what p0 is suitable and so it requires hyperparameter tuning.
+    Instead, luckily, the linearly dependent filter is quite fast here, so passing a load of rules into that and then selecting the first `num_rules` is feasible.
+"""
+function _process_rules(rules::Vector{Rule}, num_rules::Int)
+    selected = _frequency_sort(rules)
+    for i in 1:3
+        required_rule_guess = i^2 * 10 * num_rules
+        before = first(rules, required_rule_guess)
+        filtered = _filter_linearly_dependent(before)
+        too_few = length(filtered) < num_rules
+        more_possible = required_rule_guess < length(rules)
+        if i < 3 && too_few && more_possible
+            continue
+        end
+        return first(filtered, num_rules)
+    end
 end
 
 function _predict(rule::Rule, row::AbstractVector)

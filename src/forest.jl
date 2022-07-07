@@ -218,16 +218,15 @@ function _tree(
     depth += 1
     left = let
         _X, _y = _view_X_y(X, y, splitpoint, <)
-        _tree(_X, _y, classes; cutpoints, depth)
+        _tree(rng, _X, _y, classes; cutpoints, depth)
     end
     right = let
         _X, _y = _view_X_y(X, y, splitpoint, ≥)
-        _tree(_X, _y, classes; cutpoints, depth)
+        _tree(rng, _X, _y, classes; cutpoints, depth)
     end
     node = Node(splitpoint, left, right)
     return node
 end
-_tree(X, y, classes; kwargs...) = _tree(default_rng(), X, y, classes; kwargs...)
 
 _predict(leaf::Leaf, x::AbstractVector) = leaf.probabilities
 
@@ -299,7 +298,7 @@ function _forest(
     n_samples = floor(Int, partial_sampling * length(y))
 
     trees = Vector{Union{Node,Leaf}}(undef, n_trees)
-    Threads.@threads for i in 1:n_trees
+    for i in 1:n_trees
         _rng = copy(rng)
         _change_rng_state!(_rng, i)
         # Don't change this to sampling without replacement.
