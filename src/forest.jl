@@ -299,7 +299,7 @@ function _forest(
     n_samples = floor(Int, partial_sampling * length(y))
 
     trees = Vector{Union{Node,Leaf}}(undef, n_trees)
-    for i in 1:n_trees
+    Threads.@threads for i in 1:n_trees
         _rng = copy(rng)
         _change_rng_state!(_rng, i)
         # Don't change this to sampling without replacement.
@@ -308,6 +308,7 @@ function _forest(
         _X = view(X, rows, :)
         _y = view(y, rows)
         tree = _tree(
+            _rng,
             _X,
             _y,
             classes;

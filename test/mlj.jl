@@ -26,6 +26,8 @@ println("StableForestClassifier(...) AUC: ", auc(preds, y))
 e = _evaluate(StableForestClassifier(; rng, n_trees=50))
 println("StableForestClassifier AUC: ", e)
 @test 0.95 < _score(e)
+e2 = _evaluate(StableForestClassifier(; rng, n_trees=50))
+@test _score(e) == _score(e2)
 
 rng = StableRNG(1)
 rulesmodel = StableRulesClassifier(; rng, p0=0.001, n_trees=50)
@@ -54,5 +56,7 @@ X, y = let
     (select(sub, Not(:y)), sub.y)
 end
 e = _evaluate(StableRulesClassifier(; rng, n_trees=1); X, y)
+e2 = _evaluate(StableRulesClassifier(; rng, n_trees=1); X, y)
+@test _score(e) == _score(e2)
 @test 0.7 < _score(e)
 
