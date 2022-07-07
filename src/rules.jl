@@ -230,34 +230,13 @@ function _select_rules(rules::Vector{Rule}; p0=0.01)
     return collect(keys(counts))
 end
 
-"Filter all rules that have one constraint and are identical to a previous rule with the sign reversed."
-function _filter_reversed(rules::Vector{Rule})
-    out = copy(rules)
-    for rule in rules
-        path = rule.path
-        splits = path.splits
-        if length(splits) == 1
-            split = splits[1]
-            # Keep the rule with the sign "<" and filter "≥".
-            if split.direction == :L
-                rev_direction = :R
-                rev_split = Split(split.splitpoint, rev_direction)
-                rev_path = TreePath([rev_split])
-                rev_rule = Rule(rev_path, rule.else_probs, rule.then_probs)
-                out = filter!(!=(rev_rule), out)
-            end
-        end
-    end
-    return out
-end
-
 "Return the Euclidian distance between the `then_probs` and `else_probs`."
 _gap_width(rule::Rule) = norm(rule.then_probs .- rule.else_probs)
 
-"Return post-treated rules."
-function _treat_rules(rules::Vector{Rule})
-    return error()
-    # return _filter_linearly_dependent(_filter_reversed(rules))
+function _process_rules(rules::Vector{Rule}, p0)
+    selected = _select_rules(rules; p0)
+    filtered = _filter_linearly_dependent(selected)
+    return filtered
 end
 
 function _predict(rule::Rule, row::AbstractVector)

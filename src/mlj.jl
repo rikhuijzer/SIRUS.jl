@@ -20,8 +20,7 @@ using StableTrees:
     _mean_probabilities,
     _predict,
     _rules,
-    _select_rules,
-    _treat_rules
+    _process_rules
 using Tables: Tables
 
 """
@@ -46,6 +45,7 @@ Base.@kwdef mutable struct StableRulesClassifier <: Probabilistic
     n_trees::Int=1_000
     max_depth::Int=2
     q::Int=10
+    p0::Float64=0.01
     min_data_in_leaf::Int=5
     max_rules::Int=10
 end
@@ -112,12 +112,10 @@ function fit(model::StableRulesClassifier, verbosity::Int, X, y)
         model.min_data_in_leaf
     )
     rules = _rules(forest)
-    selected = _select_rules(rules)
-    U = unique(selected)
-    treated = _treat_rules(U)
+    processed = _process_rules(rules, model.p0)
     cache = nothing
     report = nothing
-    return (treated, forest.classes), cache, report
+    return (processed, forest.classes), cache, report
 end
 
 function predict(model::StableRulesClassifier, fitresult, Xnew)

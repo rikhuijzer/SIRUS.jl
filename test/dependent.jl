@@ -9,8 +9,6 @@
 r1 = ST.Rule(ST.TreePath(" X[i, 1] < 32000 "), [0.61], [0.408])
 r2 = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 "), [0.408], [0.61])
 
-@test ST._filter_reversed([r1, r2]) == [r1]
-
 r3 = ST.Rule(ST.TreePath(" X[i, 2] < 8000 "), [0.62], [0.386])
 r4 = ST.Rule(ST.TreePath(" X[i, 2] ≥ 8000 "), [0.386], [0.62])
 r5 = ST.Rule(ST.TreePath(" X[i, 3] < 64 "), [0.56], [0.334])
