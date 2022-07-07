@@ -159,7 +159,12 @@ function _linearly_dependent(rules::Vector{Rule})
     return dependent
 end
 
-function _filter_linearly_dependent(rules::Vector{Rule})
+"""
+Return the subset of `rules` which are not linearly dependent.
+This is based on a complex heuristic involving calculating the rank of the matrix, see above StackExchange link for more information.
+Note that calculating the rank is expensive, so make sure to pre-filter before calling this function.
+"""
+function _filter_linearly_dependent_rank(rules::Vector{Rule})
     dependent = _linearly_dependent(rules)
     out = Rule[]
     for i in 1:length(dependent)
@@ -170,3 +175,30 @@ function _filter_linearly_dependent(rules::Vector{Rule})
     return out
 end
 
+"""
+Return a subset of `rules` where simple duplicates have been removed.
+Also, this flips all rules containing a single clause to the left.
+This heuristic is more quick than finding linearly dependent rules.
+"""
+function _prefilter_linearly_dependent(rules::Vector{Rule})
+    out = Rule[]
+    for rule in rules
+        splits = _splits(rule)
+        if length(splits) == 1
+            left_rule = _left_rule(rule)
+            if !(left_rule in out)
+                push!(out, left_rule)
+            end
+        else
+            if !(rule in out)
+                push!(out, rule)
+            end
+        end
+    end
+    return out
+end
+
+function _filter_linearly_dependent(rules::Vector{Rule})
+    prefiltered = _prefilter_linearly_dependent(rules)
+    return _filter_linearly_dependent_rank(prefiltered)
+end

@@ -76,6 +76,19 @@ struct Rule
 end
 
 _splits(rule::Rule) = rule.path.splits
+function _reverse(rule::Rule)
+    splits = _splits(rule)
+    @assert length(splits) == 1
+    split = splits[1]
+    path = TreePath([_reverse(split)])
+    return Rule(path, rule.else_probs, rule.then_probs)
+end
+function _left_rule(rule::Rule)
+    splits = _splits(rule)
+    @assert length(splits) == 1
+    split = splits[1]
+    return _direction(split) == :L ? rule : _reverse(rule)
+end
 
 function _rules!(leaf::Leaf, splits::Vector{Split}, rules::Vector{Rule})
     path = TreePath(splits)
