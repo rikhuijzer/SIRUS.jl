@@ -19,7 +19,7 @@ using MLJModelInterface:
 using Random: AbstractRNG, default_rng
 using StableTrees:
     StableForest,
-    StableRules
+    StableRules,
     _forest,
     _mean_probabilities,
     _predict,
