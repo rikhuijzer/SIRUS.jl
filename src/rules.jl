@@ -62,7 +62,7 @@ function Base.show(io::IO, path::TreePath)
     texts = map(path.splits) do split
         splitpoint = split.splitpoint
         comparison = split.direction == :L ? '<' : '≥'
-        val = round(splitpoint.value; sigdigits=3)
+        val = splitpoint.value
         text = "X[i, $(splitpoint.feature)] $comparison $val"
     end
     text = string("TreePath(\" ", join(texts, " & "), " \")")::String

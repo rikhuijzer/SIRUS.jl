@@ -67,4 +67,4 @@ function equal_output(stage::Symbol)
 end
 @test equal_output(:forest)
 @test equal_output(:rules)
-# @test equal_output(:processed)
+@test equal_output(:processed)

@@ -144,7 +144,8 @@ end
 function _linearly_dependent(rules::Vector{Rule})
     S = _unique_left_splits(rules)
     P = _left_triangular_product(S)
-    dependent = BitVector(undef, length(rules))
+    # A `BitVector(undef, length(rules))` here will cause randomness.
+    dependent = falses(length(rules))
     for (A, B) in P
         indexes = filter(i -> _related_rule(rules[i], A, B), 1:length(rules))
         subset = view(rules, indexes)
