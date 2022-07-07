@@ -18,6 +18,8 @@ using MLJModelInterface:
     Table
 using Random: AbstractRNG, default_rng
 using StableTrees:
+    StableForest,
+    StableRules
     _forest,
     _mean_probabilities,
     _predict,
@@ -97,7 +99,7 @@ function fit(model::StableForestClassifier, verbosity::Int, X, y)
     return fitresult, cache, report
 end
 
-function predict(model::StableForestClassifier, fitresult, Xnew)
+function predict(model::StableForestClassifier, fitresult::StableForest, Xnew)
     forest = fitresult
     return _predict(forest, matrix(Xnew))
 end
@@ -115,18 +117,15 @@ function fit(model::StableRulesClassifier, verbosity::Int, X, y)
     )
     rules = _rules(forest)
     processed = _process_rules(rules, model.num_rules)
+    fitresult = StableRules(processed, forest.classes)
     cache = nothing
     report = nothing
-    return (processed, forest.classes), cache, report
+    return fitresult, cache, report
 end
 
-function predict(model::StableRulesClassifier, fitresult, Xnew)
-    rules, classes = fitresult
-    isempty(rules) && error("Zero rules")
-    M = matrix(Xnew)
-    probs = _predict.(Ref(rules), eachrow(M))
-    P = reduce(hcat, probs)'
-    return UnivariateFinite(classes, P; pool=missing)
+function predict(model::StableRulesClassifier, fitresult::StableRules, Xnew)
+    isempty(fitresult.rules) && error("Zero rules")
+    return _predict(fitresult, matrix(Xnew))
 end
 
 end # module

@@ -32,14 +32,18 @@ r1b = ST.Rule(ST.TreePath(" X[i, 1] < 32000 "), [0.61], [0.408])
 
 r5 = ST.Rule(ST.TreePath(" X[i, 3] < 64 "), [0.56], [0.334])
 
-@test ST._predict([r1], [31000]) == [0.61]
-@test ST._predict([r1], [33000]) == [0.408]
-@test ST._predict([r1, r5], [33000, 0, 61]) == [mean([0.408, 0.56])]
+@test ST._predict(ST.StableRules([r1], [1]), [31000]) == [0.61]
+@test ST._predict(ST.StableRules([r1], [1]), [33000]) == [0.408]
+let
+    model = ST.StableRules([r1, r5], [1])
+    @test ST._predict(model, [33000, 0, 61]) == [mean([0.408, 0.56])]
+end
 
 function generate_rules()
     forest = ST._forest(_rng(), X, y)
-    rules = ST._rules(forest)
-    processed = ST._process_rules(rules, 10)
+    _model(rules::Vector{ST.Rule}) = ST.StableRules(rules, forest.classes)
+    rules = _model(ST._rules(forest))
+    processed = _model(ST._process_rules(ST._elements(rules), 10))
     (; forest, rules, processed)
 end
 
@@ -62,5 +66,5 @@ function equal_output(stage::Symbol)
     return true
 end
 @test equal_output(:forest)
-# @test equal_output(:rules)
+@test equal_output(:rules)
 # @test equal_output(:processed)

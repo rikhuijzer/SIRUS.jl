@@ -250,10 +250,12 @@ function _predict(node::Node, X::AbstractMatrix)
     return _predict.(Ref(node), eachrow(X))
 end
 
-struct Forest{T}
+abstract type StableModel end
+struct StableForest{T} <: StableModel
     trees::Vector{Union{Node,Leaf}}
     classes::Vector{T}
 end
+_elements(model::StableForest) = model.trees
 
 "Increase the state of `rng` by `i`."
 _change_rng_state!(rng::AbstractRNG, i::Int) = rand(rng, i)
@@ -319,7 +321,7 @@ function _forest(
         )
         trees[i] = tree
     end
-    return Forest(trees, classes)
+    return StableForest(trees, classes)
 end
 function _forest(rng::AbstractRNG, X, y; kwargs...)
     if !(X isa AbstractMatrix || Tables.istable(X))
@@ -330,20 +332,20 @@ function _forest(rng::AbstractRNG, X, y; kwargs...)
     return _forest(rng, Tables.matrix(X), y; kwargs...)
 end
 
-function _predict(forest::Forest, row::AbstractVector)
-    probs = [_predict(tree, row) for tree in forest.trees]
+function _predict(model::StableModel, row::AbstractVector)
+    probs = _predict.(_elements(model), Ref(row))
     return _mean_probabilities(probs)
 end
 
-function _predict(forest::Forest, X::AbstractMatrix)
-    probs = _predict.(Ref(forest), eachrow(X))
+function _predict(model::StableModel, X::AbstractMatrix)
+    probs = _predict.(Ref(model), eachrow(X))
     P = reduce(hcat, probs)'
-    return UnivariateFinite(forest.classes, P; pool=missing)
+    return UnivariateFinite(model.classes, P; pool=missing)
 end
 
-function _predict(forest::Forest, X)
+function _predict(model::StableModel, X)
     if !Tables.istable(X)
-        error("Expected a Table")
+        error("Expected a Table but got $(typeof(X))")
     end
-    return _predict(forest, Tables.matrix(X))
+    return _predict(model, Tables.matrix(X))
 end

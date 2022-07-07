@@ -173,7 +173,7 @@ function _rules!(
     return rules
 end
 
-function _rules(forest::Forest)
+function _rules(forest::StableForest)
     rules = Rule[]
     for tree in forest.trees
         tree_rules = _rules!(tree)
@@ -259,15 +259,9 @@ function _predict(rule::Rule, row::AbstractVector)
     return all(constraints) ? rule.then_probs : rule.else_probs
 end
 
-"""
-Predict `y` for a data `row`.
-Also returns a vector if the data has only one feature.
-"""
-function _predict(rules::Vector{Rule}, row::AbstractVector)
-    preds = [_predict(rule, row) for rule in rules]
-    # For classification, take the average of the rules.
-    return _mean_probabilities(preds)
+struct StableRules{T} <: StableModel
+    rules::Vector{Rule}
+    classes::Vector{T}
 end
-function _predict(rules::Vector{Rule}, x::Union{Tables.MatrixRow, Tables.ColumnsRow})
-    return _predict(rules, collect(x))
-end
+_elements(model::StableRules) = model.rules
+
