@@ -120,6 +120,7 @@ end
 
 function predict(model::StableRulesClassifier, fitresult, Xnew)
     rules, classes = fitresult
+    isempty(rules) && error("Zero rules")
     probs = map(Tables.rows(Xnew)) do row
         probs = _predict(rules, row)
     end

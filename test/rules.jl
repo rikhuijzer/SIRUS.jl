@@ -7,6 +7,8 @@ left = ST.Leaf([1.0, 0.0, 0.0])
 splitpoint = ST.SplitPoint(1, Float(1))
 right = ST.Node(splitpoint, ST.Leaf([0.0, 1.0, 0.0]), ST.Leaf([0.0, 0.0, 1.0]))
 
+@test StableTrees._mean_probabilities([[1, 4], [2, 4]]) == [1.5, 4.0]
+
 splitpoint = ST.SplitPoint(1, ST.Float(4))
 node = ST.Node(splitpoint, left, right)
 
