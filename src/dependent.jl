@@ -163,6 +163,8 @@ end
 Return the subset of `rules` which are not linearly dependent.
 This is based on a complex heuristic involving calculating the rank of the matrix, see above StackExchange link for more information.
 Note that calculating the rank is expensive, so make sure to pre-filter before calling this function.
+Also note that this method assumes that the rules are assumed to be in ordered by frequency of occurence in the trees.
+This assumption is used to filter less common rules when finding linearly dependent rules.
 """
 function _filter_linearly_dependent_rank(rules::Vector{Rule})
     dependent = _linearly_dependent(rules)

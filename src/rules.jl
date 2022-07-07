@@ -198,37 +198,36 @@ function Base.:(==)(a::Rule, b::Rule)
     return a.path == b.path && a.then_probs == b.then_probs && a.else_probs == b.else_probs
 end
 
-function _count_unique_paths(V::Vector{Rule})
+function Base.hash(rule::Rule)
+    hash([rule.path.splits, rule.then_probs, rule.else_probs])
+end
+
+function _count_unique(V::Vector{T}) where T
     U = unique(V)
     l = length(U)
-    counts = Vector{Int}(undef, l)
-    for i in 1:l
-        u = U[i]
-        count = 0
-        for v in V
-            if v.path == u.path
-                count += 1
-            end
-        end
-        counts[i] = count
+    counts = Dict{T,Int}(zip(U, zeros(l)))
+    for v in V
+        counts[v] += 1
     end
-    return Dict{Rule,Int}(zip(U, counts))
+    return counts
 end
 
 """
 Select rules based on frequency of occurence.
-`p0` sets a threshold on the number of occurences of a rule.
+`p0` sets a threshold on the minimum occurence frequency of a rule.
 Below this threshold, the rule is removed.
-The default value is based on Figure 4 and 5 of the SIRUS paper.
 """
-function _select_rules(rules::Vector{Rule}; p0=20)
-    unique_counts = _count_unique_paths(rules)
-    for rule in keys(unique_counts)
-        if unique_counts[rule] < p0
-            delete!(unique_counts, rule)
+function _select_rules(rules::Vector{Rule}; p0=0.01)
+    @assert 0 ≤ p0 ≤ 1
+    counts = _count_unique(rules)
+    l = length(rules)
+    for rule in keys(counts)
+        frequency = counts[rule] / l
+        if frequency < p0
+            delete!(counts, rule)
         end
     end
-    return collect(keys(unique_counts))
+    return collect(keys(counts))
 end
 
 "Filter all rules that have one constraint and are identical to a previous rule with the sign reversed."
