@@ -8,7 +8,8 @@ end
 
 function _evaluate(model; X=X, y=y)
     resampling = CV(; nfolds=14, shuffle=true, rng=_rng())
-    evaluate(model, X, y; verbosity=0, resampling, measure=auc)
+    acceleration = MLJBase.CPUThreads()
+    evaluate(model, X, y; acceleration, verbosity=0, resampling, measure=auc)
 end
 
 e = _evaluate(LGBMClassifier(; max_depth=2))
