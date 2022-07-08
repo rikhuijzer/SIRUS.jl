@@ -42,7 +42,7 @@ rules = ST._rules(forest)
 @test hash(r1.path) == hash(r1b.path)
 
 @test ST._combine_paths([r1, r1b]) == [r1 => 2]
-@test first(only(ST._combine_paths([r1, r1c]))).then_probs == [mean([0.61, 0.0])]
+@test first(only(ST._combine_paths([r1, r1c]))).then_probs == [0.0]
 @test ST._count_unique([1, 1, 1, 2]) == Dict(1 => 3, 2 => 1)
 
 weights = [0.395, 0.197, 0.187, 0.057, 0.054, 0.043, 0.027, 0.02, 0.01, 0.01]

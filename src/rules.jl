@@ -126,16 +126,6 @@ function _mean_probabilities(V::AbstractVector)
     return round.(only(mean(V; dims=1)); digits=3)
 end
 
-function _count_unique(V::AbstractVector{T}) where T
-    U = unique(V)
-    l = length(U)
-    counts = Dict{T,Int}(zip(U, zeros(l)))
-    for v in V
-        counts[v] += 1
-    end
-    return counts
-end
-
 function _frequency_sort(V::AbstractVector)
     counts = _count_unique(V)
     sorted = sort(collect(counts); by=last, rev=true)
