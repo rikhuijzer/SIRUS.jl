@@ -321,19 +321,28 @@ function _regularize_weights(V::Vector{<:Real}; penalty::Real=0.75)
     [round(v - (penalty * (v - m)); digits=3) for v in V]
 end
 
-function StableRules(rules::Vector{Rule}, classes, max_rules::Int)
+function StableRules(
+        rules::Vector{Rule},
+        classes,
+        max_rules::Int;
+        penalty::Float64=0.75
+    )
     processed = _process_rules(rules, max_rules)
     rules = first.(processed)
     frequencies = last.(processed)
     total = sum(frequencies)
     relative_weights = frequencies ./ total
-    weights = _regularize_weights(relative_weights)
+    weights = _regularize_weights(relative_weights; penalty)
     return StableRules(rules, classes, weights)
 end
 
-function StableRules(forest::StableForest, max_rules::Int)
+function StableRules(
+        forest::StableForest,
+        max_rules::Int;
+        penalty::Float64=0.75
+    )
     rules = _rules(forest)
-    return StableRules(rules, forest.classes, max_rules)
+    return StableRules(rules, forest.classes, max_rules; penalty)
 end
 
 function Base.show(io::IO, model::StableRules)
@@ -362,5 +371,5 @@ function _predict(pair::Tuple{Rule,Float64}, row::AbstractVector)
         satisfies_constraint = comparison(row[feature], value)
     end
     probs = all(constraints) ? rule.then_probs : rule.else_probs
-    return weight * probs
+    return weight .* probs
 end

@@ -51,6 +51,7 @@ Base.@kwdef mutable struct StableRulesClassifier <: Probabilistic
     q::Int=10
     min_data_in_leaf::Int=5
     max_rules::Int=10
+    weight_penalty::Float64=0.75
 end
 
 metadata_model(
@@ -114,7 +115,8 @@ function fit(model::StableRulesClassifier, verbosity::Int, X, y)
         model.q,
         model.min_data_in_leaf
     )
-    fitresult = StableRules(forest, model.max_rules)
+    penalty = model.weight_penalty
+    fitresult = StableRules(forest, model.max_rules; penalty)
     cache = nothing
     report = nothing
     return fitresult, cache, report
