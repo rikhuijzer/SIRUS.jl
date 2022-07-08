@@ -58,9 +58,9 @@ e2 = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees=1); X, y)
 @test _score(e) == _score(e2)
 @test 0.7 < _score(e)
 
-e = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees=100); X, y)
+e = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees=1500); X, y)
 println("Titanic _evaluate(StableRulesClassifier) AUC: ", _score(e))
-@test 0.8 < _score(e)
+@test 0.80 < _score(e)
 
 Xt = MLJBase.table(MLJBase.matrix(X))
 le = _evaluate(LGBMClassifier(; max_depth=2); X=Xt, y)

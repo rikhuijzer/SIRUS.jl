@@ -8,6 +8,7 @@ using DataFrames: DataFrames, Not, select, dropmissing!
 using DecisionTree: DecisionTree
 using MLJBase:
     CV,
+    MLJBase,
     PerformanceEvaluation,
     accuracy,
     auc,

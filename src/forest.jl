@@ -335,9 +335,6 @@ end
 function _isempty_error(::StableForest)
     throw(AssertionError("The forest contains no trees"))
 end
-function _isempty_error(::StableRules)
-    throw(AssertionError("The rule model contains no rules"))
-end
 
 function _predict(model::StableModel, row::AbstractVector)
     isempty(_elements(model)) && _isempty_error(model)

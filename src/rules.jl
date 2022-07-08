@@ -187,6 +187,25 @@ function Base.hash(path::TreePath)
 end
 
 """
+Return a subset of `rules` where all rules containing a single clause are flipped to the left.
+This is meant to speed up further steps such as finding linearly dependent rules.
+"""
+function _flip_left(rules::Vector{Rule})
+    out = Vector{Rule}(undef, length(rules))
+    for i in eachindex(rules)
+        rule = rules[i]
+        splits = _splits(rule)
+        if length(splits) == 1
+            left_rule = _left_rule(rule)
+            out[i] = left_rule
+        else
+            out[i] = rule
+        end
+    end
+    return out
+end
+
+"""
 Return a subset of `rules` where all the `rule.paths` are unique.
 This is done by averaging the `then_probs` and `else_probs`.
 
@@ -200,15 +219,16 @@ function _combine_paths(rules::Vector{Rule})
     for rule in rules
         push!(duplicate_paths[rule.path], rule)
     end
-    averaged_rules = Vector{Rule}(undef, length(duplicate_paths))
+    averaged_rules = Vector{Pair{Rule,Int}}(undef, length(duplicate_paths))
     for (i, path) in enumerate(keys(duplicate_paths))
         rules = duplicate_paths[path]
         then_probs = _mean_probabilities(getproperty.(rules, :then_probs))
         else_probs = _mean_probabilities(getproperty.(rules, :else_probs))
         combined_rule = Rule(path, then_probs, else_probs)
-        averaged_rules[i] = combined_rule
+        averaged_rules[i] = Pair(combined_rule, length(rules))
     end
-    return averaged_rules
+    sorted = sort(averaged_rules; by=last, rev=true)
+    return sorted
 end
 
 function Base.:(==)(a::SplitPoint, b::SplitPoint)
@@ -242,18 +262,6 @@ function _count_unique(V::AbstractVector{T}) where T
 end
 
 """
-Return a vector containing the unique elements of `V` sorted by order of occurence in `V` (most frequent to least frequent).
-"""
-function _frequency_sort(V::AbstractVector)
-    counts = _count_unique(V)
-    sorted = sort(collect(counts); by=last, rev=true)
-    return first.(sorted)
-end
-
-"Return the Euclidian distance between the `then_probs` and `else_probs`."
-_gap_width(rule::Rule) = norm(rule.then_probs .- rule.else_probs)
-
-"""
 Return a subset of `rules` of length `max_rules`.
 
 !!! note
@@ -262,11 +270,11 @@ Return a subset of `rules` of length `max_rules`.
     Instead, luckily, the linearly dependent filter is quite fast here, so passing a load of rules into that and then selecting the first `max_rules` is feasible.
 """
 function _process_rules(rules::Vector{Rule}, max_rules::Int)
-    combined = _combine_paths(rules)
-    sorted = _frequency_sort(combined)
+    flipped = _flip_left(rules)
+    combined = _combine_paths(flipped)
     for i in 1:3
         required_rule_guess = i^2 * 10 * max_rules
-        before = first(sorted, required_rule_guess)
+        before = first(combined, required_rule_guess)
         filtered = _filter_linearly_dependent(before)
         too_few = length(filtered) < max_rules
         more_possible = required_rule_guess < length(rules)
@@ -277,7 +285,61 @@ function _process_rules(rules::Vector{Rule}, max_rules::Int)
     end
 end
 
-function _predict(rule::Rule, row::AbstractVector)
+struct StableRules{T} <: StableModel
+    rules::Vector{Rule}
+    classes::Vector{T}
+    weights::Vector{Float64}
+end
+_elements(model::StableRules) = zip(model.rules, model.weights)
+function _isempty_error(::StableRules)
+    throw(AssertionError("The rule model contains no rules"))
+end
+
+"""
+The weights are regularized slightly since that seems to improve performance.
+A higher `penalty` means a stronger regularization, but also lower interpretability of the rules.
+
+!!! note
+    Make sure to use enough trees (thousands) for best accuracy.
+"""
+function _regularize_weights(V::Vector{<:Real}; penalty::Real=0.75)
+    @assert 0.0 ≤ penalty ≤ 1.0
+    m = mean(V)
+    [round(v - (penalty * (v - m)); digits=3) for v in V]
+end
+
+function StableRules(rules::Vector{Rule}, classes, max_rules::Int)
+    processed = _process_rules(rules, max_rules)
+    rules = first.(processed)
+    frequencies = last.(processed)
+    total = sum(frequencies)
+    relative_weights = frequencies ./ total
+    weights = _regularize_weights(relative_weights)
+    return StableRules(rules, classes, weights)
+end
+
+function StableRules(forest::StableForest, max_rules::Int)
+    rules = _rules(forest)
+    return StableRules(rules, forest.classes, max_rules)
+end
+
+function Base.show(io::IO, model::StableRules)
+    l = length(model.rules)
+    rule_text = string("rule", l == 1 ? "" : "s")
+    println(io, "StableRules model with $l $rule_text:")
+    for i in 1:l
+        ending = i == l ? "" : " +"
+        rule = model.rules[i]
+        weight = model.weights[i]
+        println(io, " $weight * $rule", ending)
+    end
+    lc = length(model.classes)
+    class_text = string("class", lc == 1 ? "" : "es")
+    println(io, "and $lc $class_text: $(model.classes)")
+end
+
+function _predict(pair::Tuple{Rule,Float64}, row::AbstractVector)
+    rule, weight = pair
     constraints = map(rule.path.splits) do split
         splitpoint = split.splitpoint
         direction = split.direction
@@ -286,12 +348,6 @@ function _predict(rule::Rule, row::AbstractVector)
         value = splitpoint.value
         satisfies_constraint = comparison(row[feature], value)
     end
-    return all(constraints) ? rule.then_probs : rule.else_probs
+    probs = all(constraints) ? rule.then_probs : rule.else_probs
+    return weight * probs
 end
-
-struct StableRules{T} <: StableModel
-    rules::Vector{Rule}
-    classes::Vector{T}
-end
-_elements(model::StableRules) = model.rules
-

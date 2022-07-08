@@ -29,7 +29,14 @@ r17 = ST.Rule(ST.TreePath(" X[i, 2] ≥ 8000 & X[i, 4] < 12 "), [0.236], [0.94])
 @test ST._unique_features([r1, r7, r12]) == [1, 3]
 @test sort(ST._unique_features([r1, r7, r12, r17])) == [1, 2, 3, 4]
 
-@test ST._filter_linearly_dependent_rank([r1, r2, r3, r5]) == [r1, r3, r5]
+"Add the frequencies and remove them again after filtering."
+function wrap_filter(rules::Vector{ST.Rule})
+    pairs = [rule => 0 for rule in rules]
+    filtered = ST._filter_linearly_dependent(pairs)
+    return first.(filtered)
+end
+
+@test wrap_filter([r1, r2, r3, r5]) == [r1, r3, r5]
 
 let
     A = ST.Split(1, 32000f0, :L)
@@ -86,10 +93,10 @@ let
     @test !(ST._related_rule(r1, ST.Split(1, 31000.0f0, :L), B))
 end
 
-@test ST._gap_width(r12) < ST._gap_width(r7)
 @test ST._linearly_dependent([r1, r3]) == Bool[0, 0]
 @test ST._linearly_dependent([r1, r5, r7, r12]) == Bool[0, 0, 0, 1]
-@test ST._filter_linearly_dependent_rank([r1, r5, r7, r12]) == [r1, r5, r7]
+
+@test wrap_filter([r1, r5, r7, r12]) == [r1, r5, r7]
 
 @test ST._linearly_dependent([r3, r16, r17]) == Bool[0, 0, 1]
 @test ST._linearly_dependent([r3, r16, r13]) == Bool[0, 0, 0]
@@ -97,15 +104,7 @@ end
 let
     allrules = [r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17]
     expected = [r1, r3, r5, r7, r8, r10, r13, r14, r16]
-    @test ST._filter_linearly_dependent_rank(allrules) == expected
-
-    @test ST._prefilter_linearly_dependent([r1, r2]) == [r1]
-    @test ST._prefilter_linearly_dependent([r1, r2, r7]) == [r1, r7]
-    @test ST._prefilter_linearly_dependent([r7, r7]) == [r7]
-
-    # Calling this without pre-filtering is non-deterministic.
-    # The rank calculation probably takes shortcuts for large matrices?
-    @test ST._filter_linearly_dependent(repeat(allrules, 600)) == expected
+    @test wrap_filter(allrules) == expected
 
     @test length(ST._process_rules(allrules, 9)) == 9
     @test length(ST._process_rules(allrules, 10)) == 9

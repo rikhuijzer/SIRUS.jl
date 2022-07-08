@@ -167,41 +167,13 @@ Note that calculating the rank is expensive, so make sure to pre-filter before c
 Also note that this method assumes that the rules are assumed to be in ordered by frequency of occurence in the trees.
 This assumption is used to filter less common rules when finding linearly dependent rules.
 """
-function _filter_linearly_dependent_rank(rules::Vector{Rule})
-    dependent = _linearly_dependent(rules)
-    out = Rule[]
+function _filter_linearly_dependent(rules::Vector{Pair{Rule,Int}})
+    dependent = _linearly_dependent(first.(rules))
+    out = Pair{Rule,Int}[]
     for i in 1:length(dependent)
         if !dependent[i]
             push!(out, rules[i])
         end
     end
     return out
-end
-
-"""
-Return a subset of `rules` where simple duplicates have been removed.
-Also, this flips all rules containing a single clause to the left.
-This heuristic is more quick than finding linearly dependent rules.
-"""
-function _prefilter_linearly_dependent(rules::Vector{Rule})
-    out = Rule[]
-    for rule in rules
-        splits = _splits(rule)
-        if length(splits) == 1
-            left_rule = _left_rule(rule)
-            if !(left_rule in out)
-                push!(out, left_rule)
-            end
-        else
-            if !(rule in out)
-                push!(out, rule)
-            end
-        end
-    end
-    return out
-end
-
-function _filter_linearly_dependent(rules::Vector{Rule})
-    prefiltered = _prefilter_linearly_dependent(rules)
-    return _filter_linearly_dependent_rank(prefiltered)
 end

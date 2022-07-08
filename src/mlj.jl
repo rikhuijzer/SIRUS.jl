@@ -114,9 +114,7 @@ function fit(model::StableRulesClassifier, verbosity::Int, X, y)
         model.q,
         model.min_data_in_leaf
     )
-    rules = _rules(forest)
-    processed = _process_rules(rules, model.max_rules)
-    fitresult = StableRules(processed, forest.classes)
+    fitresult = StableRules(forest, model.max_rules)
     cache = nothing
     report = nothing
     return fitresult, cache, report
