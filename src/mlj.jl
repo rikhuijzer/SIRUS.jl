@@ -22,7 +22,7 @@ using StableTrees:
     StableForest,
     StableRules,
     _forest,
-    _mean_probabilities,
+    _mean,
     _predict,
     _rules,
     _process_rules

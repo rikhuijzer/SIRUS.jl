@@ -122,8 +122,10 @@ function _else_output!(not_node::Union{Node,Leaf}, node::Node, probs::Probs=Prob
     return probs
 end
 
-function _mean_probabilities(V::AbstractVector)
+function _mean(V::AbstractVector{<:AbstractVector})
     return round.(only(mean(V; dims=1)); digits=3)
+    # M = reduce(hcat, V)
+    # [round(median(row); sigdigits=3) for row in eachrow(M)]
 end
 
 function _frequency_sort(V::AbstractVector)
@@ -132,17 +134,17 @@ function _frequency_sort(V::AbstractVector)
     return first.(sorted)
 end
 
-function _mode_probabilities(V::AbstractVector)
+function _median(V::AbstractVector{<:AbstractVector})
     M = reduce(hcat, V)
-    [first(_frequency_sort(row)) for row in eachrow(M)]
+    [median(row) for row in eachrow(M)]
 end
 
 function Rule(root::Node, node::Union{Node, Leaf}, splits::Vector{Split})
     path = TreePath(splits)
     then_output = _then_output!(node)
-    then_probs = _mean_probabilities(then_output)
+    then_probs = _mean(then_output)
     else_output = _else_output!(node, root)
-    else_probs = _mean_probabilities(else_output)
+    else_probs = _mean(else_output)
     return Rule(path, then_probs, else_probs)
 end
 
@@ -235,8 +237,8 @@ function _combine_paths(rules::Vector{Rule})
         rules = duplicate_paths[path]
         # Taking the mode because that might make more sense here.
         # Doesn't seem to affect accuracy so much.
-        then_probs = _mode_probabilities(getproperty.(rules, :then_probs))
-        else_probs = _mode_probabilities(getproperty.(rules, :else_probs))
+        then_probs = _median(getproperty.(rules, :then_probs))
+        else_probs = _median(getproperty.(rules, :else_probs))
         combined_rule = Rule(path, then_probs, else_probs)
         averaged_rules[i] = Pair(combined_rule, length(rules))
     end
@@ -377,4 +379,15 @@ function _predict(pair::Tuple{Rule,Float64}, row::AbstractVector)
     end
     probs = all(constraints) ? rule.then_probs : rule.else_probs
     return weight .* probs
+end
+
+function _sum(V::AbstractVector{<:AbstractVector})
+    M = reduce(hcat, V)
+    return [sum(row) for row in eachrow(M)]
+end
+
+function _predict(model::StableRules, row::AbstractVector)
+    isempty(_elements(model)) && _isempty_error(model)
+    probs = _predict.(_elements(model), Ref(row))
+    return _sum(probs)
 end

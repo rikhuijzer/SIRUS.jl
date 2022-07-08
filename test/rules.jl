@@ -20,9 +20,9 @@ let
     expected = [r1 => 2, r5 => 1]
     @test ST._combine_paths(ST._flip_left([r5, r1, r1])) == expected
 end
-@test ST._mean_probabilities([[1, 4], [2, 4]]) == [1.5, 4.0]
+@test ST._mean([[1, 4], [2, 4]]) == [1.5, 4.0]
 
-@test ST._mode_probabilities([[1, 2], [1, 6], [4, 6]]) == [1, 6]
+# @test ST._mode([[1, 2], [1, 6], [4, 6]]) == [1, 6]
 
 splitpoint = ST.SplitPoint(1, ST.Float(4))
 node = ST.Node(splitpoint, left, right)
@@ -42,7 +42,7 @@ rules = ST._rules(forest)
 @test hash(r1.path) == hash(r1b.path)
 
 @test ST._combine_paths([r1, r1b]) == [r1 => 2]
-@test first(only(ST._combine_paths([r1, r1c]))).then_probs == [0.0]
+@test first(only(ST._combine_paths([r1, r1c]))).then_probs == [mean([0.61, 0])]
 @test ST._count_unique([1, 1, 1, 2]) == Dict(1 => 3, 2 => 1)
 
 weights = [0.395, 0.197, 0.187, 0.057, 0.054, 0.043, 0.027, 0.02, 0.01, 0.01]
@@ -56,7 +56,7 @@ empty_model = ST.StableRules(ST.Rule[], [1], [0.1])
 @test ST._predict(ST.StableRules([r1], [1], [1.0]), [31000]) == [0.61]
 @test ST._predict(ST.StableRules([r1], [1], [1.0]), [33000]) == [0.408]
 let
-    model = ST.StableRules([r1, r5], [1], [1.0, 1.0])
+    model = ST.StableRules([r1, r5], [1], [0.5, 0.5])
     @test ST._predict(model, [33000, 0, 61]) == [mean([0.408, 0.56])]
 end
 

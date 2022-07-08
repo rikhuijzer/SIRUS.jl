@@ -336,14 +336,14 @@ function _isempty_error(::StableForest)
     throw(AssertionError("The forest contains no trees"))
 end
 
-function _predict(model::StableModel, row::AbstractVector)
-    isempty(_elements(model)) && _isempty_error(model)
-    probs = _predict.(_elements(model), Ref(row))
-    return _mean_probabilities(probs)
+function _predict(forest::StableForest, row::AbstractVector)
+    isempty(_elements(forest)) && _isempty_error(forest)
+    probs = [_predict(tree, row) for tree in forest.trees]
+    return _median(probs)
 end
 
 function _predict(model::StableModel, X::AbstractMatrix)
-    probs = _predict.(Ref(model), eachrow(X))
+    probs = [_predict(model, row) for row in eachrow(X)]
     P = reduce(hcat, probs)'
     return UnivariateFinite(model.classes, P; pool=missing)
 end

@@ -7,7 +7,7 @@ using CategoricalArrays: CategoricalValue, unwrap
 using LinearAlgebra: rank
 using MLJModelInterface: UnivariateFinite
 using Random: AbstractRNG, default_rng, shuffle
-using Statistics: mean
+using Statistics: mean, median
 using Tables: Tables
 
 const Float = Float32
