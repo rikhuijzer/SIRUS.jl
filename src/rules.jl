@@ -233,10 +233,10 @@ Return a subset of `rules` of length `max_rules`.
     Instead, luckily, the linearly dependent filter is quite fast here, so passing a load of rules into that and then selecting the first `max_rules` is feasible.
 """
 function _process_rules(rules::Vector{Rule}, max_rules::Int)
-    selected = _frequency_sort(rules)
+    sorted = _frequency_sort(rules)
     for i in 1:3
         required_rule_guess = i^2 * 10 * max_rules
-        before = first(rules, required_rule_guess)
+        before = first(sorted, required_rule_guess)
         filtered = _filter_linearly_dependent(before)
         too_few = length(filtered) < max_rules
         more_possible = required_rule_guess < length(rules)

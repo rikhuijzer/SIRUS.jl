@@ -39,6 +39,8 @@ let
     @test ST._predict(model, [33000, 0, 61]) == [mean([0.408, 0.56])]
 end
 
+@test first(ST._process_rules([r5, r1, r1], 10)) == r1
+
 function generate_rules()
     forest = ST._forest(_rng(), X, y)
     _model(rules::Vector{ST.Rule}) = ST.StableRules(rules, forest.classes)
