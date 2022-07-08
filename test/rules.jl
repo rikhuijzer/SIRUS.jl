@@ -28,6 +28,11 @@ r1 = ST.Rule(ST.TreePath(" X[i, 1] < 32000 "), [0.61], [0.408])
 r1b = ST.Rule(ST.TreePath(" X[i, 1] < 32000 "), [0.61], [0.408])
 
 @test hash(r1) == hash(r1b)
+@test hash(r1.path) == hash(r1b.path)
+
+@test ST._combine_paths([r1, r1b]) == [r1]
+r1c = ST.Rule(ST.TreePath(" X[i, 1] < 32000 "), [0.0], [0.408])
+@test only(ST._combine_paths([r1, r1c])).then_probs == [mean([0.61, 0.0])]
 @test ST._count_unique([1, 1, 1, 2]) == Dict(1 => 3, 2 => 1)
 
 r5 = ST.Rule(ST.TreePath(" X[i, 3] < 64 "), [0.56], [0.334])

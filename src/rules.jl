@@ -182,6 +182,35 @@ function _rules(forest::StableForest)
     return rules
 end
 
+function Base.hash(path::TreePath)
+    return hash(path.splits)
+end
+
+"""
+Return a subset of `rules` where all the `rule.paths` are unique.
+This is done by averaging the `then_probs` and `else_probs`.
+
+This is not mentioned in the SIRUS paper, but probably necessary because not sorting the rules by the occurence frequency didn't really affect accuracy.
+So, that could mean that the most important rules aren't correct selected which could be caused by multiple paths having different then else probabilities.
+"""
+function _combine_paths(rules::Vector{Rule})
+    U = unique(getproperty.(rules, :path))
+    init = zip(U, repeat([Vector{Rule}[]], length(U)))
+    duplicate_paths = Dict{TreePath,Vector{Rule}}(init)
+    for rule in rules
+        push!(duplicate_paths[rule.path], rule)
+    end
+    averaged_rules = Vector{Rule}(undef, length(duplicate_paths))
+    for (i, path) in enumerate(keys(duplicate_paths))
+        rules = duplicate_paths[path]
+        then_probs = _mean_probabilities(getproperty.(rules, :then_probs))
+        else_probs = _mean_probabilities(getproperty.(rules, :else_probs))
+        combined_rule = Rule(path, then_probs, else_probs)
+        averaged_rules[i] = combined_rule
+    end
+    return averaged_rules
+end
+
 function Base.:(==)(a::SplitPoint, b::SplitPoint)
     return a.feature == b.feature && a.value ≈ b.value
 end
@@ -233,7 +262,8 @@ Return a subset of `rules` of length `max_rules`.
     Instead, luckily, the linearly dependent filter is quite fast here, so passing a load of rules into that and then selecting the first `max_rules` is feasible.
 """
 function _process_rules(rules::Vector{Rule}, max_rules::Int)
-    sorted = _frequency_sort(rules)
+    combined = _combine_paths(rules)
+    sorted = _frequency_sort(combined)
     for i in 1:3
         required_rule_guess = i^2 * 10 * max_rules
         before = first(sorted, required_rule_guess)
