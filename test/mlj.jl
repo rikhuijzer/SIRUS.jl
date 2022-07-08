@@ -2,14 +2,17 @@ n = 200
 p = 40
 X, y = make_blobs(n, p; centers=2, rng=_rng(), shuffle=true)
 
-_score(e::PerformanceEvaluation) = only(e.measurement)
+function _score(e::PerformanceEvaluation)
+    return round(only(e.measurement); sigdigits=2)
+end
+
 function _evaluate(model; X=X, y=y)
-    resampling = CV(; shuffle=true, rng=_rng())
+    resampling = CV(; nfolds=14, shuffle=true, rng=_rng())
     evaluate(model, X, y; verbosity=0, resampling, measure=auc)
 end
 
 e = _evaluate(LGBMClassifier(; max_depth=2))
-println("_evaluate(LGBMClassifier(...)) AUC: ", e)
+println("_evaluate(LGBMClassifier) AUC: ", _score(e))
 @test 0.95 < _score(e)
 
 model = StableForestClassifier(; rng=_rng())
@@ -17,11 +20,11 @@ mach = machine(model, X, y)
 fit!(mach; verbosity=0)
 
 preds = predict(mach)
-println("StableForestClassifier(...) AUC: ", auc(preds, y))
+println("StableForestClassifier AUC: ", auc(preds, y))
 @test 0.95 < auc(preds, y)
 
 e = _evaluate(StableForestClassifier(; rng=_rng(), n_trees=50))
-println("StableForestClassifier AUC: ", e)
+println("StableForestClassifier AUC: ", _score(e))
 @test 0.95 < _score(e)
 e2 = _evaluate(StableForestClassifier(; rng=_rng(), n_trees=50))
 @test _score(e) == _score(e2)
@@ -35,7 +38,7 @@ println("StableRulesClassifier AUC: ", auc(preds, y))
 @test 0.95 < auc(preds, y)
 
 e = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees=50))
-println("_evaluate(StableRulesClassifier(...)) AUC: ", e)
+println("_evaluate(StableRulesClassifier) AUC: ", _score(e))
 @test 0.95 < _score(e)
 
 titanic = Titanic()
@@ -55,11 +58,12 @@ e2 = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees=1); X, y)
 @test _score(e) == _score(e2)
 @test 0.7 < _score(e)
 
-e = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees=100); X, y)
-println("Titanic _evaluate(StableRulesClassifier(...)) AUC: ", e)
+e = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees=50); X, y)
+println("Titanic _evaluate(StableRulesClassifier) AUC: ", _score(e))
 @test 0.8 < _score(e)
 
-le = _evaluate(LGBMClassifier(; max_depth=2); X, y)
-println("Titanic _evaluate(StableRulesClassifier(...)) AUC: ", e)
+Xt = MLJBase.table(MLJBase.matrix(X))
+le = _evaluate(LGBMClassifier(; max_depth=2); X=Xt, y)
+println("Titanic _evaluate(LGBMClassifier) AUC: ", _score(le))
 @test 0.83 < _score(le)
 
