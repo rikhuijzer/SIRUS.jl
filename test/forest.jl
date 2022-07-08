@@ -105,3 +105,6 @@ fpreds = DecisionTree.apply_forest(dforest, data)
 sfpreds = ST._predict(sforest, data)
 @show accuracy(mode.(sfpreds), y)
 @test 0.95 < accuracy(mode.(sfpreds), y)
+
+empty_forest = ST.StableForest(Union{ST.Leaf, ST.Node}[], [1])
+@test_throws AssertionError ST._predict(empty_forest, data)

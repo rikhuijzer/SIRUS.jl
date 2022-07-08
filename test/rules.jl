@@ -37,6 +37,9 @@ r1c = ST.Rule(ST.TreePath(" X[i, 1] < 32000 "), [0.0], [0.408])
 
 r5 = ST.Rule(ST.TreePath(" X[i, 3] < 64 "), [0.56], [0.334])
 
+empty_model = ST.StableRules(ST.Rule[], [1])
+@test_throws AssertionError ST._predict(empty_model, [31000])
+
 @test ST._predict(ST.StableRules([r1], [1]), [31000]) == [0.61]
 @test ST._predict(ST.StableRules([r1], [1]), [33000]) == [0.408]
 let
