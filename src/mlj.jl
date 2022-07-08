@@ -18,6 +18,7 @@ using MLJModelInterface:
     Table
 using Random: AbstractRNG, default_rng
 using StableTrees:
+    DEFAULT_PENALTY,
     StableForest,
     StableRules,
     _forest,
@@ -51,7 +52,7 @@ Base.@kwdef mutable struct StableRulesClassifier <: Probabilistic
     q::Int=10
     min_data_in_leaf::Int=5
     max_rules::Int=10
-    weight_penalty::Float64=0.75
+    weight_penalty::Float64=DEFAULT_PENALTY
 end
 
 metadata_model(

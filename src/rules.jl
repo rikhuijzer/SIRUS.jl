@@ -308,6 +308,8 @@ function _isempty_error(::StableRules)
     throw(AssertionError("The rule model contains no rules"))
 end
 
+const DEFAULT_PENALTY = 0.3
+
 """
 The weights are regularized slightly since that seems to improve performance.
 A higher `penalty` means a stronger regularization, but also lower interpretability of the rules.
@@ -315,7 +317,10 @@ A higher `penalty` means a stronger regularization, but also lower interpretabil
 !!! note
     Make sure to use enough trees (thousands) for best accuracy.
 """
-function _regularize_weights(V::Vector{<:Real}; penalty::Real=0.75)
+function _regularize_weights(
+        V::Vector{<:Real};
+        penalty::Real=DEFAULT_PENALTY
+    )
     @assert 0.0 ≤ penalty ≤ 1.0
     m = mean(V)
     [round(v - (penalty * (v - m)); digits=3) for v in V]
@@ -325,7 +330,7 @@ function StableRules(
         rules::Vector{Rule},
         classes,
         max_rules::Int;
-        penalty::Float64=0.75
+        penalty::Float64=DEFAULT_PENALTY
     )
     processed = _process_rules(rules, max_rules)
     rules = first.(processed)
@@ -339,7 +344,7 @@ end
 function StableRules(
         forest::StableForest,
         max_rules::Int;
-        penalty::Float64=0.75
+        penalty::Float64=DEFAULT_PENALTY
     )
     rules = _rules(forest)
     return StableRules(rules, forest.classes, max_rules; penalty)

@@ -60,7 +60,7 @@ e2 = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees); X, y)
 @test _score(e) == _score(e2)
 @test 0.7 < _score(e)
 
-e3 = _evaluate(StableRulesClassifier(; rng=_rng(), weight_penalty=0.0, n_trees); X, y)
+e3 = _evaluate(StableRulesClassifier(; rng=_rng(), weight_penalty=1.0, n_trees); X, y)
 @test _score(e) != _score(e3)
 
 e = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees=1500); X, y)
