@@ -122,8 +122,29 @@ function _else_output!(not_node::Union{Node,Leaf}, node::Node, probs::Probs=Prob
     return probs
 end
 
-function _mean_probabilities(V::AbstractVector{T}) where {T}
+function _mean_probabilities(V::AbstractVector)
     return round.(only(mean(V; dims=1)); digits=3)
+end
+
+function _count_unique(V::AbstractVector{T}) where T
+    U = unique(V)
+    l = length(U)
+    counts = Dict{T,Int}(zip(U, zeros(l)))
+    for v in V
+        counts[v] += 1
+    end
+    return counts
+end
+
+function _frequency_sort(V::AbstractVector)
+    counts = _count_unique(V)
+    sorted = sort(collect(counts); by=last, rev=true)
+    return first.(sorted)
+end
+
+function _mode_probabilities(V::AbstractVector)
+    M = reduce(hcat, V)
+    [first(_frequency_sort(row)) for row in eachrow(M)]
 end
 
 function Rule(root::Node, node::Union{Node, Leaf}, splits::Vector{Split})
@@ -222,8 +243,10 @@ function _combine_paths(rules::Vector{Rule})
     averaged_rules = Vector{Pair{Rule,Int}}(undef, length(duplicate_paths))
     for (i, path) in enumerate(keys(duplicate_paths))
         rules = duplicate_paths[path]
-        then_probs = _mean_probabilities(getproperty.(rules, :then_probs))
-        else_probs = _mean_probabilities(getproperty.(rules, :else_probs))
+        # Taking the mode because that might make more sense here.
+        # Doesn't seem to affect accuracy so much.
+        then_probs = _mode_probabilities(getproperty.(rules, :then_probs))
+        else_probs = _mode_probabilities(getproperty.(rules, :else_probs))
         combined_rule = Rule(path, then_probs, else_probs)
         averaged_rules[i] = Pair(combined_rule, length(rules))
     end

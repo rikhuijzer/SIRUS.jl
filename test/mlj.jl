@@ -63,7 +63,7 @@ println("Titanic _evaluate(StableRulesClassifier) AUC: ", _score(e))
 @test 0.80 < _score(e)
 
 Xt = MLJBase.table(MLJBase.matrix(X))
-le = _evaluate(LGBMClassifier(; max_depth=2); X=Xt, y)
+le = _evaluate(LGBMClassifier(; max_depth=10); X=Xt, y)
 println("Titanic _evaluate(LGBMClassifier) AUC: ", _score(le))
 @test 0.83 < _score(le)
 

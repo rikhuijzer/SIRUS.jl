@@ -22,6 +22,8 @@ let
 end
 @test ST._mean_probabilities([[1, 4], [2, 4]]) == [1.5, 4.0]
 
+@test ST._mode_probabilities([[1, 2], [1, 6], [4, 6]]) == [1, 6]
+
 splitpoint = ST.SplitPoint(1, ST.Float(4))
 node = ST.Node(splitpoint, left, right)
 
