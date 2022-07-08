@@ -2,7 +2,7 @@ n = 200
 p = 40
 X, y = make_blobs(n, p; centers=2, rng=_rng(), shuffle=true)
 
-_score(e::MLJBase.PerformanceEvaluation) = only(e.measurement)
+_score(e::PerformanceEvaluation) = only(e.measurement)
 function _evaluate(model; X=X, y=y)
     resampling = CV(; shuffle=true, rng=_rng())
     evaluate(model, X, y; verbosity=0, resampling, measure=auc)
@@ -55,9 +55,9 @@ e2 = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees=1); X, y)
 @test _score(e) == _score(e2)
 @test 0.7 < _score(e)
 
-e = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees=500); X, y)
+e = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees=100); X, y)
 println("Titanic _evaluate(StableRulesClassifier(...)) AUC: ", e)
-@test 0.75 < _score(e)
+@test 0.8 < _score(e)
 
 le = _evaluate(LGBMClassifier(; max_depth=2); X, y)
 println("Titanic _evaluate(StableRulesClassifier(...)) AUC: ", e)
