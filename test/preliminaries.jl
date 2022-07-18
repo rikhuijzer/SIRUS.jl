@@ -50,6 +50,7 @@ end
 Return the Haberman survival dataset.
 
 Accuracy on this dataset can be verified against the benchmark by Nalenz and Augustin (https://proceedings.mlr.press/v151/nalenz22a.html).
+In that paper, the AUC for SIRUS and XGBoost are respectively 0.651 and 0.688.
 """
 function haberman()
     dir = datadep"Haberman"
