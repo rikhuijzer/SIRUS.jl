@@ -99,8 +99,8 @@ e = _evaluate!(results, "blobs", StableRulesClassifier, (; rng=_rng(), n_trees=5
 @test 0.95 < _score(e)
 
 n_trees = 40
-e = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees); X, y)
-e2 = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees); X, y)
+e = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees), X, y)
+e2 = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees), X, y)
 @test _score(e) == _score(e2)
 @test 0.7 < _score(e)
 
@@ -111,7 +111,7 @@ e2 = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees); X, y)
 let
     hyper = (; max_depth=2)
     e = _evaluate!(results, "titanic", LGBMClassifier, hyper)
-    @test 0.83 < _score(le)
+    @test 0.83 < _score(e)
 end
 
 let
