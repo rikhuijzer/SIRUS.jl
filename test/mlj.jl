@@ -20,6 +20,15 @@ model = StableForestClassifier(; rng=_rng())
 mach = machine(model, X, y)
 fit!(mach; verbosity=0)
 
+@testset "y as String" begin
+    # https://github.com/rikhuijzer/StableTrees.jl/issues/5
+    X = rand(10, 100)
+    y = categorical(rand(["a", "b"], 10))
+    model = StableForestClassifier(; rng=_rng())
+    mach = machine(model, X, y; scitype_check_level=0)
+    fit!(mach)
+end
+
 preds = predict(mach)
 println("StableForestClassifier AUC: ", auc(preds, y))
 @test 0.95 < auc(preds, y)
