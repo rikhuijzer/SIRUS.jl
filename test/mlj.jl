@@ -20,15 +20,6 @@ model = StableForestClassifier(; rng=_rng())
 mach = machine(model, X, y)
 fit!(mach; verbosity=0)
 
-@testset "y as String" begin
-    # https://github.com/rikhuijzer/StableTrees.jl/issues/5
-    X = rand(10, 100)
-    y = categorical(rand(["a", "b"], 10))
-    model = StableForestClassifier(; rng=_rng())
-    mach = machine(model, X, y; scitype_check_level=0)
-    @test_throws ArgumentError fit!(mach)
-end
-
 preds = predict(mach)
 println("StableForestClassifier AUC: ", auc(preds, y))
 @test 0.95 < auc(preds, y)
@@ -81,4 +72,13 @@ Xt = MLJBase.table(MLJBase.matrix(X))
 le = _evaluate(LGBMClassifier(; max_depth=10); X=Xt, y)
 println("Titanic _evaluate(LGBMClassifier) AUC: ", _score(le))
 @test 0.83 < _score(le)
+
+@testset "y as String" begin
+    # https://github.com/rikhuijzer/StableTrees.jl/issues/5
+    X = rand(10, 100)
+    y = categorical(rand(["a", "b"], 10))
+    model = StableForestClassifier()
+    mach = machine(model, X, y; scitype_check_level=0)
+    @test_throws ArgumentError fit!(mach)
+end
 
