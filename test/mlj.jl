@@ -143,4 +143,13 @@ end
 
 print('\n' * repr(results) * "\n\n")
 
+if haskey(ENV, "CI")
+    job_summary = """
+        ```
+        $(repr(results))
+        ```
+        """
+    write("summary.txt", job_summary)
+end
+
 nothing
