@@ -26,7 +26,7 @@ fit!(mach; verbosity=0)
     y = categorical(rand(["a", "b"], 10))
     model = StableForestClassifier(; rng=_rng())
     mach = machine(model, X, y; scitype_check_level=0)
-    fit!(mach)
+    @test_throws ArgumentError fit!(mach)
 end
 
 preds = predict(mach)

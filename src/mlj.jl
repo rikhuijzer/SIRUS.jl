@@ -88,16 +88,6 @@ metadata_pkg.(
     is_wrapper=false
 )
 
-function _float(T::Type{<:AbstractString}, A)
-    @warn """
-        Converting $(typeof(A)) to floats via `levelcode.(A)`.
-
-        Consider passing a (Categorical)Vector of `Float`s to avoid mixing up classes.
-        """
-    return categorical(levelcode.(A))
-end
-_float(T, A) = convert(AbstractArray{typeof(float(zero(T)))}, A)
-
 """
 Return a floating point vector of `A`.
 This method patches the version from CategoricalArrays.jl for `AbstractString`s.
@@ -106,7 +96,11 @@ function _float(A::CategoricalArray{T}) where T
     if !isconcretetype(T)
         error("`float` not defined on abstractly-typed arrays; please convert to a more specific type")
     end
-    return _float(T, A)
+    if T isa Type{String}
+        msg = "Cannot automatically convert $(typeof(A)) to an array containing `Float`s."
+        return throw(ArgumentError(msg))
+    end
+    return float(A)
 end
 
 function fit(model::StableForestClassifier, verbosity::Int, X, y)
