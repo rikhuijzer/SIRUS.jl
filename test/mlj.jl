@@ -138,18 +138,21 @@ end
 let
     hyper = (; rng=_rng(), n_trees=1_500)
     e = _evaluate!(results, "haberman", StableRulesClassifier, hyper)
-    @test 0.64 < _score(e)
+    @test 0.60 < _score(e)
 end
 
 print('\n' * repr(results) * "\n\n")
 
-if haskey(ENV, "CI")
+if haskey(ENV, "GITHUB_STEP_SUMMARY")
     job_summary = """
         ```
         $(repr(results))
         ```
         """
-    write("summary.txt", job_summary)
+    path = ENV["GITHUB_STEP_SUMMARY"]
+    open(path, "a") do io
+        write(io, job_summary)
+    end
 end
 
 nothing

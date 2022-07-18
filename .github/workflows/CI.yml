@@ -31,4 +31,3 @@ jobs:
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@latest
       - uses: julia-actions/julia-runtest@v1
-      - run: cat summary.txt >> $GITHUB_STEP_SUMMARY
