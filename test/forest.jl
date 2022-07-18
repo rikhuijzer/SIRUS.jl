@@ -108,3 +108,5 @@ sfpreds = ST._predict(sforest, data)
 
 empty_forest = ST.StableForest(Union{ST.Leaf, ST.Node}[], [1])
 @test_throws AssertionError ST._predict(empty_forest, data)
+
+nothing

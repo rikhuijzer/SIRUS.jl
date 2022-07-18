@@ -1,59 +1,103 @@
-n = 200
-p = 40
-X, y = make_blobs(n, p; centers=2, rng=_rng(), shuffle=true)
+datasets = Dict{String,Tuple}(
+        "blobs" => let
+            n = 200
+            p = 40
+            make_blobs(n, p; centers=2, rng=_rng(), shuffle=true)
+        end,
+        "titanic" => let
+            titanic = Titanic()
+            df = titanic.features
+            F = [:Pclass, :Sex, :Age, :SibSp, :Parch, :Fare, :Embarked]
+            sub = select(df, F...)
+            sub[!, :y] = categorical(titanic.targets[:, 1])
+            sub[!, :Sex] = ifelse.(sub.Sex .== "male", 1, 0)
+            dropmissing!(sub)
+            embarked2int(x) = x == "S" ? 1 : x == "C" ? 2 : 3
+            sub[!, :Embarked] = embarked2int.(sub.Embarked)
+            X = MLJBase.table(MLJBase.matrix(sub[:, Not(:y)]))
+            (X, sub.y)
+        end,
+        "haberman" => let
+            df = haberman()
+            X = MLJBase.table(MLJBase.matrix(df[:, Not(:survival)]))
+            y = df.survival
+            (X, y)
+        end
+    )
 
 function _score(e::PerformanceEvaluation)
     return round(only(e.measurement); sigdigits=2)
 end
 
-function _evaluate(model; X=X, y=y)
-    resampling = CV(; nfolds=14, shuffle=true, rng=_rng())
+function _evaluate(model, X, y, nfolds=10)
+    resampling = CV(; nfolds, shuffle=true, rng=_rng())
     acceleration = MLJBase.CPUThreads()
     evaluate(model, X, y; acceleration, verbosity=0, resampling, measure=auc)
 end
 
-e = _evaluate(LGBMClassifier(; max_depth=2))
-println("_evaluate(LGBMClassifier) AUC: ", _score(e))
-@test 0.95 < _score(e)
+results = DataFrame(;
+        dataset=String[],
+        model=String[],
+        hyperparameters=NamedTuple[],
+        nfolds=Int[],
+        auc=Float64[],
+        variance=Float64[]
+    )
 
+_filter_rng(hyper::NamedTuple) = Base.structdiff(hyper, (; rng=:foo))
+_pretty_name(modeltype) = last(split(string(modeltype), '.'))
+
+function _evaluate!(
+        results::DataFrame,
+        dataset::String,
+        modeltype::DataType,
+        hyperparameters::NamedTuple
+    )
+    X, y = datasets[dataset]
+    nfolds = 10
+    model = modeltype(; hyperparameters...)
+    e = _evaluate(model, X, y)
+    row = (;
+        dataset=dataset,
+        model=_pretty_name(modeltype),
+        hyperparameters=_filter_rng(hyperparameters),
+        nfolds,
+        auc=_score(e),
+        variance=round(var(only(e.per_fold)); digits=2)
+    )
+    push!(results, row)
+    return e
+end
+
+let
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, "blobs", LGBMClassifier, hyper)
+    @test 0.95 < _score(e)
+end
+
+X, y = datasets["blobs"]
 model = StableForestClassifier(; rng=_rng())
 mach = machine(model, X, y)
 fit!(mach; verbosity=0)
 
 preds = predict(mach)
-println("StableForestClassifier AUC: ", auc(preds, y))
 @test 0.95 < auc(preds, y)
 
-e = _evaluate(StableForestClassifier(; rng=_rng(), n_trees=50))
-println("StableForestClassifier AUC: ", _score(e))
+hyper= (; rng=_rng(), n_trees=50)
+e = _evaluate(StableForestClassifier(; hyper...), X, y)
 @test 0.95 < _score(e)
-e2 = _evaluate(StableForestClassifier(; rng=_rng(), n_trees=50))
+e2 = _evaluate(StableForestClassifier(; hyper...), X, y)
 @test _score(e) == _score(e2)
 
-rulesmodel = StableRulesClassifier(; rng=_rng(), n_trees=50)
+rulesmodel = StableRulesClassifier(; n_trees=50, rng=_rng())
 rulesmach = machine(rulesmodel, X, y)
 fit!(rulesmach; verbosity=0)
 preds = predict(rulesmach)
-
-println("StableRulesClassifier AUC: ", auc(preds, y))
 @test 0.95 < auc(preds, y)
 
-e = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees=50))
-println("_evaluate(StableRulesClassifier) AUC: ", _score(e))
+e = _evaluate!(results, "blobs", StableRulesClassifier, (; rng=_rng(), n_trees=50))
 @test 0.95 < _score(e)
 
-titanic = Titanic()
-X, y = let
-    df = titanic.features
-    F = [:Pclass, :Sex, :Age, :SibSp, :Parch, :Fare, :Embarked]
-    sub = select(df, F...)
-    sub[!, :y] = categorical(titanic.targets[:, 1])
-    sub[!, :Sex] = ifelse.(sub.Sex .== "male", 1, 0)
-    dropmissing!(sub)
-    embarked2int(x) = x == "S" ? 1 : x == "C" ? 2 : 3
-    sub[!, :Embarked] = embarked2int.(sub.Embarked)
-    (select(sub, Not(:y)), sub.y)
-end
 n_trees = 40
 e = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees); X, y)
 e2 = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees); X, y)
@@ -64,14 +108,17 @@ e2 = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees); X, y)
 # e4 = _evaluate(StableRulesClassifier(; rng=_rng(), weight_penalty=1.0, n_trees); X, y)
 # @test _score(e3) != _score(e4)
 
-e = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees=1500); X, y)
-println("Titanic _evaluate(StableRulesClassifier) AUC: ", _score(e))
-@test 0.80 < _score(e)
+let
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, "titanic", LGBMClassifier, hyper)
+    @test 0.83 < _score(le)
+end
 
-Xt = MLJBase.table(MLJBase.matrix(X))
-le = _evaluate(LGBMClassifier(; max_depth=10); X=Xt, y)
-println("Titanic _evaluate(LGBMClassifier) AUC: ", _score(le))
-@test 0.83 < _score(le)
+let
+    hyper = (; rng=_rng(), n_trees=1_500)
+    e = _evaluate!(results, "titanic", StableRulesClassifier, hyper)
+    @test 0.80 < _score(e)
+end
 
 @testset "y as String" begin
     # https://github.com/rikhuijzer/StableTrees.jl/issues/5
@@ -82,3 +129,18 @@ println("Titanic _evaluate(LGBMClassifier) AUC: ", _score(le))
     @test_throws ArgumentError fit!(mach)
 end
 
+let
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, "haberman", LGBMClassifier, hyper)
+    @test 0.65 < _score(e)
+end
+
+let
+    hyper = (; rng=_rng(), n_trees=1_500)
+    e = _evaluate!(results, "haberman", StableRulesClassifier, hyper)
+    @test 0.65 < _score(e)
+end
+
+print('\n' * repr(results) * "\n\n")
+
+nothing

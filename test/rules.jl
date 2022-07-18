@@ -102,3 +102,5 @@ end
 @test equal_output(:forest)
 @test equal_output(:rulesmodel)
 @test equal_output(:processed)
+
+nothing

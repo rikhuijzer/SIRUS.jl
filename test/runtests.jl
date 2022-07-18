@@ -15,3 +15,5 @@ end
 @testset "interface" begin
     include("mlj.jl")
 end
+
+nothing
