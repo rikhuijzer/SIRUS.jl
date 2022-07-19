@@ -119,6 +119,9 @@ end
 
 let
     hyper = (; rng=_rng(), n_trees=1_500)
+    e = _evaluate!(results, "titanic", StableForestClassifier, hyper)
+    @test 0.80 < _score(e)
+
     e = _evaluate!(results, "titanic", StableRulesClassifier, hyper)
     @test 0.80 < _score(e)
 end

@@ -24,3 +24,5 @@ docs/site/
 **/Manifest.toml
 
 docs/src/**/**.md
+
+profile.pb.gz

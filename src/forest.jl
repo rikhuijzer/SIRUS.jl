@@ -1,4 +1,18 @@
 """
+Return the number of elements in `V` being equal to `x`.
+This method allocates less memory than `count(V .== y)`.
+"""
+function _count_equal(V::AbstractVector, x)::Int
+    c = 0
+    for v in V
+        if x == v
+            c += 1
+        end
+    end
+    return c
+end
+
+"""
     _gini(y::AbstractVector, classes::AbstractVector)
 
 Return the Gini index for a vector outcomes `y` and `classes`.
@@ -9,12 +23,12 @@ The equation is mentioned on Wikipedia as
 ``1 - \\sum{class \\in classes} p_i^2``
 for ``p_i`` be the fraction (proportion) of items labeled with class ``i`` in the set.
 """
-function _gini(y::AbstractVector)
-    classes = unique(y)
+function _gini(y::AbstractVector, classes)
     len_y = length(y)
     impurity = 1.0
     for class in classes
-        proportion = count(y .== class) / len_y
+        c = _count_equal(y, class)
+        proportion = c / len_y
         impurity -= proportion^2
     end
     return impurity
@@ -88,10 +102,10 @@ struct SplitPoint
     value::Float
 end
 
-function _information_gain(y, y_left, y_right)
+function _information_gain(y, y_left, y_right, classes)
     p = length(y_left) / length(y)
-    starting_impurity = _gini(y)
-    impurity_change = p * _gini(y_left) + (1 - p) * _gini(y_right)
+    starting_impurity = _gini(y, classes)
+    impurity_change = p * _gini(y_left, classes) + (1 - p) * _gini(y_right, classes)
     return starting_impurity - impurity_change
 end
 
@@ -126,7 +140,7 @@ function _split(
             length(y_left) == 0 && continue
             y_right = _view_y(X, y, feature, ≥, cutpoint)
             length(y_right) == 0 && continue
-            gain = _information_gain(y, y_left, y_right)
+            gain = _information_gain(y, y_left, y_right, classes)
             if best_score ≤ gain
                 best_score = gain
                 best_score_feature = feature
