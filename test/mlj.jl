@@ -47,7 +47,7 @@ results = DataFrame(;
 
 _filter_rng(hyper::NamedTuple) = Base.structdiff(hyper, (; rng=:foo))
 _pretty_name(modeltype) = last(split(string(modeltype), '.'))
-_hyper2str(hyper::NamedTuple) = hyper == (;) ? "()" : string(hyper)::String
+_hyper2str(hyper::NamedTuple) = hyper == (;) ? "(;)" : string(hyper)::String
 
 function _evaluate!(
         results::DataFrame,
