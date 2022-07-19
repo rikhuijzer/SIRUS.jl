@@ -95,8 +95,11 @@ fit!(rulesmach; verbosity=0)
 preds = predict(rulesmach)
 @test 0.95 < auc(preds, y)
 
-e = _evaluate!(results, "blobs", StableRulesClassifier, (; rng=_rng(), n_trees=50))
-@test 0.95 < _score(e)
+let
+    hyper = (; rng=_rng(), n_trees=50)
+    e = _evaluate!(results, "blobs", StableRulesClassifier, hyper)
+    @test 0.95 < _score(e)
+end
 
 n_trees = 40
 e = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees), X, y)
@@ -137,6 +140,9 @@ end
 
 let
     hyper = (; rng=_rng(), n_trees=1_500)
+    e = _evaluate!(results, "haberman", StableForestClassifier, hyper)
+    @test 0.60 < _score(e)
+
     e = _evaluate!(results, "haberman", StableRulesClassifier, hyper)
     @test 0.60 < _score(e)
 end
