@@ -22,7 +22,8 @@ datasets = Dict{String,Tuple}(
             X = MLJBase.table(MLJBase.matrix(df[:, Not(:survival)]))
             y = df.survival
             (X, y)
-        end
+        end,
+        "boston" => boston()
     )
 
 function _score(e::PerformanceEvaluation)
@@ -38,7 +39,7 @@ end
 results = DataFrame(;
         Dataset=String[],
         Model=String[],
-        Hyperparameters=NamedTuple[],
+        Hyperparameters=String[],
         nfolds=Int[],
         AUC=Float64[],
         se=Float64[]
@@ -46,12 +47,13 @@ results = DataFrame(;
 
 _filter_rng(hyper::NamedTuple) = Base.structdiff(hyper, (; rng=:foo))
 _pretty_name(modeltype) = last(split(string(modeltype), '.'))
+_hyper2str(hyper::NamedTuple) = hyper == (;) ? "()" : string(hyper)::String
 
 function _evaluate!(
         results::DataFrame,
         dataset::String,
         modeltype::DataType,
-        hyperparameters::NamedTuple
+        hyperparameters::NamedTuple=(; )
     )
     X, y = datasets[dataset]
     nfolds = 10
@@ -60,7 +62,7 @@ function _evaluate!(
     row = (;
         Dataset=dataset,
         Model=_pretty_name(modeltype),
-        Hyperparameters=_filter_rng(hyperparameters),
+        Hyperparameters=_hyper2str(_filter_rng(hyperparameters)),
         nfolds,
         AUC=_score(e),
         se=round(only(MLJBase._standard_errors(e)); digits=2)
@@ -70,6 +72,7 @@ function _evaluate!(
 end
 
 let
+    e = _evaluate!(results, "blobs", LGBMClassifier)
     hyper = (; max_depth=2)
     e = _evaluate!(results, "blobs", LGBMClassifier, hyper)
     @test 0.95 < _score(e)
@@ -112,6 +115,7 @@ e2 = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees), X, y)
 # @test _score(e3) != _score(e4)
 
 let
+    e = _evaluate!(results, "titanic", LGBMClassifier)
     hyper = (; max_depth=2)
     e = _evaluate!(results, "titanic", LGBMClassifier, hyper)
     @test 0.83 < _score(e)
@@ -136,6 +140,7 @@ end
 end
 
 let
+    e = _evaluate!(results, "haberman", LGBMClassifier)
     hyper = (; max_depth=2)
     e = _evaluate!(results, "haberman", LGBMClassifier, hyper)
     @test 0.64 < _score(e)
@@ -148,6 +153,19 @@ let
 
     e = _evaluate!(results, "haberman", StableRulesClassifier, hyper)
     @test 0.60 < _score(e)
+end
+
+let
+    e = _evaluate!(results, "boston", LGBMClassifier)
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, "boston", LGBMClassifier, hyper)
+end
+
+let
+    hyper = (; rng=_rng(), n_trees=1_500)
+    e = _evaluate!(results, "boston", StableForestClassifier, hyper)
+
+    e = _evaluate!(results, "boston", StableRulesClassifier, hyper)
 end
 
 rename!(results, :se => "1.96*SE")

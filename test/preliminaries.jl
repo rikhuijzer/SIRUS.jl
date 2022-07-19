@@ -5,7 +5,7 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
 using CategoricalArrays: CategoricalValue, categorical, unwrap
 using CSV: CSV
 using DataDeps: DataDeps, DataDep, @datadep_str
-using MLDatasets: Titanic
+using MLDatasets: BostonHousing, Titanic
 using DataFrames:
     DataFrames,
     DataFrame,
@@ -63,6 +63,24 @@ function haberman()
         df[!, col] = float.(df[:, col])
     end
     return df
+end
+
+"""
+Return the Boston Housing Dataset after changing the outcome to binary.
+"""
+function boston()
+    data = BostonHousing()
+    df = hcat(data.features, data.targets)
+    dropmissing!(df)
+    for col in names(df)
+        df[!, col] = float.(df[:, col])
+    end
+    # Median value of owner-occupied homes in 1000's of dollars.
+    target = :MEDV
+    m = mean(df[:, target])
+    y = categorical([value < m ? 0 : 1 for value in df[:, target]])
+    X = MLJBase.table(MLJBase.matrix(df[:, Not(target)]))
+    return (X, y)
 end
 
 nothing

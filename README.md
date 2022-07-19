@@ -1,7 +1,8 @@
 # StableTrees.jl
 
-This package implements the **S**table and **I**nterpretable **RU**le **S**ets (SIRUS) for classification.
-Regression is also technically possible but not yet implemented.
+This package implements the **S**table and **I**nterpretable **RU**le **S**ets (SIRUS) for binary classification.
+Regression and multiclass-classification are also technically possible but not yet implemented.
+The reason is that I need binary classification for my own paper and that paper should be finished yesterday.
 
 The SIRUS algorithm was presented by Bénard et al. in 2020 and 2021.
 In short, SIRUS combines the predictive accuracy of random forests with the explainability of decision trees while remaining stable.
