@@ -13,7 +13,7 @@ using DataFrames:
     dropmissing!,
     rename!,
     select
-using DecisionTree: DecisionTree
+using DecisionTree: DecisionTreeClassifier
 using MLJBase:
     CV,
     MLJBase,
@@ -27,6 +27,7 @@ using MLJBase:
     make_blobs,
     make_moons,
     predict
+using MLJDecisionTreeInterface: DecisionTree
 using LightGBM.MLJInterface: LGBMClassifier
 using StableRNGs: StableRNG
 using StableTrees

@@ -58,7 +58,7 @@ function _evaluate!(
     X, y = datasets[dataset]
     nfolds = 10
     model = modeltype(; hyperparameters...)
-    e = _evaluate(model, X, y)
+    e = _evaluate(model, X, y, nfolds)
     row = (;
         Dataset=dataset,
         Model=_pretty_name(modeltype),
@@ -71,10 +71,15 @@ function _evaluate!(
     return e
 end
 
+function _evaluate_baseline!(results, dataset)
+    _evaluate!(results, dataset, LGBMClassifier)
+    e = _evaluate!(results, dataset, LGBMClassifier, (; max_depth=2))
+    # _evaluate!(results, dataset, DecisionTreeClassifier, (; max_depth=2, rng=_rng()))
+    return e
+end
+
 let
-    e = _evaluate!(results, "blobs", LGBMClassifier)
-    hyper = (; max_depth=2)
-    e = _evaluate!(results, "blobs", LGBMClassifier, hyper)
+    e = _evaluate_baseline!(results, "blobs")
     @test 0.95 < _score(e)
 end
 
@@ -115,9 +120,7 @@ e2 = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees), X, y)
 # @test _score(e3) != _score(e4)
 
 let
-    e = _evaluate!(results, "titanic", LGBMClassifier)
-    hyper = (; max_depth=2)
-    e = _evaluate!(results, "titanic", LGBMClassifier, hyper)
+    e = _evaluate_baseline!(results, "titanic")
     @test 0.83 < _score(e)
 end
 
@@ -140,9 +143,7 @@ end
 end
 
 let
-    e = _evaluate!(results, "haberman", LGBMClassifier)
-    hyper = (; max_depth=2)
-    e = _evaluate!(results, "haberman", LGBMClassifier, hyper)
+    e = _evaluate_baseline!(results, "haberman")
     @test 0.64 < _score(e)
 end
 
@@ -156,9 +157,7 @@ let
 end
 
 let
-    e = _evaluate!(results, "boston", LGBMClassifier)
-    hyper = (; max_depth=2)
-    e = _evaluate!(results, "boston", LGBMClassifier, hyper)
+    e = _evaluate_baseline!(results, "boston")
 end
 
 let

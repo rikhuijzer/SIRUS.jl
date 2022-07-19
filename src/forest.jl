@@ -307,6 +307,9 @@ function _forest(
     if 2 < max_depth
         error("Tree depth is too high. Rule filtering for a higher depth is not implemented.")
     end
+    if max_depth < 1
+        error("Minimum tree depth is 1; got $max_depth")
+    end
     # It is essential for the stability to determine the cutpoints over the whole dataset.
     cutpoints = _cutpoints(X, q)
     classes = unique(y)
