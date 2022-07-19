@@ -36,11 +36,11 @@ function _evaluate(model, X, y, nfolds=10)
 end
 
 results = DataFrame(;
-        dataset=String[],
-        model=String[],
-        hyperparameters=NamedTuple[],
+        Dataset=String[],
+        Model=String[],
+        Hyperparameters=NamedTuple[],
         nfolds=Int[],
-        auc=Float64[],
+        AUC=Float64[],
         se=Float64[]
     )
 
@@ -58,11 +58,11 @@ function _evaluate!(
     model = modeltype(; hyperparameters...)
     e = _evaluate(model, X, y)
     row = (;
-        dataset=dataset,
-        model=_pretty_name(modeltype),
-        hyperparameters=_filter_rng(hyperparameters),
+        Dataset=dataset,
+        Model=_pretty_name(modeltype),
+        Hyperparameters=_filter_rng(hyperparameters),
         nfolds,
-        auc=_score(e),
+        AUC=_score(e),
         se=round(only(MLJBase._standard_errors(e)); digits=2)
     )
     push!(results, row)
@@ -150,14 +150,21 @@ let
     @test 0.60 < _score(e)
 end
 
+rename!(results, :se => "1.96*SE")
+rename!(results, :nfolds => "`nfolds`")
 print('\n' * repr(results) * "\n\n")
 
+function df2markdown(df::DataFrame)
+    io = IOBuffer()
+    PrettyTables = DataFrames.PrettyTables
+    PrettyTables.pretty_table(io, df, tf=DataFrames.PrettyTables.tf_markdown)
+    text = String(take!(io))
+    lines = split(text, '\n')
+    return join([lines[1]; lines[3:end]], '\n')
+end
+
 if haskey(ENV, "GITHUB_STEP_SUMMARY")
-    job_summary = """
-        ```
-        $(repr(results))
-        ```
-        """
+    job_summary = df2markdown(results)
     path = ENV["GITHUB_STEP_SUMMARY"]
     open(path, "a") do io
         write(io, job_summary)

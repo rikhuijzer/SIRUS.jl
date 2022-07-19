@@ -10,8 +10,9 @@ using DataFrames:
     DataFrames,
     DataFrame,
     Not,
-    select,
-    dropmissing!
+    dropmissing!,
+    rename!,
+    select
 using DecisionTree: DecisionTree
 using MLJBase:
     CV,
