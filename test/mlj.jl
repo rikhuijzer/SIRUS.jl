@@ -41,7 +41,7 @@ results = DataFrame(;
         hyperparameters=NamedTuple[],
         nfolds=Int[],
         auc=Float64[],
-        variance=Float64[]
+        se=Float64[]
     )
 
 _filter_rng(hyper::NamedTuple) = Base.structdiff(hyper, (; rng=:foo))
@@ -63,7 +63,7 @@ function _evaluate!(
         hyperparameters=_filter_rng(hyperparameters),
         nfolds,
         auc=_score(e),
-        variance=round(var(only(e.per_fold)); digits=2)
+        se=round(only(MLJBase._standard_errors(e)); digits=2)
     )
     push!(results, row)
     return e

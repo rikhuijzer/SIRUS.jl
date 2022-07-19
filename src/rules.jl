@@ -187,7 +187,9 @@ function _rules(forest::StableForest)
     rules = Rule[]
     for tree in forest.trees
         tree_rules = _rules!(tree)
-        rules = [rules; tree_rules]
+        for rule in tree_rules
+            push!(rules, rule)
+        end
     end
     return rules
 end
