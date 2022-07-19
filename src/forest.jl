@@ -92,7 +92,8 @@ end
 
 "Return a view on all `y` for which the `comparison` holds in `X[:, feature]`."
 function _view_y(X, y, feature::Int, comparison, cutpoint)
-    indexes_in_region = comparison.(X[:, feature], cutpoint)
+    data = view(X, :, feature)
+    indexes_in_region = Bool[comparison(e, cutpoint) for e in data]
     return view(y, indexes_in_region)
 end
 
