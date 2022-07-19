@@ -154,17 +154,12 @@ rename!(results, :se => "1.96*SE")
 rename!(results, :nfolds => "`nfolds`")
 print('\n' * repr(results) * "\n\n")
 
-function df2markdown(df::DataFrame)
-    io = IOBuffer()
-    PrettyTables = DataFrames.PrettyTables
-    PrettyTables.pretty_table(io, df, tf=DataFrames.PrettyTables.tf_markdown)
-    text = String(take!(io))
-    lines = split(text, '\n')
-    return join([lines[1]; lines[3:end]], '\n')
-end
-
 if haskey(ENV, "GITHUB_STEP_SUMMARY")
-    job_summary = df2markdown(results)
+    job_summary = """
+        ```
+        $(repr(results))
+        ```
+        """
     path = ENV["GITHUB_STEP_SUMMARY"]
     open(path, "a") do io
         write(io, job_summary)
