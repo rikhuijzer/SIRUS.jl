@@ -62,7 +62,7 @@ function _binary_accuracy(stree::ST.Node, classes, data, y)
     return accuracy(binary, y)
 end
 
-classes = unique(y)
+classes = ST._classes(y)
 stree = ST._tree(_rng(), data, y, classes, min_data_in_leaf=1, q=10)
 @test 0.95 < _binary_accuracy(stree, classes, data, y)
 
@@ -92,7 +92,16 @@ end
 # DecisionTree.print_tree.(dforest.trees);
 
 sforest = ST._forest(_rng(), data, y, colnames; n_trees=10, max_depth=2)
-# AbstractTrees.print_tree.(sforest.trees);
+
+@testset "max_depth is adhered to" begin
+    some_children(forest) = ST.AbstractTrees.children(forest.trees[1])
+
+    # ST.print_tree.(sforest.trees);
+    @test !(all(child -> child isa ST.Leaf, some_children(sforest)))
+
+    undeep_forest = ST._forest(_rng(), data, y, colnames; n_trees=10, max_depth=1)
+    @test all(child -> child isa ST.Leaf, some_children(undeep_forest))
+end
 
 @testset "trees in forest are capable" begin
     dtree_accuracies = [accuracy(DecisionTree.apply_tree(tree, data), y) for tree in dforest.trees]

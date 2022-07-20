@@ -265,11 +265,11 @@ function _tree(
     depth += 1
     left = let
         _X, _y = _view_X_y(X, y, sp, <)
-        _tree(rng, _X, _y, classes, colnames; cutpoints, depth)
+        _tree(rng, _X, _y, classes, colnames; cutpoints, depth, max_depth)
     end
     right = let
         _X, _y = _view_X_y(X, y, sp, ≥)
-        _tree(rng, _X, _y, classes, colnames; cutpoints, depth)
+        _tree(rng, _X, _y, classes, colnames; cutpoints, depth, max_depth)
     end
     node = Node(sp, left, right)
     return node
