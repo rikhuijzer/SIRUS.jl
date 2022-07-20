@@ -107,6 +107,10 @@ let
     hyper = (; rng=_rng(), n_trees=50)
     e = _evaluate!(results, "blobs", StableRulesClassifier, hyper)
     @test 0.95 < _score(e)
+
+    for fitted in e.fitted_params_per_fold
+        @test fitted.fitresult.classes == [1, 2]
+    end
 end
 
 n_trees = 40

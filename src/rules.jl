@@ -377,17 +377,16 @@ end
 
 function Base.show(io::IO, model::StableRules)
     l = length(model.rules)
-    rule_text = string("rule", l == 1 ? "" : "s")
+    rule_text = string("rule", l == 1 ? "" : "s")::String
     println(io, "StableRules model with $l $rule_text:")
     for i in 1:l
-        ending = i == l ? "" : " +"
+        ending = i < l ? " +" : ""
         rule = model.rules[i]
         weight = model.weights[i]
         println(io, " $weight * $rule", ending)
     end
     lc = length(model.classes)
-    class_text = string("class", lc == 1 ? "" : "es")
-    println(io, "and $lc $class_text: $(model.classes)")
+    println(io, "and $lc classes: $(model.classes)")
 end
 
 function _predict(pair::Tuple{Rule,Float64}, row::AbstractVector)

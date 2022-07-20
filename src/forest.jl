@@ -242,7 +242,7 @@ function _tree(
         rng::AbstractRNG,
         X,
         y::AbstractVector,
-        classes::AbstractVector=unique(y),
+        classes::AbstractVector,
         colnames::Vector{String}=_colnames(X);
         max_split_candidates=_p(X),
         depth=0,
@@ -307,6 +307,12 @@ _elements(model::StableForest) = model.trees
 "Increase the state of `rng` by `i`."
 _change_rng_state!(rng::AbstractRNG, i::Int) = rand(rng, i)
 
+"""
+Return an unique and sorted vector of classes based on `y`.
+The vector is sorted to ensure that class ordering is the same between cross-validations.
+"""
+_classes(y::AbstractVector) = sort(unique(y))
+
 const PARTIAL_SAMPLING_DEFAULT = 0.7
 const N_TREES_DEFAULT = 1_000
 const MAX_DEPTH_DEFAULT = 2
@@ -345,7 +351,7 @@ function _forest(
     end
     # It is essential for the stability to determine the cutpoints over the whole dataset.
     cutpoints = _cutpoints(X, q)
-    classes = unique(y)
+    classes = _classes(y)
 
     max_split_candidates = round(Int, sqrt(_p(X)))
     n_samples = floor(Int, partial_sampling * length(y))
