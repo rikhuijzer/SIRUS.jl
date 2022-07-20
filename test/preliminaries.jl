@@ -84,4 +84,8 @@ function boston()
     return (X, y)
 end
 
+function _Split(feature::Int, splitval::Float, direction::Symbol)
+    return ST.Split(feature, string(feature), splitval, direction)
+end
+
 nothing

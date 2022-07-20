@@ -9,8 +9,8 @@ struct Split
     direction::Symbol # :L or :R
 end
 
-function Split(feature::Int, splitval::Float, direction::Symbol)
-    return Split(SplitPoint(feature, splitval), direction)
+function Split(feature::Int, name::String, splitval::Float, direction::Symbol)
+    return Split(SplitPoint(feature, splitval, name), direction)
 end
 
 _feature(splitpoint::SplitPoint) = splitpoint.feature
@@ -37,15 +37,25 @@ function TreePath(text::String)
         comparisons = split(strip(text), '&')
         splits = map(comparisons) do c
             direction = contains(c, '<') ? :L : :R
-            feature = parse(Int, c[6:findfirst(']', c)-1])
+            feature_text = c[6:findfirst(']', c) - 1]
+            if startswith(feature_text, ':')
+                msg = "Can only parse feature numbers such as `X[i, 3]`, " *
+                    "but got `X[i, $feature_text]`"
+                throw(ArgumentError(msg))
+            end
+            feature = parse(Int, feature_text)
             splitval = let
                 start = direction == :L ? findfirst('<', c) + 1 : findfirst('≥', c) + 3
                 parse(Float, c[start:end])
             end
-            Split(feature, splitval, direction)
+            feature_name = string(feature)::String
+            Split(feature, feature_name, splitval, direction)
         end
         return TreePath(splits)
     catch e
+        if e isa ArgumentError
+            rethrow(e)
+        end
         msg = """
             Couldn't parse \"$text\"
 
@@ -58,12 +68,26 @@ function TreePath(text::String)
     end
 end
 
+"""
+Return a feature name that can be shown as `[:, 1]` or `[:, :some_var]`.
+"""
+function _pretty_feature_name(feature::Int, feature_name::String255)
+    name = string(feature_name)::String
+    s = string(feature)::String
+    if s == name
+        return s
+    else
+        return string(':', name)
+    end
+end
+
 function Base.show(io::IO, path::TreePath)
     texts = map(path.splits) do split
-        splitpoint = split.splitpoint
+        sp = split.splitpoint
         comparison = split.direction == :L ? '<' : '≥'
-        val = splitpoint.value
-        text = "X[i, $(splitpoint.feature)] $comparison $val"
+        val = sp.value
+        feature = _pretty_feature_name(sp.feature, sp.feature_name)
+        text = "X[i, $feature] $comparison $val"
     end
     text = string("TreePath(\" ", join(texts, " & "), " \")")::String
     print(io, text)

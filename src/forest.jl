@@ -97,10 +97,24 @@ function _view_y(X, y, feature::Int, comparison, cutpoint)
     return view(y, indexes_in_region)
 end
 
-"Location where the tree splits for some split."
+"""
+    SplitPoint(feature::Int, value::Float, feature_name::String)
+
+A location where the tree splits.
+
+Arguments:
+- `feature`: Feature index.
+- `value`: Value of split.
+- `feature_name`: Name of the feature which is used for pretty printing.
+"""
 struct SplitPoint
     feature::Int
     value::Float
+    feature_name::String255
+
+    function SplitPoint(feature::Int, value::Float, feature_name::String)
+        return new(feature, value, String255(feature_name))
+    end
 end
 
 function _information_gain(y, y_left, y_right, classes)
@@ -125,6 +139,7 @@ function _split(
         X,
         y::AbstractVector,
         classes::AbstractVector,
+        colnames::Vector{String},
         cutpoints::AbstractMatrix{Float};
         max_split_candidates::Int=_p(X)
     )
@@ -152,7 +167,8 @@ function _split(
     if best_score == Float(0)
         return nothing
     end
-    return SplitPoint(best_score_feature, best_score_cutpoint)
+    feature_name = colnames[best_score_feature]
+    return SplitPoint(best_score_feature, best_score_cutpoint, feature_name)
 end
 
 const Probabilities = Vector{Float64}
@@ -211,7 +227,8 @@ function _tree(
         rng::AbstractRNG,
         X,
         y::AbstractVector,
-        classes::AbstractVector=unique(y);
+        classes::AbstractVector=unique(y),
+        colnames::Vector{String}=_colnames(X);
         max_split_candidates=_p(X),
         depth=0,
         max_depth=2,
@@ -226,20 +243,20 @@ function _tree(
     if depth == max_depth
         return Leaf(classes, y)
     end
-    splitpoint = _split(rng, X, y, classes, cutpoints; max_split_candidates)
-    if isnothing(splitpoint) || length(y) ≤ min_data_in_leaf
+    sp = _split(rng, X, y, classes, colnames, cutpoints; max_split_candidates)
+    if isnothing(sp) || length(y) ≤ min_data_in_leaf
         return Leaf(classes, y)
     end
     depth += 1
     left = let
-        _X, _y = _view_X_y(X, y, splitpoint, <)
-        _tree(rng, _X, _y, classes; cutpoints, depth)
+        _X, _y = _view_X_y(X, y, sp, <)
+        _tree(rng, _X, _y, classes, colnames; cutpoints, depth)
     end
     right = let
-        _X, _y = _view_X_y(X, y, splitpoint, ≥)
-        _tree(rng, _X, _y, classes; cutpoints, depth)
+        _X, _y = _view_X_y(X, y, sp, ≥)
+        _tree(rng, _X, _y, classes, colnames; cutpoints, depth)
     end
-    node = Node(splitpoint, left, right)
+    node = Node(sp, left, right)
     return node
 end
 
@@ -279,6 +296,15 @@ const PARTIAL_SAMPLING_DEFAULT = 0.7
 const N_TREES_DEFAULT = 1_000
 const MAX_DEPTH_DEFAULT = 2
 
+"Return `names(X)` if defined for `X` and string numbers otherwise."
+function _colnames(X)::Vector{String}
+    return try
+        return names(X)
+    catch
+        return string.(1:_p(X))
+    end
+end
+
 """
 Return a random forest.
 
@@ -297,7 +323,8 @@ Arguments:
 function _forest(
         rng::AbstractRNG,
         X::AbstractMatrix,
-        y::AbstractVector;
+        y::AbstractVector,
+        colnames::Vector{String};
         partial_sampling::Real=PARTIAL_SAMPLING_DEFAULT,
         n_trees::Int=N_TREES_DEFAULT,
         max_depth::Int=MAX_DEPTH_DEFAULT,
@@ -330,7 +357,8 @@ function _forest(
             _rng,
             _X,
             _y,
-            classes;
+            classes,
+            colnames;
             max_split_candidates,
             max_depth,
             q,
@@ -341,13 +369,14 @@ function _forest(
     end
     return StableForest(trees, classes)
 end
+
 function _forest(rng::AbstractRNG, X, y; kwargs...)
     if !(X isa AbstractMatrix || Tables.istable(X))
         error("Input `X` doesn't satisfy the Tables.jl interface.")
     end
     # Tables doesn't assume the data fits in memory so that complicates things a lot.
     # Implementing out-of-memory trees is a problem for later.
-    return _forest(rng, Tables.matrix(X), y; kwargs...)
+    return _forest(rng, matrix(X), y, _colnames(X); kwargs...)
 end
 
 function _isempty_error(::StableForest)

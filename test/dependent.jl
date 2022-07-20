@@ -39,8 +39,8 @@ end
 @test wrap_filter([r1, r2, r3, r5]) == [r1, r3, r5]
 
 let
-    A = ST.Split(1, 32000f0, :L)
-    B = ST.Split(3, 64f0, :L)
+    A = _Split(1, 32000f0, :L)
+    B = _Split(3, 64f0, :L)
     rules = [r1, r5, r7, r12]
     expected = Bool[1 1 1 0 0;
                     1 1 0 0 0;
@@ -51,8 +51,8 @@ let
 end
 
 let
-    A = ST.Split(1, 32000f0, :L)
-    B = ST.Split(4, 12f0, :L)
+    A = _Split(1, 32000f0, :L)
+    B = _Split(4, 12f0, :L)
     rules = [r1, r14, r15]
     expected = Bool[1 1 0 0;
                     1 1 0 0;
@@ -63,8 +63,8 @@ let
 end
 
 let
-    A = ST.Split(2, 8000f0, :L)
-    B = ST.Split(4, 12f0, :L)
+    A = _Split(2, 8000f0, :L)
+    B = _Split(4, 12f0, :L)
     rules = [r3, r16, r17]
     expected = Bool[1 1 0 0;
                     1 1 0 0;
@@ -74,9 +74,9 @@ let
     @test ST._linearly_dependent(rules, A, B) == Bool[0, 0, 1]
 end
 
-@test ST._unique_left_splits([r1, r2]) == [ST.Split(1, 32000f0, :L)]
+@test ST._unique_left_splits([r1, r2]) == [_Split(1, 32000f0, :L)]
 let
-    expected = [ST.Split(1, 32000f0, :L), ST.Split(3, 64f0, :L)]
+    expected = [_Split(1, 32000f0, :L), _Split(3, 64f0, :L)]
     @test ST._unique_left_splits([r1, r5, r7, r12]) == expected
 end
 
@@ -84,13 +84,13 @@ end
 @test ST._left_triangular_product([1, 2, 3]) == [(1, 2), (1, 3), (2, 3)]
 
 let
-    A = ST.Split(2, 8000f0, :L)
-    B = ST.Split(4, 12f0, :L)
+    A = _Split(2, 8000f0, :L)
+    B = _Split(4, 12f0, :L)
     @test ST._related_rule(r3, A, B)
     @test ST._related_rule(r16, A, B)
     @test ST._related_rule(r17, A, B)
     @test !ST._related_rule(r1, A, B)
-    @test !(ST._related_rule(r1, ST.Split(1, 31000.0f0, :L), B))
+    @test !(ST._related_rule(r1, _Split(1, 31000.0f0, :L), B))
 end
 
 @test ST._linearly_dependent([r1, r3]) == Bool[0, 0]

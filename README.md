@@ -10,7 +10,10 @@ Decision trees are easily interpretable but are unstable, meaning that small cha
 Random forests have solved this by fitting multiple trees.
 However, interpretability of random forests is limited even with tools such as Shapley values.
 For example, it is not possible to reconstruct the model given only the Shapley values.
-SIRUS solves these problems by finding 10 to 20 decision rules.
+This package solves these problems by finding a number of decision rules; typically 10.
+
+Note that, compared to random forests, the accuracy of these rules are lower than the accuracy of the pure tree.
+However, in practise, it is very likely that the accuracy of the rules is higher because the model can be verified by interpreting the rules.
 
 ## Algorithm
 

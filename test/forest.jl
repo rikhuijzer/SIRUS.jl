@@ -23,10 +23,12 @@ let
     X = [1 1;
          1 3]
     classes = unique(y)
+    colnames = ["A", "B"]
     cutpoints = Float.(X)
-    splitpoint = ST._split(StableRNG(1), X, y, classes, cutpoints)
+    splitpoint = ST._split(StableRNG(1), X, y, classes, colnames, cutpoints)
     # Obviously, feature (column) 2 is more informative to split on than feature 1.
     @test splitpoint.feature == 2
+    @test splitpoint.feature_name == "B"
     # Given that the split does < and ≥, then 3 is the best place since it separates 1 (left) and 3 (right).
     @test splitpoint.value == Float(3)
 end
@@ -45,6 +47,7 @@ end
 n = 200
 p = 70
 X, y = make_blobs(n, p; centers=2, rng=_rng(), shuffle=true)
+colnames = ST._colnames(X)
 
 n_subfeatures = 0
 max_depth = 2
@@ -88,7 +91,7 @@ dforest = let
 end
 # DecisionTree.print_tree.(dforest.trees);
 
-sforest = ST._forest(_rng(), data, y; n_trees=10, max_depth=2)
+sforest = ST._forest(_rng(), data, y, colnames; n_trees=10, max_depth=2)
 # AbstractTrees.print_tree.(sforest.trees);
 
 @testset "trees in forest are capable" begin

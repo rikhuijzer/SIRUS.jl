@@ -142,6 +142,17 @@ end
     @test_throws ArgumentError fit!(mach)
 end
 
+@testset "feature names" begin
+    rng = _rng()
+    n = 50
+    X = DataFrame(; AAA=rand(rng, n), AAB=rand(rng, n))
+    y = categorical(rand(rng, 1:2, n))
+    model = StableRulesClassifier(; n_trees=50)
+    mach = machine(model, X, y)
+    fit!(mach)
+    @test contains(repr(mach.fitresult), "AAB")
+end
+
 let
     e = _evaluate_baseline!(results, "haberman")
     @test 0.64 < _score(e)

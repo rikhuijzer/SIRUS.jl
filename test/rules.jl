@@ -1,10 +1,18 @@
-text = " X[i, 1] < 1.0 & X[i, 1] ≥ 4.0 "
-@test repr(TreePath(text)) == "TreePath(\"$text\")"
+let
+    text = " X[i, 1] < 1.0 & X[i, 1] ≥ 4.0 "
+    @test repr(TreePath(text)) == "TreePath(\"$text\")"
+end
+
+let
+    text = " X[i, :A] < 1.0 "
+    @test_throws ArgumentError repr(TreePath(text))
+end
 
 Float = ST.Float
 classes = [:a, :b, :c]
 left = ST.Leaf([1.0, 0.0, 0.0])
-splitpoint = ST.SplitPoint(1, Float(1))
+feature_name = "1"
+splitpoint = ST.SplitPoint(1, Float(1), feature_name)
 right = ST.Node(splitpoint, ST.Leaf([0.0, 1.0, 0.0]), ST.Leaf([0.0, 0.0, 1.0]))
 
 left_rule = ST.Rule(ST.TreePath(" X[i, 1] < 32000 "), [0.61], [0.408])
@@ -24,7 +32,7 @@ end
 
 # @test ST._mode([[1, 2], [1, 6], [4, 6]]) == [1, 6]
 
-splitpoint = ST.SplitPoint(1, ST.Float(4))
+splitpoint = ST.SplitPoint(1, ST.Float(4), feature_name)
 node = ST.Node(splitpoint, left, right)
 
 rules = ST._rules!(node)

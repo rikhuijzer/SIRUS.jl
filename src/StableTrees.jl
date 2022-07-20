@@ -4,11 +4,12 @@ import AbstractTrees: children, nodevalue
 import Base
 
 using CategoricalArrays: CategoricalValue, unwrap
+using InlineStrings: String255
 using LinearAlgebra: rank
 using MLJModelInterface: UnivariateFinite
 using Random: AbstractRNG, default_rng, shuffle
 using Statistics: mean, median
-using Tables: Tables
+using Tables: Tables, matrix
 
 const Float = Float32
 

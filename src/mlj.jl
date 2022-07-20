@@ -2,7 +2,6 @@ module MLJImplementation
 
 import MLJModelInterface:
     fit,
-    matrix,
     predict,
     metadata_model,
     metadata_pkg
@@ -26,12 +25,13 @@ using StableTrees:
     DEFAULT_PENALTY,
     StableForest,
     StableRules,
+    _colnames,
     _forest,
     _mean,
     _predict,
     _rules,
     _process_rules
-using Tables: Tables
+using Tables: Tables, matrix
 
 """
     StableForestClassifier <: MLJModelInterface.Probabilistic
@@ -107,7 +107,8 @@ function fit(model::StableForestClassifier, verbosity::Int, X, y)
     forest = _forest(
         model.rng,
         matrix(X),
-        _float(y);
+        _float(y),
+        _colnames(X);
         model.partial_sampling,
         model.n_trees,
         model.max_depth,
@@ -129,7 +130,8 @@ function fit(model::StableRulesClassifier, verbosity::Int, X, y)
     forest = _forest(
         model.rng,
         matrix(X),
-        _float(y);
+        _float(y),
+        _colnames(X);
         model.partial_sampling,
         model.n_trees,
         model.max_depth,
