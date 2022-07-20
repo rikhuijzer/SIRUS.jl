@@ -165,6 +165,8 @@ let
 
     e = _evaluate!(results, "haberman", StableRulesClassifier, hyper)
     @test 0.60 < _score(e)
+    fitresult = string(first(e.fitted_params_per_fold).fitresult)
+    @test contains(fitresult, ":x1")
 end
 
 let
@@ -178,14 +180,14 @@ let
     e = _evaluate!(results, "boston", StableRulesClassifier, hyper)
 end
 
-rename!(results, :se => "1.96*SE")
-rename!(results, :nfolds => "`nfolds`")
-print('\n' * repr(results) * "\n\n")
+pretty = rename(results, :se => "1.96*SE")
+rename!(pretty, :nfolds => "`nfolds`")
+print('\n' * repr(pretty) * "\n\n")
 
 if haskey(ENV, "GITHUB_STEP_SUMMARY")
     job_summary = """
         ```
-        $(repr(results))
+        $(repr(pretty))
         ```
         """
     path = ENV["GITHUB_STEP_SUMMARY"]

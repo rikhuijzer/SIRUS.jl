@@ -215,6 +215,21 @@ function _verify_lengths(X, y)
     end
 end
 
+"Return `names(X)` if defined for `X` and string numbers otherwise."
+function _colnames(X)::Vector{String}
+    fallback() = string.(1:_p(X))
+    try
+        names = collect(string.(Tables.columnnames(X)))
+        if isempty(names)
+            return fallback()
+        else
+            return names
+        end
+    catch
+        return fallback()
+    end
+end
+
 """
 Return the root node of a stable decision tree fitted on `X` and `y`.
 
@@ -295,15 +310,6 @@ _change_rng_state!(rng::AbstractRNG, i::Int) = rand(rng, i)
 const PARTIAL_SAMPLING_DEFAULT = 0.7
 const N_TREES_DEFAULT = 1_000
 const MAX_DEPTH_DEFAULT = 2
-
-"Return `names(X)` if defined for `X` and string numbers otherwise."
-function _colnames(X)::Vector{String}
-    return try
-        return names(X)
-    catch
-        return string.(1:_p(X))
-    end
-end
 
 """
 Return a random forest.

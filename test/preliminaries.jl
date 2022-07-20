@@ -12,6 +12,7 @@ using DataFrames:
     Not,
     dropmissing!,
     rename!,
+    rename,
     select
 using DecisionTree: DecisionTreeClassifier
 using MLJBase:
