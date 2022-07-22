@@ -74,18 +74,24 @@ _p(X::AbstractMatrix) = size(X, 2)
 _p(X) = length(Tables.columnnames(X))
 
 "Set of possible cutpoints, that is, numbers from the empirical quantiles."
-const Cutpoints = Matrix{Float}
+const Cutpoints = Vector{Float}
 
 _view_feature(X::AbstractMatrix, feature::Int) = view(X, :, feature)
 _view_feature(X, feature::Int) = X[feature]
 
-"Return a matrix containing `q` rows and one column for each feature in the dataset."
+"""
+Return a vector of vectors containing
+- one inner vector for each feature in the dataset and
+- inner vectors containing the unique cutpoints, that is, `length(V[i])` ≤ `q` for all i in V.
+
+Using unique here to avoid checking splits twice.
+"""
 function _cutpoints(X, q::Int)
     p = _p(X)
-    cutpoints = Cutpoints(undef, q, p)
+    cutpoints = Vector{Cutpoints}(undef, p)
     for feature in 1:p
         V = _view_feature(X, feature)
-        cutpoints[:, feature] = _cutpoints(V, q)
+        cutpoints[feature] = unique(_cutpoints(V, q))
     end
     return cutpoints
 end
@@ -140,7 +146,7 @@ function _split(
         y::AbstractVector,
         classes::AbstractVector,
         colnames::Vector{String},
-        cutpoints::AbstractMatrix{Float};
+        cutpoints::Vector{Cutpoints};
         max_split_candidates::Int=_p(X)
     )
     best_score = Float(0)
@@ -150,8 +156,7 @@ function _split(
     mc = max_split_candidates
     possible_features = mc == p ? (1:p) : _rand_subset(rng, 1:p, mc)
     for feature in possible_features
-        feature_cutpoints = view(cutpoints, :, feature)
-        for cutpoint in feature_cutpoints
+        for cutpoint in cutpoints[feature]
             y_left = _view_y(X, y, feature, <, cutpoint)
             length(y_left) == 0 && continue
             y_right = _view_y(X, y, feature, ≥, cutpoint)
@@ -248,7 +253,7 @@ function _tree(
         depth=0,
         max_depth=2,
         q=10,
-        cutpoints::AbstractMatrix{Float}=_cutpoints(X, q),
+        cutpoints::Vector{Cutpoints}=_cutpoints(X, q),
         min_data_in_leaf=5
     )
     if X isa Tables.MatrixTable

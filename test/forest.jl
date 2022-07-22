@@ -16,15 +16,15 @@ feature = 1
 @test ST._cutpoints(1:4, 3) == Float[1, 2, 3]
 @test ST._cutpoints([1, 3, 5, 7], 2) == Float[3, 5]
 
-@test ST._cutpoints(X, 2) == Float[1 2; 3 4]
-@test ST._cutpoints([3 4; 1 5; 2 6], 2) == Float[1 4; 2 5]
+@test ST._cutpoints(X, 2) == [Float[1, 3], Float[2, 4]]
+@test ST._cutpoints([3 4; 1 5; 2 6], 2) == [Float[1, 2], Float[4, 5]]
 
 let
     X = [1 1;
          1 3]
     classes = unique(y)
     colnames = ["A", "B"]
-    cutpoints = Float.(X)
+    cutpoints = ST._cutpoints(X, 2)
     splitpoint = ST._split(StableRNG(1), X, y, classes, colnames, cutpoints)
     # Obviously, feature (column) 2 is more informative to split on than feature 1.
     @test splitpoint.feature == 2
