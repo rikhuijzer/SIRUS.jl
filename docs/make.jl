@@ -5,6 +5,7 @@ using Documenter:
     asset,
     deploydocs,
     makedocs
+using Pkg: Pkg
 using PlutoStaticHTML
 using StableTrees
 
@@ -16,14 +17,15 @@ DocMeta.setdocmeta!(
 )
 
 sitename = "StableTrees.jl"
-tutorials_dir = joinpath(pkgdir(StableTrees), "docs", "src")
+tutorials_dir = joinpath(dirname(@__DIR__), "docs", "src")
 
 function build()
-    println("Building notebooks")
+    println("Building notebooks in $tutorials_dir")
     use_distributed = false
     output_format = documenter_output
     bopts = BuildOptions(tutorials_dir; use_distributed, output_format)
     build_notebooks(bopts)
+    Pkg.activate(@__DIR__)
     return nothing
 end
 

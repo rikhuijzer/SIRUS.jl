@@ -1,5 +1,6 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 PlutoStaticHTML = "359b1769-a58e-495b-9770-312e911026ad"
 StableTrees = "9113e207-2504-4b06-8eee-d78e288bee65"
 

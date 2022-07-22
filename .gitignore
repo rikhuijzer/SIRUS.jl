@@ -26,3 +26,4 @@ docs/site/
 docs/src/**/**.md
 
 profile.pb.gz
+tmp**
