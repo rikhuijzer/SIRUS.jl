@@ -1,3 +1,3 @@
 # StableTrees.jl
 
-See the documentation for more information.
+See the [documentation](https://huijzer.xyz/StableTrees.jl/) for more information.
