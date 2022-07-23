@@ -31,7 +31,7 @@ begin
 	using MLJ: CV, MLJ, Not, PerformanceEvaluation, auc, fit!, evaluate, machine
 	using PlutoUI: TableOfContents # hide
 	using StableRNGs: StableRNG
-	using StableTrees: StableTrees, StableForestClassifier, StableRulesClassifier
+	using StableTrees: StableTrees, StableRules, StableForestClassifier, StableRulesClassifier
 	using Statistics: mean
 end
 
@@ -233,7 +233,7 @@ The higher this number, the more trees are fitted and, hence, the higher the cha
 
 # ╔═╡ 16de5518-2a16-40ef-87a5-d2acd514d294
 md"""
-## Model interpretation
+## Interpretation
 
 Finally, let's interpret the rules that the model has learned.
 Since we know that the model performs well on the cross-validations, we can fit our preferred model on the complete dataset:
@@ -255,7 +255,84 @@ Intuitively, the 2 of the rules inside the model makes sense.
 A patient is more likely to survive if the `age` of the patient and the number of `nodes` found inside the patient are lower.
 Why patients operated before the `year` 1960 are more likely to survive is unclear to me.
 This could be an indication that the model is wrong or that there is something unexpected going on.
+We investigate this perculiarity by visualizing the model.
 """
+
+# ╔═╡ 3c415a26-803e-4f35-866f-2e582c6c1c45
+md"""
+## Visualization
+
+Since our rules are relatively simple with only a binary outcome and only one clause in each rule, the following figure is a way to visualize the obtained rules per fold.
+For multiple clauses, I would not know how to visualize the rules.
+What this visualization shows is a right arrow for each rule in each fitted model.
+The horizontal position of each arrow is determined by the cutpoint specified by the rule and the vertical position is determined by the weight of the rule times the probability of survival (class 1).
+So, a higher arrow means that some rule had a stronger influence on the outcome.
+
+In the background, a histogram of the data is shown.
+The histogram is scaled to the highest arrow in all features meaning that each y-axis in this plot has the same height.
+"""
+
+# ╔═╡ ab5423cd-c8a9-488e-9bb0-bb41e583c2fa
+md"""
+What this plot shows is that the `nodes` feature is on average chosen as the feature with the most predictive power.
+This can be concluded from the fact that the arrows are located higher than the arrows for the other features.
+Furthermore, there is unfortunately some unstability in the position of the splitpoint for the `nodes` feature.
+Some models split the data at around 3 and others at around 8.
+Depending on the context in which this model is used, it might thus be beneficial to decrease the number of empirical quantiles `q` that the model can use to split on.
+By default `q=10`, but maybe something like `q=3` would make more sense here.
+
+For the other features, we can see that `age` is second best in predictive power and `year` the third best, that is, `year` actually performs pretty bad.
+Based on the fact that `year` is very unstable, it might be better to remove the feature altogether.
+This visualization solves the problem posed in the previous section.
+Apparently, the model felt that it had to fit on `year` even though the feature has little predictive power.
+Indeed, removing the feature from the dataset appears to have almost no effect on the accuracy:
+"""
+
+# ╔═╡ d9d357c9-f381-4266-ad4e-d87d4bcf4298
+md"""
+For comparison removing the `nodes` feature does reduce the predictive performance:
+"""
+
+# ╔═╡ ebf34b9e-62bb-4164-a970-f06279ea4937
+# hideall
+function _weight(model::StableRules, feature_name::String)
+	for (i, rule) in enumerate(model.rules)
+		if only(rule.path.splits).splitpoint.feature_name == feature_name
+			return model.weights[i]
+		end
+	end
+end;
+
+# ╔═╡ 487e7f5f-75a5-402b-b284-3ebeeca1b56d
+# hideall
+function _threshold(model::StableRules, feature_name::String)
+	for (i, rule) in enumerate(model.rules)
+		sp = only(rule.path.splits).splitpoint
+		if sp.feature_name == feature_name
+			return sp.value
+		end
+	end
+end;
+
+# ╔═╡ 4a0a8be4-c200-4e11-ad44-37af2e170f55
+# hideall
+function _then(model::StableRules, feature_name::String)
+	for (i, rule) in enumerate(model.rules)
+		if only(rule.path.splits).splitpoint.feature_name == feature_name
+			return rule.then_probs[2]
+		end
+	end
+end;
+
+# ╔═╡ a48221a9-f7c6-4ef3-9fde-5fafbe127c0d
+# hideall
+function _else(model::StableRules, feature_name::String)
+	for (i, rule) in enumerate(model.rules)
+		if only(rule.path.splits).splitpoint.feature_name == feature_name
+			return rule.else_probs[2]
+		end
+	end
+end;
 
 # ╔═╡ 0e0252e7-87a8-49e4-9a48-5612e0ded41b
 md"""
@@ -416,6 +493,59 @@ end
 # hideall
 _plot_cutpoints(nodes)
 
+# ╔═╡ 0abd8010-43a4-4aad-aa25-bd2b958988e6
+# hideall
+function _rule_plot(e::PerformanceEvaluation)
+	fig = Figure(; resolution=(800, 500))
+	
+	fitresults = getproperty.(e.fitted_params_per_fold, :fitresult)
+	feature_names = String[]
+	for fitresult in fitresults
+		for rule in fitresult.rules
+			name = only(rule.path.splits).splitpoint.feature_name
+			push!(feature_names, name)
+		end
+	end
+
+	unique_names = sort(unique(feature_names))
+	
+	then_heights = map(unique_names) do feature_name
+		W = _weight.(fitresults, feature_name)
+		probs = _then.(fitresults, feature_name)
+		H = W .* probs
+	end
+	
+	max_height = maximum(maximum.(then_heights))
+	
+	for (i, feature_name) in enumerate(unique_names)
+		ylabel = feature_name
+		ax = if i == 1
+			Axis(fig[i, 1]; title="Single-clause bootstrapped rule plot", ylabel)
+		else
+			Axis(fig[i, 1]; ylabel)
+		end
+		T = _threshold.(fitresults, feature_name)
+		
+		else_probs = _else.(fitresults, feature_name)
+		l = length(T)
+		grp = 1:l
+		
+		kwargs = (;
+			color=:white,
+			strokecolor=:black,
+			strokewidth=1,
+			scale_to=max_height
+		)
+
+		hist!(ax, data[:, feature_name]; kwargs...)
+
+		H = then_heights[i]
+		scatter!(T, H; marker=:ltriangle, markersize=12)
+		hideydecorations!(ax; label=false)
+	end
+	fig
+end;
+
 # ╔═╡ 4dcd564a-5b2f-4eae-87d6-c2973b828282
 _filter_rng(hyper::NamedTuple) = Base.structdiff(hyper, (; rng=:foo));
 
@@ -465,6 +595,22 @@ let
 	end
 end
 
+# ╔═╡ 03e27cb0-7106-4f17-8a2c-e3fac13ca0b0
+let
+	model = StableRulesClassifier
+	hyperparameters = (; max_depth=1, rng=_rng())
+	e = _evaluate(model, hyperparameters, X[:, Not(:year)], y).e
+	Base.Text(string("Without `year` AUC: ", _score(e)))
+end
+
+# ╔═╡ 8d881e71-3434-401f-bf54-868964dcab9a
+let
+	model = StableRulesClassifier
+	hyperparameters = (; max_depth=1, rng=_rng())
+	e = _evaluate(model, hyperparameters, X[:, Not(:nodes)], y).e
+	Base.Text(string("Without `nodes` AUC: ", _score(e)))
+end
+
 # ╔═╡ ab103b4e-24eb-4575-8c04-ae3fd9ec1673
 # ╠═╡ show_logs = false
 e1 = let
@@ -495,6 +641,41 @@ e4 = let
 	hyperparameters = (; max_depth=1, rng=_rng())
 	_evaluate(model, hyperparameters, X, y)
 end;
+
+# ╔═╡ e3173bf3-79f3-47d2-9dd3-164346022793
+# hideall
+_rule_plot(e4.e)
+
+# ╔═╡ 1e990652-5995-4fec-901a-852bfc3e79cd
+Base.Text(string("Full dataset AUC: ", _score(e4.e)))
+
+# ╔═╡ 7fad8dd5-c0a9-4c45-9663-d40a464bca77
+# hideall
+fitresults = getproperty.(e4.e.fitted_params_per_fold, :fitresult);
+
+# ╔═╡ 0ee41f3a-8348-4875-82a4-07b7121a589a
+# hideall
+fitresult = first(fitresults);
+
+# ╔═╡ 76ac8397-383e-4f03-8ecd-1f959fc0ef19
+# hideall
+fitresult |> typeof |> fieldnames;
+
+# ╔═╡ 10c772e7-28c9-4a0c-aaa4-0e02bcd1ee9d
+# hideall
+@assert _weight(fitresult, "age") == 0.276
+
+# ╔═╡ d98d9162-f72a-4212-ae47-1428ca45a4de
+# hideall
+@assert _threshold(fitresult, "age") == 42.0f0
+
+# ╔═╡ ad5f6878-f250-4102-a1eb-79b08706e14d
+# hideall
+@assert _then(fitresult, "age") == 0.858
+
+# ╔═╡ b5fe57d6-126c-4092-90be-5fb2bc0d3835
+# hideall
+@assert _else(fitresult, "age") == 0.744
 
 # ╔═╡ 5d875f9d-a0aa-47b0-8a75-75bb280fa1ba
 # ╠═╡ show_logs = false
@@ -587,6 +768,25 @@ end
 # ╠═16de5518-2a16-40ef-87a5-d2acd514d294
 # ╠═c2650040-f398-4a2e-bfe0-ce139c6ca879
 # ╠═6d0b29b6-61fb-4d16-9389-071892a3d9db
+# ╠═3c415a26-803e-4f35-866f-2e582c6c1c45
+# ╠═e3173bf3-79f3-47d2-9dd3-164346022793
+# ╠═ab5423cd-c8a9-488e-9bb0-bb41e583c2fa
+# ╠═1e990652-5995-4fec-901a-852bfc3e79cd
+# ╠═03e27cb0-7106-4f17-8a2c-e3fac13ca0b0
+# ╠═d9d357c9-f381-4266-ad4e-d87d4bcf4298
+# ╠═8d881e71-3434-401f-bf54-868964dcab9a
+# ╠═7fad8dd5-c0a9-4c45-9663-d40a464bca77
+# ╠═0ee41f3a-8348-4875-82a4-07b7121a589a
+# ╠═76ac8397-383e-4f03-8ecd-1f959fc0ef19
+# ╠═ebf34b9e-62bb-4164-a970-f06279ea4937
+# ╠═10c772e7-28c9-4a0c-aaa4-0e02bcd1ee9d
+# ╠═487e7f5f-75a5-402b-b284-3ebeeca1b56d
+# ╠═d98d9162-f72a-4212-ae47-1428ca45a4de
+# ╠═4a0a8be4-c200-4e11-ad44-37af2e170f55
+# ╠═ad5f6878-f250-4102-a1eb-79b08706e14d
+# ╠═a48221a9-f7c6-4ef3-9fde-5fafbe127c0d
+# ╠═b5fe57d6-126c-4092-90be-5fb2bc0d3835
+# ╠═0abd8010-43a4-4aad-aa25-bd2b958988e6
 # ╠═0e0252e7-87a8-49e4-9a48-5612e0ded41b
 # ╠═e1890517-7a44-4814-999d-6af27e2a136a
 # ╠═ede038b3-d92e-4208-b8ab-984f3ca1810e
