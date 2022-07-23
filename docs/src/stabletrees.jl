@@ -264,12 +264,15 @@ md"""
 
 Since our rules are relatively simple with only a binary outcome and only one clause in each rule, the following figure is a way to visualize the obtained rules per fold.
 For multiple clauses, I would not know how to visualize the rules.
-What this visualization shows is a right arrow for each rule in each fitted model.
-The horizontal position of each arrow is determined by the cutpoint specified by the rule and the vertical position is determined by the weight of the rule times the probability of survival (class 1).
-So, a higher arrow means that some rule had a stronger influence on the outcome.
+What this visualization shows is a blue point for each rule in each fitted model.
+The horizontal position of each point is determined by the cutpoint specified by the rule and the vertical position is determined by the weight of the rule times the probability of survival (class 1).
+So, a higher point means that some rule had a stronger influence on the outcome.
 
 In the background, a histogram of the data is shown.
 The histogram is scaled to the highest arrow in all features meaning that each y-axis in this plot has the same height.
+
+Also, the dashed vertical lines show the empirical quantiles, that is, the possible points at which the model is allowed to split.
+These empirical quantile are calculated on the full dataset and hence some points fall next to the quantile because the quantile for that fold turned out slightly different.
 """
 
 # ╔═╡ ab5423cd-c8a9-488e-9bb0-bb41e583c2fa
@@ -340,7 +343,7 @@ md"""
 
 Thanks to Clément Bénard, Gérard Biau, Sébastian da Veiga and Erwan Scornet for creating the SIRUS algorithm and documenting it extensively.
 Special thanks to Clément Bénard for answering my questions regarding the implementation.
-Also thanks to my PhD supervisors Ruud den Hartigh, Peter de Jonge and Frank Blaauw, and Age de Wit and colleagues at the Dutch Ministry of Defence for clarifying the constraints of the our data-problem and for providing the space to investigate multiple solutions.
+Also thanks to my PhD supervisors Ruud den Hartigh, Peter de Jonge and Frank Blaauw, and Age de Wit and colleagues at the Dutch Ministry of Defence for providing the data clarifying the constraints of the problem and for providing many methodological suggestions.
 """
 
 # ╔═╡ e1890517-7a44-4814-999d-6af27e2a136a
@@ -537,10 +540,12 @@ function _rule_plot(e::PerformanceEvaluation)
 			scale_to=max_height
 		)
 
-		hist!(ax, data[:, feature_name]; kwargs...)
+		D = data[:, feature_name]
+		hist!(ax, D; kwargs...)
+		vlines!(ax, unique(ST._cutpoints(D, 4)); color=:gray, linestyle=:dash)
 
 		H = then_heights[i]
-		scatter!(T, H; marker=:ltriangle, markersize=12)
+		scatter!(T, H) # marker=:ltriangle, markersize=12)
 		hideydecorations!(ax; label=false)
 	end
 	fig
