@@ -3,7 +3,7 @@
 <h1 align="center">StableTrees.jl</h1>
 
 <h3 align="center">
-  Explainable random forests via rule extraction
+  Explainable machine learning via rule extraction
 </h3>
 
 <p align="center">
