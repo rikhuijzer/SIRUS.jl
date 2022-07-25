@@ -326,16 +326,6 @@ function _then(model::StableRules, feature_name::String)
 	end
 end;
 
-# ╔═╡ a48221a9-f7c6-4ef3-9fde-5fafbe127c0d
-# hideall
-function _else(model::StableRules, feature_name::String)
-	for (i, rule) in enumerate(model.rules)
-		if only(rule.path.splits).splitpoint.feature_name == feature_name
-			return rule.else_probs[2]
-		end
-	end
-end;
-
 # ╔═╡ 0e0252e7-87a8-49e4-9a48-5612e0ded41b
 md"""
 ## Acknowledgements
@@ -527,8 +517,7 @@ function _rule_plot(e::PerformanceEvaluation)
 			Axis(fig[i, 1]; ylabel)
 		end
 		T = _threshold.(fitresults, feature_name)
-		
-		else_probs = _else.(fitresults, feature_name)
+
 		l = length(T)
 		grp = 1:l
 		
@@ -661,10 +650,6 @@ fitresults = getproperty.(e4.e.fitted_params_per_fold, :fitresult);
 # hideall
 fitresult = first(fitresults);
 
-# ╔═╡ 76ac8397-383e-4f03-8ecd-1f959fc0ef19
-# hideall
-fitresult |> typeof |> fieldnames;
-
 # ╔═╡ 10c772e7-28c9-4a0c-aaa4-0e02bcd1ee9d
 # hideall
 @assert _weight(fitresult, "age") == 0.276
@@ -676,10 +661,6 @@ fitresult |> typeof |> fieldnames;
 # ╔═╡ ad5f6878-f250-4102-a1eb-79b08706e14d
 # hideall
 @assert _then(fitresult, "age") == 0.858
-
-# ╔═╡ b5fe57d6-126c-4092-90be-5fb2bc0d3835
-# hideall
-@assert _else(fitresult, "age") == 0.744
 
 # ╔═╡ 5d875f9d-a0aa-47b0-8a75-75bb280fa1ba
 # ╠═╡ show_logs = false
@@ -781,15 +762,12 @@ end
 # ╠═8d881e71-3434-401f-bf54-868964dcab9a
 # ╠═7fad8dd5-c0a9-4c45-9663-d40a464bca77
 # ╠═0ee41f3a-8348-4875-82a4-07b7121a589a
-# ╠═76ac8397-383e-4f03-8ecd-1f959fc0ef19
 # ╠═ebf34b9e-62bb-4164-a970-f06279ea4937
 # ╠═10c772e7-28c9-4a0c-aaa4-0e02bcd1ee9d
 # ╠═487e7f5f-75a5-402b-b284-3ebeeca1b56d
 # ╠═d98d9162-f72a-4212-ae47-1428ca45a4de
 # ╠═4a0a8be4-c200-4e11-ad44-37af2e170f55
 # ╠═ad5f6878-f250-4102-a1eb-79b08706e14d
-# ╠═a48221a9-f7c6-4ef3-9fde-5fafbe127c0d
-# ╠═b5fe57d6-126c-4092-90be-5fb2bc0d3835
 # ╠═0abd8010-43a4-4aad-aa25-bd2b958988e6
 # ╠═0e0252e7-87a8-49e4-9a48-5612e0ded41b
 # ╠═e1890517-7a44-4814-999d-6af27e2a136a
