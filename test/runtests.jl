@@ -12,7 +12,7 @@ end
     include("dependent.jl")
 end
 
-@testset "interface" begin
+@testset "mlj" begin
     include("mlj.jl")
 end
 

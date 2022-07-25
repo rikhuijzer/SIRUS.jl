@@ -8,6 +8,7 @@ using CategoricalArrays: CategoricalValue, unwrap
 using InlineStrings: String255
 using LinearAlgebra: rank
 using MLJModelInterface: UnivariateFinite
+using PrecompileSignatures: @precompile_signatures
 using Random: AbstractRNG, default_rng, shuffle
 using Statistics: mean, median
 using Tables: Tables, matrix
@@ -24,5 +25,7 @@ const StableForestClassifier = MLJImplementation.StableForestClassifier
 export StableForestClassifier
 const StableRulesClassifier = MLJImplementation.StableRulesClassifier
 export StableRulesClassifier
+
+@precompile_signatures(StableTrees)
 
 end # module

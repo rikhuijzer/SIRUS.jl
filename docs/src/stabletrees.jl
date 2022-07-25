@@ -244,10 +244,9 @@ md"""
 The interpretation of the fitted model is as follows.
 The model has learned three rules for this dataset.
 For making a prediction for some value at row `i`, the model will first look at the value for the `nodes` feature.
-If that value is below 2.0, then the probability of survival is 0.819 and the probability of not surviving is 0.181.
-To see that the 0.819 means survival, see the bottom of the result which states "and 2 classes: [0.0, 1.0]" which means that any first element means that the patient didn't survive for at least 5 years and the second element means that the patient did survive.
-As a side note, giving a probability for each class is useful for later when the model will need to handle multi-class and regression settings.
-The values `[0.338, 0.622]` are used when the `nodes` value is greater or equal to 2.0.
+If that value is below 2.0, then the probability of survival is 0.819 and the probability of not surviving is 1 - 0.819 = 0.181.
+To see that the 0.819 means survival, see the bottom of the result which states showing only the probability for class 1.0.
+The value 0.662 is used when the `nodes` value is greater or equal to 2.0.
 Similarly, the model will obtain the probabilities for rules 2 and 3.
 To obtain the final result, the model will take a weighted average over the three rules.
 
@@ -286,7 +285,7 @@ By default `q=10`, but maybe something like `q=3` would make more sense here.
 
 For the other features, we can see that `age` is second best in predictive power and `year` the third best, that is, `year` actually performs pretty bad.
 Based on the fact that `year` is very unstable, it might be better to remove the feature altogether.
-This visualization solves the problem posed in the previous section.
+This visualization might be a solution to the problem posed in the previous section.
 Apparently, the model felt that it had to fit on `year` even though the feature has little predictive power.
 Indeed, removing the feature from the dataset appears to have almost no effect on the accuracy:
 """

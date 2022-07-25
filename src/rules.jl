@@ -81,7 +81,7 @@ function _pretty_feature_name(feature::Int, feature_name::String255)
     end
 end
 
-function Base.show(io::IO, path::TreePath)
+function _pretty_path(path::TreePath)
     texts = map(path.splits) do split
         sp = split.splitpoint
         comparison = split.direction == :L ? '<' : '≥'
@@ -89,7 +89,11 @@ function Base.show(io::IO, path::TreePath)
         feature = _pretty_feature_name(sp.feature, sp.feature_name)
         text = "X[i, $feature] $comparison $val"
     end
-    text = string("TreePath(\" ", join(texts, " & "), " \")")::String
+    return join(texts, " & ")
+end
+
+function Base.show(io::IO, path::TreePath)
+    text = string("TreePath(\" ", _pretty_path(path), " \")")::String
     print(io, text)
 end
 
@@ -375,18 +379,48 @@ function StableRules(
     return StableRules(rules, forest.classes, max_rules; penalty)
 end
 
+"Return only the last result for the binary case because the other is 1 -p anyway."
+function _simplify_binary_probabilities(probs::AbstractVector)
+    if length(probs) == 2
+        left = first(probs)
+        right = last(probs)
+        if !isapprox(left + right, 1.0; atol=0.01)
+            @warn """
+                The sum of the two probabilities $probs doesn't add to 1.
+                This is unexpected.
+                Please open an issue at StableTrees.jl.
+                """
+        end
+        return right
+    else
+        return probs
+    end
+end
+
+"Return a pretty formatted so that it is easy to understand."
+function _pretty_rule(rule::Rule)
+    then_probs = _simplify_binary_probabilities(rule.then_probs)
+    else_probs = _simplify_binary_probabilities(rule.else_probs)
+    condition = _pretty_path(rule.path)
+    return "if $condition then $then_probs else $else_probs"
+end
+
 function Base.show(io::IO, model::StableRules)
     l = length(model.rules)
     rule_text = string("rule", l == 1 ? "" : "s")::String
     println(io, "StableRules model with $l $rule_text:")
     for i in 1:l
         ending = i < l ? " +" : ""
-        rule = model.rules[i]
+        rule = _pretty_rule(model.rules[i])
         weight = model.weights[i]
         println(io, " $weight * $rule", ending)
     end
-    lc = length(model.classes)
-    println(io, "and $lc classes: $(model.classes)")
+    C = model.classes
+    lc = length(C)
+    note = lc == 2 ?
+    "\nNote: showing only the probability for class $(last(C)) since class $(first(C)) has probability 1 - p." :
+        ""
+    println(io, "and $lc classes: $C. $note")
 end
 
 function _predict(pair::Tuple{Rule,Float64}, row::AbstractVector)

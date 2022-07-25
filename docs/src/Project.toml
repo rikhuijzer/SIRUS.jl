@@ -17,7 +17,7 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
 CSV = "0.10"
-CairoMakie = "=0.8.10"
+CairoMakie = "0.8.12"
 DataFrames = "1"
 LightGBM = "0.5"
 MLJ = "0.18"
