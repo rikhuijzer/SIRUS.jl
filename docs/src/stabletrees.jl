@@ -263,14 +263,15 @@ md"""
 
 Since our rules are relatively simple with only a binary outcome and only one clause in each rule, the following figure is a way to visualize the obtained rules per fold.
 For multiple clauses, I would not know how to visualize the rules.
-What this visualization shows is a blue point for each rule in each fitted model.
-The horizontal position of each point is determined by the cutpoint specified by the rule and the vertical position is determined by the weight of the rule times the probability of survival (class 1).
-So, a higher point means that some rule had a stronger influence on the outcome.
+Also, this plot is probably not perfect; let me know if you have suggestions.
+
+What this visualization shows is an arrow for each rule in each fitted model.
+The vertical position is determined by the weight of the rule, the horizontal position by the location of the splitpoint, and the rotation of the arrow by the difference between the "then" and the "else" probability for class 1.0 (survival).
+So, in this case, one arrow located at 41 in the `age` feature at height 0.2 with a small rotation towards the left means that there was rule in one model in the cross-validation folds which concluded that patients with an `age` below 41 are more slightly likely to survive for at least 5 years than patients with an `age` above 41.
+Compared to some arrows having a height of 0.6 in the `nodes` feature, the age plays a not so big role here.
 
 In the background, a histogram of the data is shown.
-The histogram is scaled to the highest arrow in all features meaning that each y-axis in this plot has the same height.
-
-Also, the dashed vertical lines show the empirical quantiles, that is, the possible points at which the model is allowed to split.
+The histogram is scaled to the highest arrow in all features meaning that each y-axis in this plot has the same height. Finally, the dashed vertical lines show the empirical quantiles, that is, the possible points at which the model is allowed to split.
 These empirical quantile are calculated on the full dataset and hence some points fall next to the quantile because the quantile for that fold turned out slightly different.
 """
 
@@ -284,9 +285,10 @@ Depending on the context in which this model is used, it might thus be beneficia
 By default `q=10`, but maybe something like `q=3` would make more sense here.
 
 For the other features, we can see that `age` is second best in predictive power and `year` the third best, that is, `year` actually performs pretty bad.
-Based on the fact that `year` is very unstable, it might be better to remove the feature altogether.
-This visualization might be a solution to the problem posed in the previous section.
-Apparently, the model felt that it had to fit on `year` even though the feature has little predictive power.
+Based on the fact that `year` is very unstable and that the arrow directions don't agree, it might be better to remove the feature altogether.
+
+This visualization might be the solution to the problem posed in the previous section.
+Apparently, the model fitted on `year` even though the feature has little predictive power.
 Indeed, removing the feature from the dataset appears to have almost no effect on the accuracy:
 """
 
@@ -295,35 +297,43 @@ md"""
 For comparison removing the `nodes` feature does reduce the predictive performance:
 """
 
-# ╔═╡ ebf34b9e-62bb-4164-a970-f06279ea4937
+# ╔═╡ e6b880e9-e263-4818-81e9-bb4105e5c2c1
+md"""
+## Conclusion
+
+Compared to decision trees, the rule-based classifier is more stable, more accurate and similarly easy to interpet.
+Compared to the random forest, the rule-based classifier is only slightly less accurate, but much easier to interpet.
+Due to the interpretability, it is likely that the rule-based classifier will be more accurate in real-world settings.
+This makes rule-based highly suitable for many machine learning tasks.
+"""
+
+# ╔═╡ cfd908a0-1ee9-461d-9309-d4ffe738ba8e
 # hideall
-function _weight(model::StableRules, feature_name::String)
-	for (i, rule) in enumerate(model.rules)
-		if only(rule.path.splits).splitpoint.feature_name == feature_name
-			return model.weights[i]
-		end
+function _threshold(rule)
+	sp = only(rule.path.splits).splitpoint
+	return sp.value
+end;
+
+# ╔═╡ e7f396dc-38a7-40f7-9e5b-6fbea9d61789
+# hideall
+function _rotation(left, right)
+	# π/2 points to the left and -(π/2) points to the right.
+	if right < left
+		return (left - right) / left * (π/2)
+	else
+		return (right - left) / right * (-π/2)
 	end
 end;
 
-# ╔═╡ 487e7f5f-75a5-402b-b284-3ebeeca1b56d
+# ╔═╡ 7c688412-d1b4-492d-bda2-0b9181057d4d
 # hideall
-function _threshold(model::StableRules, feature_name::String)
-	for (i, rule) in enumerate(model.rules)
-		sp = only(rule.path.splits).splitpoint
-		if sp.feature_name == feature_name
-			return sp.value
-		end
-	end
-end;
-
-# ╔═╡ 4a0a8be4-c200-4e11-ad44-37af2e170f55
-# hideall
-function _then(model::StableRules, feature_name::String)
+function _rule_index(model::StableRules, feature_name::String)
 	for (i, rule) in enumerate(model.rules)
 		if only(rule.path.splits).splitpoint.feature_name == feature_name
-			return rule.then_probs[2]
+			return i
 		end
 	end
+	return nothing
 end;
 
 # ╔═╡ 0e0252e7-87a8-49e4-9a48-5612e0ded41b
@@ -501,42 +511,38 @@ function _rule_plot(e::PerformanceEvaluation)
 
 	unique_names = sort(unique(feature_names))
 	
-	then_heights = map(unique_names) do feature_name
-		W = _weight.(fitresults, feature_name)
-		probs = _then.(fitresults, feature_name)
-		H = W .* probs
-	end
-	
-	max_height = maximum(maximum.(then_heights))
+	max_height = maximum(maximum.(getproperty.(fitresults, :weights)))
 	
 	for (i, feature_name) in enumerate(unique_names)
 		ylabel = feature_name
-		ax = if i == 1
-			Axis(fig[i, 1]; title="Single-clause bootstrapped rule plot", ylabel)
-		else
-			Axis(fig[i, 1]; ylabel)
-		end
-		T = _threshold.(fitresults, feature_name)
+		ax = Axis(fig[i, 1]; subtitle=feature_name)
 
-		l = length(T)
-		grp = 1:l
-		
-		kwargs = (;
+		D = data[:, feature_name]
+		hist_kwargs = (;
 			color=:white,
 			strokecolor=:black,
 			strokewidth=1,
 			scale_to=max_height
 		)
+		
+		hist!(ax, D; hist_kwargs...)
+		vlines!(ax, unique(StableTrees._cutpoints(D, 4)); color=:gray, linestyle=:dash)
 
-		D = data[:, feature_name]
-		hist!(ax, D; kwargs...)
-		vlines!(ax, unique(ST._cutpoints(D, 4)); color=:gray, linestyle=:dash)
-
-		H = then_heights[i]
-		scatter!(T, H) # marker=:ltriangle, markersize=12)
-		hideydecorations!(ax; label=false)
+		for model in fitresults
+			index = _rule_index(model, feature_name)
+			isnothing(index) && continue
+			rule = model.rules[index]
+			left = last(rule.then_probs)
+			right = last(rule.else_probs)
+			weight = model.weights[index]
+			rotation = _rotation(left, right)
+			marker = '↑'
+			w = model.weights[index]
+			t = _threshold(rule)
+			scatter!(t, w; rotations=[rotation], marker, color=:black, markersize=14)
+		end
 	end
-	fig
+	return fig
 end;
 
 # ╔═╡ 4dcd564a-5b2f-4eae-87d6-c2973b828282
@@ -646,22 +652,6 @@ Base.Text(string("Full dataset AUC: ", _score(e4.e)))
 # hideall
 fitresults = getproperty.(e4.e.fitted_params_per_fold, :fitresult);
 
-# ╔═╡ 0ee41f3a-8348-4875-82a4-07b7121a589a
-# hideall
-fitresult = first(fitresults);
-
-# ╔═╡ 10c772e7-28c9-4a0c-aaa4-0e02bcd1ee9d
-# hideall
-@assert _weight(fitresult, "age") == 0.276
-
-# ╔═╡ d98d9162-f72a-4212-ae47-1428ca45a4de
-# hideall
-@assert _threshold(fitresult, "age") == 42.0f0
-
-# ╔═╡ ad5f6878-f250-4102-a1eb-79b08706e14d
-# hideall
-@assert _then(fitresult, "age") == 0.858
-
 # ╔═╡ 5d875f9d-a0aa-47b0-8a75-75bb280fa1ba
 # ╠═╡ show_logs = false
 e5 = let
@@ -760,14 +750,11 @@ end
 # ╠═03e27cb0-7106-4f17-8a2c-e3fac13ca0b0
 # ╠═d9d357c9-f381-4266-ad4e-d87d4bcf4298
 # ╠═8d881e71-3434-401f-bf54-868964dcab9a
+# ╠═e6b880e9-e263-4818-81e9-bb4105e5c2c1
 # ╠═7fad8dd5-c0a9-4c45-9663-d40a464bca77
-# ╠═0ee41f3a-8348-4875-82a4-07b7121a589a
-# ╠═ebf34b9e-62bb-4164-a970-f06279ea4937
-# ╠═10c772e7-28c9-4a0c-aaa4-0e02bcd1ee9d
-# ╠═487e7f5f-75a5-402b-b284-3ebeeca1b56d
-# ╠═d98d9162-f72a-4212-ae47-1428ca45a4de
-# ╠═4a0a8be4-c200-4e11-ad44-37af2e170f55
-# ╠═ad5f6878-f250-4102-a1eb-79b08706e14d
+# ╠═cfd908a0-1ee9-461d-9309-d4ffe738ba8e
+# ╠═e7f396dc-38a7-40f7-9e5b-6fbea9d61789
+# ╠═7c688412-d1b4-492d-bda2-0b9181057d4d
 # ╠═0abd8010-43a4-4aad-aa25-bd2b958988e6
 # ╠═0e0252e7-87a8-49e4-9a48-5612e0ded41b
 # ╠═e1890517-7a44-4814-999d-6af27e2a136a
