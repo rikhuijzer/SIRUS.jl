@@ -271,8 +271,7 @@ So, in this case, one arrow located at 41 in the `age` feature at height 0.2 wit
 Compared to some arrows having a height of 0.6 in the `nodes` feature, the age plays a not so big role here.
 
 In the background, a histogram of the data is shown.
-The histogram is scaled to the highest arrow in all features meaning that each y-axis in this plot has the same height. Finally, the dashed vertical lines show the empirical quantiles, that is, the possible points at which the model is allowed to split.
-These empirical quantile are calculated on the full dataset and hence some points fall next to the quantile because the quantile for that fold turned out slightly different.
+The histogram is scaled to the highest arrow in all features meaning that each y-axis in this plot has the same height.
 """
 
 # ╔═╡ ab5423cd-c8a9-488e-9bb0-bb41e583c2fa
@@ -524,9 +523,7 @@ function _rule_plot(e::PerformanceEvaluation)
 			strokewidth=1,
 			scale_to=max_height
 		)
-		
 		hist!(ax, D; hist_kwargs...)
-		vlines!(ax, unique(StableTrees._cutpoints(D, 4)); color=:gray, linestyle=:dash)
 
 		for model in fitresults
 			index = _rule_index(model, feature_name)
