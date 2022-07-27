@@ -15,6 +15,9 @@ using Tables: Tables, matrix
 
 const Float = Float32
 
+export StableForestClassifier, StableRulesClassifier
+export feature_names, directions
+
 include("forest.jl")
 include("rules.jl")
 export TreePath
@@ -22,9 +25,7 @@ include("dependent.jl")
 
 include("mlj.jl")
 const StableForestClassifier = MLJImplementation.StableForestClassifier
-export StableForestClassifier
 const StableRulesClassifier = MLJImplementation.StableRulesClassifier
-export StableRulesClassifier
 
 @precompile_signatures(StableTrees)
 

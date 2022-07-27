@@ -123,6 +123,10 @@ struct SplitPoint
     end
 end
 
+_feature(sp::SplitPoint) = sp.feature
+_value(sp::SplitPoint) = sp.value
+_feature_name(sp::SplitPoint) = sp.feature_name
+
 function _information_gain(y, y_left, y_right, classes)
     p = length(y_left) / length(y)
     starting_impurity = _gini(y, classes)

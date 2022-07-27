@@ -38,7 +38,8 @@ if get(ENV, "BUILD_DOCS_NOTEBOOKS", "true") == "true"
 end
 
 pages = [
-    "StableTrees" => "index.md"
+    "StableTrees" => "index.md",
+    "API" => "api.md"
 ]
 
 prettyurls = get(ENV, "CI", nothing) == "true"

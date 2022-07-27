@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.9
+# v0.19.10
 
 using Markdown
 using InteractiveUtils
@@ -31,7 +31,7 @@ begin
 	using MLJ: CV, MLJ, Not, PerformanceEvaluation, auc, fit!, evaluate, machine
 	using PlutoUI: TableOfContents # hide
 	using StableRNGs: StableRNG
-	using StableTrees: StableTrees, StableRules, StableForestClassifier, StableRulesClassifier
+	using StableTrees
 	using Statistics: mean
 end
 
@@ -326,7 +326,7 @@ end;
 
 # ╔═╡ 7c688412-d1b4-492d-bda2-0b9181057d4d
 # hideall
-function _rule_index(model::StableRules, feature_name::String)
+function _rule_index(model::StableTrees.StableRules, feature_name::String)
 	for (i, rule) in enumerate(model.rules)
 		if only(rule.path.splits).splitpoint.feature_name == feature_name
 			return i
@@ -500,15 +500,15 @@ function _rule_plot(e::PerformanceEvaluation)
 	fig = Figure(; resolution=(800, 500))
 	
 	fitresults = getproperty.(e.fitted_params_per_fold, :fitresult)
-	feature_names = String[]
+	F = String[]
 	for fitresult in fitresults
 		for rule in fitresult.rules
-			name = only(rule.path.splits).splitpoint.feature_name
-			push!(feature_names, name)
+			name = only(feature_names(rule))
+			push!(F, name)
 		end
 	end
 
-	unique_names = sort(unique(feature_names))
+	unique_names = sort(unique(F))
 	
 	max_height = maximum(maximum.(getproperty.(fitresults, :weights)))
 	
@@ -742,6 +742,7 @@ end
 # ╠═6d0b29b6-61fb-4d16-9389-071892a3d9db
 # ╠═3c415a26-803e-4f35-866f-2e582c6c1c45
 # ╠═e3173bf3-79f3-47d2-9dd3-164346022793
+# ╠═0abd8010-43a4-4aad-aa25-bd2b958988e6
 # ╠═ab5423cd-c8a9-488e-9bb0-bb41e583c2fa
 # ╠═1e990652-5995-4fec-901a-852bfc3e79cd
 # ╠═03e27cb0-7106-4f17-8a2c-e3fac13ca0b0
@@ -752,11 +753,10 @@ end
 # ╠═cfd908a0-1ee9-461d-9309-d4ffe738ba8e
 # ╠═e7f396dc-38a7-40f7-9e5b-6fbea9d61789
 # ╠═7c688412-d1b4-492d-bda2-0b9181057d4d
-# ╠═0abd8010-43a4-4aad-aa25-bd2b958988e6
 # ╠═0e0252e7-87a8-49e4-9a48-5612e0ded41b
 # ╠═e1890517-7a44-4814-999d-6af27e2a136a
-# ╠═ede038b3-d92e-4208-b8ab-984f3ca1810e
 # ╠═f833dab6-31d4-4353-a68b-ef0501d606d4
+# ╠═ede038b3-d92e-4208-b8ab-984f3ca1810e
 # ╠═93a7dd3b-7810-4021-bf6e-ae9c04acea46
 # ╠═be324728-1b60-4584-b8ea-c4fe9e3466af
 # ╠═7ad3cf67-2acd-44c6-aa91-7d5ae809dfbc

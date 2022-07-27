@@ -21,14 +21,11 @@ jobs:
         run: |
           using Pkg: Pkg
           Pkg.activate("docs")
+          @info "Pkg.develop(; path=\"$(pwd())\")"
+          Pkg.develop(; path=pwd())
           Pkg.instantiate()
       - name: Build docs and deploy to the docs branch
-        shell: julia --color=yes {0}
-        run: |
-          using Pkg: Pkg
-          dir = pwd()
-          Pkg.activate("docs")
-          include(joinpath(dir, "docs", "make.jl"))
+        run: julia --color=yes --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

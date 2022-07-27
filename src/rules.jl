@@ -13,10 +13,9 @@ function Split(feature::Int, name::String, splitval::Float, direction::Symbol)
     return Split(SplitPoint(feature, splitval, name), direction)
 end
 
-_feature(splitpoint::SplitPoint) = splitpoint.feature
 _feature(split::Split) = _feature(split.splitpoint)
-_value(splitpoint::SplitPoint) = splitpoint.value
 _value(split::Split) = _value(split.splitpoint)
+_feature_name(split::Split) = _feature_name(split.splitpoint)
 _direction(split::Split) = split.direction
 _reverse(split::Split) = Split(split.splitpoint, split.direction == :L ? :R : :L)
 
@@ -104,6 +103,34 @@ struct Rule
 end
 
 _splits(rule::Rule) = rule.path.splits
+
+"""
+    feature_names(rule::Rule) -> Vector{String}
+
+Return a vector of feature names; one for each clause in `rule`.
+"""
+function feature_names(rule::Rule)::Vector{String}
+    return [string(_feature_name(split))::String for split in _splits(rule)]
+end
+
+"""
+    directions(rule::Rule) -> Vector{Symbol}
+
+Return a vector of split directions; one for each clause in `rule`.
+"""
+function directions(rule::Rule)::Vector{Symbol}
+    return [_direction(split) for split in _splits(rule)]
+end
+
+"""
+    values(rule::Rule) -> Vector{Float64}
+
+Return a vector split values; one for each clause in `rule`.
+"""
+function Base.values(rule::Rule)::Vector{Float64}
+    return [Float64(_value(split)) for split in _splits(rule)]
+end
+
 function _reverse(rule::Rule)
     splits = _splits(rule)
     @assert length(splits) == 1
@@ -111,6 +138,7 @@ function _reverse(rule::Rule)
     path = TreePath([_reverse(split)])
     return Rule(path, rule.else_probs, rule.then_probs)
 end
+
 function _left_rule(rule::Rule)
     splits = _splits(rule)
     @assert length(splits) == 1

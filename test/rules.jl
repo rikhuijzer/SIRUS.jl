@@ -19,6 +19,12 @@ left_rule = ST.Rule(ST.TreePath(" X[i, 1] < 32000 "), [0.61], [0.408])
 right_rule = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 "), [0.408], [0.61])
 @test ST._flip_left([left_rule, right_rule]) == [left_rule, left_rule]
 
+@testset "exported functions" begin
+    @test feature_names(left_rule) == ["1"]
+    @test directions(left_rule) == [:L]
+    @test values(left_rule) == [32000]
+end
+
 r1 = ST.Rule(ST.TreePath(" X[i, 1] < 32000 "), [0.61], [0.408])
 r1b = ST.Rule(ST.TreePath(" X[i, 1] < 32000 "), [0.61], [0.408])
 r1c = ST.Rule(ST.TreePath(" X[i, 1] < 32000 "), [0.0], [0.408])

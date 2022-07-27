@@ -34,11 +34,47 @@ using StableTrees:
 using Tables: Tables, matrix
 
 """
-    StableForestClassifier <: MLJModelInterface.Probabilistic
+    StableForestClassifier(;
+        rng::AbstractRNG=default_rng(),
+        partial_sampling::Real=0.7,
+        n_trees::Int=1_000,
+        max_depth::Int=2,
+        q::Int=10,
+        min_data_in_leaf::Int=5
+    ) <: MLJModelInterface.Probabilistic
 
 Random forest classifier with a stabilized forest structure (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html)).
 This stabilization increases stability when extracting rules.
 The impact on the predictive accuracy compared to standard random forests should be relatively small.
+
+!!! note
+    Just like normal random forests, this model is not easily explainable.
+    If you are interested in an explainable model, use the `StableRulesClassifier`.
+
+# Example
+
+The classifier satisfies the MLJ interface, so it can be used like any other MLJ model.
+For example, it can be used to create a machine:
+
+```julia
+julia> using StableTrees, MLJ
+
+julia> mach = machine(StableForestClassifier(), X, y);
+```
+
+# Arguments
+
+- `rng`: Random number generator. `StableRNGs` are advised.
+- `partial_sampling`:
+    Ratio of samples to use in each subset of the data.
+    The default of 0.7 should be fine for most cases.
+- `n_trees`: The number of trees to use.
+- `max_depth`:
+    The depth of the tree.
+    A lower depth decreases model complexity and can therefore improve accuracy when the sample size is small (reduce overfitting).
+- `q`: Number of cutpoints to use per feature.
+    The default value of 10 should be good for most situations.
+- `min_data_in_leaf`: Minimum number of data points per leaf.
 """
 Base.@kwdef mutable struct StableForestClassifier <: Probabilistic
     rng::AbstractRNG=default_rng()
@@ -49,6 +85,60 @@ Base.@kwdef mutable struct StableForestClassifier <: Probabilistic
     min_data_in_leaf::Int=5
 end
 
+"""
+    StableRulesClassifier(;
+        rng::AbstractRNG=default_rng(),
+        partial_sampling::Real=0.7,
+        n_trees::Int=1_000,
+        max_depth::Int=2,
+        q::Int=10,
+        min_data_in_leaf::Int=5,
+        max_rules::Int=10,
+        weight_penalty::Float64=$DEFAULT_PENALTY,
+    ) -> MLJModelInterface.Probabilistic
+
+Explainable rule-based model based on a random forest.
+This SIRUS algorithm extracts rules from a stabilized random forest.
+See the [main page of the documentation](https://huijzer.xyz/StableTrees.jl/dev/) for details about how it works.
+
+# Example
+
+The classifier satisfies the MLJ interface, so it can be used like any other MLJ model.
+For example, it can be used to create a machine:
+
+```julia
+julia> using StableTrees, MLJ
+
+julia> mach = machine(StableRulesClassifier(; max_rules=15), X, y);
+```
+
+# Arguments
+
+- `rng`: Random number generator. `StableRNGs` are advised.
+- `partial_sampling`:
+    Ratio of samples to use in each subset of the data.
+    The default of 0.7 should be fine for most cases.
+- `n_trees`:
+    The number of trees to use.
+    The higher the number, the more likely it is that the correct rules are extracted from the trees, but also the longer model fitting will take.
+    In most cases, 1000 rules should be more than enough, but it might be useful to run 2000 rules one time and verify that the model performance does not change much.
+- `max_depth`:
+    The depth of the tree.
+    A lower depth decreases model complexity and can therefore improve accuracy when the sample size is small (reduce overfitting).
+- `q`: Number of cutpoints to use per feature.
+    The default value of 10 should be good for most situations.
+- `min_data_in_leaf`: Minimum number of data points per leaf.
+- `max_rules`:
+    This is the most important hyperparameter.
+    In general, the more rules, the more accurate the model.
+    However, more rules will also decrease model interpretability.
+    So, it is important to find a good balance here.
+    In most cases, 10-40 rules should provide reasonable accuracy while remaining interpretable.
+- `weight_penalty`:
+    This penalty regularizes the weights a bit.
+    Please don't use this hyperparameter.
+    It is likely to change in the future and it also doesn't have much of an effect.
+"""
 Base.@kwdef mutable struct StableRulesClassifier <: Probabilistic
     rng::AbstractRNG=default_rng()
     partial_sampling::Real=0.7
