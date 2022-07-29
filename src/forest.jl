@@ -96,11 +96,15 @@ function _cutpoints(X, q::Int)
     return cutpoints
 end
 
-"Return a view on all `y` for which the `comparison` holds in `X[:, feature]`."
-function _view_y(X, y, feature::Int, comparison, cutpoint)
-    data = view(X, :, feature)
-    indexes_in_region = Bool[comparison(e, cutpoint) for e in data]
-    return view(y, indexes_in_region)
+"""
+Return a view on all `y` for which the `comparison` holds in `data`.
+`indexes_in_region` is re-used between calls.
+"""
+function _view_y!(mask, data, y, comparison, cutpoint)
+    for i in eachindex(data)
+        mask[i] = comparison(data[i], cutpoint)
+    end
+    return view(y, mask)
 end
 
 """
@@ -159,12 +163,14 @@ function _split(
     p = _p(X)
     mc = max_split_candidates
     possible_features = mc == p ? (1:p) : _rand_subset(rng, 1:p, mc)
+    mask = Vector{Bool}(undef, length(y))
     for feature in possible_features
+        data = view(X, :, feature)
         for cutpoint in cutpoints[feature]
-            y_left = _view_y(X, y, feature, <, cutpoint)
-            length(y_left) == 0 && continue
-            y_right = _view_y(X, y, feature, ≥, cutpoint)
-            length(y_right) == 0 && continue
+            y_left = _view_y!(mask, data, y, <, cutpoint)
+            isempty(y_left) && continue
+            y_right = _view_y!(mask, data, y, ≥, cutpoint)
+            isempty(y_right) && continue
             gain = _information_gain(y, y_left, y_right, classes)
             if best_score ≤ gain
                 best_score = gain
@@ -208,11 +214,14 @@ end
 children(node::Node) = [node.left, node.right]
 nodevalue(node::Node) = node.splitpoint
 
-"Return a view on all rows in `X` and `y` for which the `comparison` holds in `X[:, feature]`."
+"""
+Return a view on all rows in `X` and `y` for which the `comparison` holds in `X[:, feature]`.
+"""
 function _view_X_y(X, y, splitpoint::SplitPoint, comparison)
-    indexes_in_region = comparison.(X[:, splitpoint.feature], splitpoint.value)
-    X_view = view(X, indexes_in_region, :)
-    y_view = view(y, indexes_in_region)
+    data = view(X, :, splitpoint.feature)
+    mask = comparison.(data, splitpoint.value)
+    X_view = view(X, mask, :)
+    y_view = view(y, mask)
     return (X_view, y_view)
 end
 
