@@ -408,7 +408,7 @@ function StableRules(
 end
 
 "Return only the last result for the binary case because the other is 1 -p anyway."
-function _simplify_binary_probabilities(probs::AbstractVector)
+function _simplify_binary_probabilities(weight, probs::AbstractVector)
     if length(probs) == 2
         left = first(probs)
         right = last(probs)
@@ -419,16 +419,16 @@ function _simplify_binary_probabilities(probs::AbstractVector)
                 Please open an issue at StableTrees.jl.
                 """
         end
-        return right
+        return round(weight * right; digits=3)
     else
-        return probs
+        return round.(weight .* probs; digits=3)
     end
 end
 
 "Return a pretty formatted so that it is easy to understand."
-function _pretty_rule(rule::Rule)
-    then_probs = _simplify_binary_probabilities(rule.then_probs)
-    else_probs = _simplify_binary_probabilities(rule.else_probs)
+function _pretty_rule(weight, rule::Rule)
+    then_probs = _simplify_binary_probabilities(weight, rule.then_probs)
+    else_probs = _simplify_binary_probabilities(weight, rule.else_probs)
     condition = _pretty_path(rule.path)
     return "if $condition then $then_probs else $else_probs"
 end
@@ -439,9 +439,8 @@ function Base.show(io::IO, model::StableRules)
     println(io, "StableRules model with $l $rule_text:")
     for i in 1:l
         ending = i < l ? " +" : ""
-        rule = _pretty_rule(model.rules[i])
-        weight = model.weights[i]
-        println(io, " $weight * $rule", ending)
+        rule = _pretty_rule(model.weights[i], model.rules[i])
+        println(io, " $rule", ending)
     end
     C = model.classes
     lc = length(C)
