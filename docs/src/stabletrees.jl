@@ -108,7 +108,7 @@ The individual trees are obtained by restricting the observations and the featur
 For the restriction on the observations, the trees are only allowed to see `partial_sampling * n` observations.
 In practise, `partial_sampling` is often 0.7.
 The restriction on the features is defined in such a way that it guarantees that not every tree will take the same split at the root of the tree.
-This makes the trees less correlated (James et al., [2021](https://doi.org/10.1007/978-1-0716-1418-1; Section 8.2.2)) and, hence, very accurate.
+This makes the trees less correlated (James et al., [2021](https://doi.org/10.1007/978-1-0716-1418-1); Section 8.2.2) and, hence, very accurate.
 
 Unfortunately, these random forests are hard to interpret.
 To interpret the model, individuals would need to interpret hundreds to thousands of trees containing multiple levels.
