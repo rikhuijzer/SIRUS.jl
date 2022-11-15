@@ -9,7 +9,7 @@ using InlineStrings: String255
 using LinearAlgebra: rank
 using MLJModelInterface: UnivariateFinite
 using PrecompileSignatures: @precompile_signatures
-using Random: AbstractRNG, default_rng, shuffle
+using Random: AbstractRNG, default_rng, seed!, shuffle
 using Statistics: mean, median
 using Tables: Tables, matrix
 

@@ -323,7 +323,7 @@ end
 _elements(model::StableForest) = model.trees
 
 "Increase the state of `rng` by `i`."
-_change_rng_state!(rng::AbstractRNG, i::Int) = rand(rng, i)
+_change_rng_state!(rng::AbstractRNG, i::Int) = seed!(rng, i)
 
 """
 Return an unique and sorted vector of classes based on `y`.
