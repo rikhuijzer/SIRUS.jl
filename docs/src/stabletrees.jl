@@ -42,9 +42,10 @@ TableOfContents()
 # ╔═╡ b1c17349-fd80-43f1-bbc2-53fdb539d1c0
 md"""
 This package is a pure Julia implementation of the **S**table and **I**nterpretable **RU**le **S**ets (SIRUS) algorithm.
+The algorithm was originally created by Clément Bénard, Gérard Biau, Sébastien Da Veiga, and Erwan Scornet.
 This package has only implemented binary classification for now.
 Regression and multiclass-classification will be implemented later.
-For R users, the SIRUS package is also available via [CRAN](https://cran.r-project.org/web/packages/sirus/index.html).
+For R users, the original version of the SIRUS algorithm is available via [CRAN](https://cran.r-project.org/web/packages/sirus/index.html).
 
 The algorithm is based on random forests.
 However, compared to random forests, the model is much more interpretable since the forests are converted to a set of decison rules.
