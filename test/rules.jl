@@ -87,13 +87,13 @@ end
 
 function generate_rules()
     forest = ST._forest(_rng(), X, y)
-    max_classes = 10
     rulesmodel = let
         rules = ST._rules(forest)
         weights = repeat([1.0], length(rules))
         ST.StableRules(rules, forest.classes, weights)
     end
-    processed = ST.StableRules(forest, X, y, max_classes)
+    model = StableRulesClassifier(; max_rules=10)
+    processed = ST.StableRules(forest, X, y, model)
     (; forest, rulesmodel, processed)
 end
 

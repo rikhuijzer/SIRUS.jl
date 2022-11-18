@@ -8,7 +8,7 @@ using CategoricalArrays: CategoricalValue, unwrap
 using InlineStrings: String255
 using LinearAlgebra: rank
 using MLJLinearModels: MLJLinearModels, ElasticNetRegressor, glr
-using MLJModelInterface: UnivariateFinite, fit
+using MLJModelInterface: UnivariateFinite, Probabilistic, fit
 using PrecompileSignatures: @precompile_signatures
 using Random: AbstractRNG, default_rng, seed!, shuffle
 using Statistics: mean, median

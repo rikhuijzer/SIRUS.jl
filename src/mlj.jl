@@ -132,6 +132,13 @@ julia> mach = machine(StableRulesClassifier(; max_rules=15), X, y);
     However, more rules will also decrease model interpretability.
     So, it is important to find a good balance here.
     In most cases, 10-40 rules should provide reasonable accuracy while remaining interpretable.
+- `lambda`:
+    The weights of the final rules are determined via a regularized regression over each rule as a binary feature.
+    This hyperparameter specifies the strength of the ridge (L2) regularizer.
+    Since the rules are quite strongly correlated, the ridge regularizer is the most useful to stabilize the weight estimates.
+- `gamma`:
+    Similar to `lambda`.
+    This hyperparameter specifies the strenght of the lasso (L1) regularizer.
 """
 Base.@kwdef mutable struct StableRulesClassifier <: Probabilistic
     rng::AbstractRNG=default_rng()
@@ -141,6 +148,8 @@ Base.@kwdef mutable struct StableRulesClassifier <: Probabilistic
     q::Int=10
     min_data_in_leaf::Int=5
     max_rules::Int=10
+    lambda::Float64=0.8
+    gamma::Float64=0.05
 end
 
 metadata_model(
@@ -224,7 +233,7 @@ function fit(model::StableRulesClassifier, verbosity::Int, X, y)
         model.q,
         model.min_data_in_leaf
     )
-    fitresult = StableRules(forest, data, outcome, model.max_rules)
+    fitresult = StableRules(forest, data, outcome, model)
     cache = nothing
     report = nothing
     return fitresult, cache, report

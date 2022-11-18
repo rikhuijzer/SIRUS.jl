@@ -370,12 +370,12 @@ function StableRules(
         classes,
         data,
         outcome,
-        max_rules::Int
+        model::Probabilistic
     )
-    processed = _process_rules(rules, max_rules)
+    processed = _process_rules(rules, model.max_rules)
     rules = first.(processed)
     # frequencies = last.(processed)
-    weights = _weights(rules, classes, data, outcome)
+    weights = _weights(rules, classes, data, outcome, model)
     return StableRules(rules, classes, weights)
 end
 
@@ -383,10 +383,10 @@ function StableRules(
         forest::StableForest,
         data,
         outcome,
-        max_rules::Int
+        model::Probabilistic,
     )
     rules = _rules(forest)
-    return StableRules(rules, forest.classes, data, outcome, max_rules)
+    return StableRules(rules, forest.classes, data, outcome, model)
 end
 
 "Return only the last result for the binary case because the other is 1 - p anyway."

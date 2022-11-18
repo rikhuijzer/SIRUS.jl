@@ -10,4 +10,5 @@ binary_feature_data = BitMatrix([1 0; 0 0; 1 1])
 
 y = [0.5, 0, 1]
 
-@test ST._estimate_coefficients(binary_feature_data, y) isa Vector{Float64}
+model = StableRulesClassifier()
+@test ST._estimate_coefficients(binary_feature_data, y, model) isa Vector{Float64}
