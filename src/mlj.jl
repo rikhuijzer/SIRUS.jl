@@ -57,7 +57,7 @@ The classifier satisfies the MLJ interface, so it can be used like any other MLJ
 For example, it can be used to create a machine:
 
 ```julia
-julia> using StableTrees, MLJ
+julia> using SIRUS, MLJ
 
 julia> mach = machine(StableForestClassifier(), X, y);
 ```
@@ -107,7 +107,7 @@ The classifier satisfies the MLJ interface, so it can be used like any other MLJ
 For example, it can be used to create a machine:
 
 ```julia
-julia> using StableTrees, MLJ
+julia> using SIRUS, MLJ
 
 julia> mach = machine(StableRulesClassifier(; max_rules=15), X, y);
 ```
@@ -156,7 +156,7 @@ metadata_model(
     target_scitype=AbstractVector{<:Finite},
     supports_weights=false,
     docstring="Random forest classifier with a stabilized forest structure",
-    path="StableTrees.StableForestClassifier"
+    path="SIRUS.StableForestClassifier"
 )
 
 metadata_model(
@@ -165,14 +165,14 @@ metadata_model(
     target_scitype=AbstractVector{<:Finite},
     supports_weights=false,
     docstring="Stable rule-based classifier",
-    path="StableTrees.StableForestClassifier"
+    path="SIRUS.StableForestClassifier"
 )
 
 metadata_pkg.(
     [StableForestClassifier, StableRulesClassifier];
-    name="StableTrees",
+    name="SIRUS",
     uuid="9113e207-2504-4b06-8eee-d78e288bee65",
-    url="https://github.com/rikhuijzer/StableTrees.jl",
+    url="https://github.com/rikhuijzer/SIRUS.jl",
     julia=true,
     license="MIT",
     is_wrapper=false

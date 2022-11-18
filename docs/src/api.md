@@ -12,5 +12,5 @@ StableForestClassifier
 ```@docs
 feature_names
 directions
-values(::StableTrees.Rule)
+values(::SIRUS.Rule)
 ```

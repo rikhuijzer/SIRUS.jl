@@ -31,7 +31,7 @@ begin
 	using MLJ: CV, MLJ, Not, PerformanceEvaluation, auc, fit!, evaluate, machine
 	using PlutoUI: TableOfContents # hide
 	using StableRNGs: StableRNG
-	using StableTrees
+	using SIRUS
 	using Statistics: mean
 end
 
@@ -327,7 +327,7 @@ end;
 
 # ╔═╡ 7c688412-d1b4-492d-bda2-0b9181057d4d
 # hideall
-function _rule_index(model::StableTrees.StableRules, feature_name::String)
+function _rule_index(model::SIRUS.StableRules, feature_name::String)
 	for (i, rule) in enumerate(model.rules)
 		if only(rule.path.splits).splitpoint.feature_name == feature_name
 			return i
@@ -370,7 +370,7 @@ end;
 
 # ╔═╡ 0ca8bb9a-aac1-41a7-b43d-314a4029c205
 # hideall
-ST = StableTrees;
+ST = SIRUS;
 
 # ╔═╡ ede038b3-d92e-4208-b8ab-984f3ca1810e
 function _plot_cutpoints(data::AbstractVector)
