@@ -7,16 +7,16 @@ using Documenter:
     makedocs
 using Pkg: Pkg
 using PlutoStaticHTML
-using StableTrees
+using SIRUS
 
 DocMeta.setdocmeta!(
-    StableTrees,
+    SIRUS,
     :DocTestSetup,
-    :(using StableTrees);
+    :(using SIRUS);
     recursive=true
 )
 
-sitename = "StableTrees.jl"
+sitename = "SIRUS.jl"
 tutorials_dir = joinpath(dirname(@__DIR__), "docs", "src")
 
 function build()
@@ -38,13 +38,13 @@ if get(ENV, "BUILD_DOCS_NOTEBOOKS", "true") == "true"
 end
 
 pages = [
-    "StableTrees" => "index.md",
+    "SIRUS" => "index.md",
     "API" => "api.md"
 ]
 
 prettyurls = get(ENV, "CI", nothing) == "true"
 format = HTML(; mathengine=MathJax3(), prettyurls)
-modules = [StableTrees]
+modules = [SIRUS]
 strict = true
 checkdocs = :none
 makedocs(; sitename, pages, format, modules, strict, checkdocs)
@@ -52,6 +52,6 @@ makedocs(; sitename, pages, format, modules, strict, checkdocs)
 deploydocs(;
     branch="docs",
     devbranch="main",
-    repo="github.com/rikhuijzer/StableTrees.jl.git",
+    repo="github.com/rikhuijzer/SIRUS.jl.git",
     push_preview=false
 )

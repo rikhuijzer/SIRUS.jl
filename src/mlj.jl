@@ -21,7 +21,7 @@ using MLJModelInterface:
     Probabilistic,
     Table
 using Random: AbstractRNG, default_rng
-using StableTrees:
+using SIRUS:
     DEFAULT_PENALTY,
     StableForest,
     StableRules,

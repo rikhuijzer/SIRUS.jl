@@ -1,4 +1,4 @@
-module StableTrees
+module SIRUS
 
 import AbstractTrees: children, nodevalue
 import Base
@@ -27,6 +27,6 @@ include("mlj.jl")
 const StableForestClassifier = MLJImplementation.StableForestClassifier
 const StableRulesClassifier = MLJImplementation.StableRulesClassifier
 
-@precompile_signatures(StableTrees)
+@precompile_signatures(SIRUS)
 
 end # module

@@ -8,56 +8,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  BuildAndDeploy:
-    name: Documentation
+  Documenter:
     permissions:
       contents: write
+    name: Documentation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - name: Instantiate docs/
-        shell: julia --color=yes {0}
-        run: |
-          using Pkg: Pkg
-          Pkg.activate("docs")
-          @info "Pkg.develop(; path=\"$(pwd())\")"
-          Pkg.develop(; path=pwd())
-          Pkg.instantiate()
-      - name: Build docs and deploy to the docs branch
-        run: julia --color=yes --project=docs docs/make.jl
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-docdeploy@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  MonoDeploy:
-    needs: BuildAndDeploy
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'pull_request' }}
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: 'docs'
-
-      - uses: webfactory/ssh-agent@v0.5.4
-        with:
-          ssh-private-key: ${{ secrets.SITE_DEPLOY_KEY }}
-
-      - name: Deploy to https://huijzer.xyz/StableTrees.jl
-        shell: julia --color=yes {0}
-        run: |
-          from = "."
-          clone = mktempdir()
-          url = "git@github.com:rikhuijzer/huijzer.xyz.git"
-          run(`git clone --depth=1 $url $clone`)
-          to = joinpath(clone, "public", "StableTrees.jl")
-          mkpath(to)
-          cp(from, to; force=true)
-          # To avoid Git submodules.
-          rm(joinpath(to, ".git"); recursive=true)
-          cd(clone) do
-              run(`git add .`)
-              run(`git config --global user.email 't.h.huijzer@rug.nl'`)
-              run(`git config --global user.name 'Bot'`)
-              run(`git commit --allow-empty -m 'Deploy from StableTrees.jl'`)
-              run(`git push`)
-          end

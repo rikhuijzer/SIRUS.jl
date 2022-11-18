@@ -31,12 +31,12 @@ using MLJBase:
 using MLJDecisionTreeInterface: DecisionTree
 using LightGBM.MLJInterface: LGBMClassifier
 using StableRNGs: StableRNG
-using StableTrees
+using SIRUS
 using Statistics: mean, var
 using Tables: Tables
 using Test
 
-ST = StableTrees
+ST = SIRUS
 Float = ST.Float
 _rng(seed::Int=1) = StableRNG(seed)
 

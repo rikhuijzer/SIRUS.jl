@@ -416,7 +416,7 @@ function _simplify_binary_probabilities(weight, probs::AbstractVector)
             @warn """
                 The sum of the two probabilities $probs doesn't add to 1.
                 This is unexpected.
-                Please open an issue at StableTrees.jl.
+                Please open an issue at SIRUS.jl.
                 """
         end
         return round(weight * right; digits=3)
