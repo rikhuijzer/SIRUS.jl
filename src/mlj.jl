@@ -22,7 +22,6 @@ using MLJModelInterface:
     Table
 using Random: AbstractRNG, default_rng
 using SIRUS:
-    DEFAULT_PENALTY,
     StableForest,
     StableRules,
     _colnames,
@@ -93,8 +92,7 @@ end
         max_depth::Int=2,
         q::Int=10,
         min_data_in_leaf::Int=5,
-        max_rules::Int=10,
-        weight_penalty::Float64=$DEFAULT_PENALTY,
+        max_rules::Int=10
     ) -> MLJModelInterface.Probabilistic
 
 Explainable rule-based model based on a random forest.
@@ -134,10 +132,6 @@ julia> mach = machine(StableRulesClassifier(; max_rules=15), X, y);
     However, more rules will also decrease model interpretability.
     So, it is important to find a good balance here.
     In most cases, 10-40 rules should provide reasonable accuracy while remaining interpretable.
-- `weight_penalty`:
-    This penalty regularizes the weights a bit.
-    Please don't use this hyperparameter.
-    It is likely to change in the future and it also doesn't have much of an effect.
 """
 Base.@kwdef mutable struct StableRulesClassifier <: Probabilistic
     rng::AbstractRNG=default_rng()
@@ -147,7 +141,6 @@ Base.@kwdef mutable struct StableRulesClassifier <: Probabilistic
     q::Int=10
     min_data_in_leaf::Int=5
     max_rules::Int=10
-    weight_penalty::Float64=DEFAULT_PENALTY
 end
 
 metadata_model(
@@ -184,11 +177,12 @@ This method patches the version from CategoricalArrays.jl for `AbstractString`s.
 """
 function _float(A::CategoricalArray{T}) where T
     if !isconcretetype(T)
-        error("`float` not defined on abstractly-typed arrays; please convert to a more specific type")
+        msg = "`float` not defined on abstractly-typed arrays; please convert to a more specific type"
+        throw(ArgumentError(msg))
     end
     if T isa Type{String}
         msg = "Cannot automatically convert $(typeof(A)) to an array containing `Float`s."
-        return throw(ArgumentError(msg))
+        throw(ArgumentError(msg))
     end
     return float(A)
 end
@@ -217,10 +211,12 @@ function predict(model::StableForestClassifier, fitresult::StableForest, Xnew)
 end
 
 function fit(model::StableRulesClassifier, verbosity::Int, X, y)
+    data = matrix(M)
+    outcome = _float(y)
     forest = _forest(
         model.rng,
-        matrix(X),
-        _float(y),
+        data,
+        outcome,
         _colnames(X);
         model.partial_sampling,
         model.n_trees,
@@ -228,8 +224,7 @@ function fit(model::StableRulesClassifier, verbosity::Int, X, y)
         model.q,
         model.min_data_in_leaf
     )
-    penalty = model.weight_penalty
-    fitresult = StableRules(forest, model.max_rules; penalty)
+    fitresult = StableRules(forest, data, outcome, model.max_rules)
     cache = nothing
     report = nothing
     return fitresult, cache, report
