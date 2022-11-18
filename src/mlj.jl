@@ -211,7 +211,7 @@ function predict(model::StableForestClassifier, fitresult::StableForest, Xnew)
 end
 
 function fit(model::StableRulesClassifier, verbosity::Int, X, y)
-    data = matrix(M)
+    data = matrix(X)
     outcome = _float(y)
     forest = _forest(
         model.rng,

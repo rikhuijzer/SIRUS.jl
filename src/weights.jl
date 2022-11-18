@@ -24,6 +24,10 @@ end
 Return the coefficients obtained when fitting a regularized linear model over the binary features.
 """
 function _estimate_coefficients(binary_feature_data, outcome)
+    # L2
+    lambda = 0.4
+    # L1 (produces sparse models, that is, coefficients are pulled to zero.)
+    gamma = 0.2
     # Code is based on the definition for MMI.fit inside MLJLinearModels.jl.
     model = ElasticNetRegressor(; fit_intercept=false)
     y = convert(Vector{Float16}, outcome)
@@ -44,5 +48,6 @@ function _weights(
     )
     binary_feature_data = _binary_features(rules, data)
     coefficients = _estimate_coefficients(binary_feature_data, outcome)
+    @show coefficients
     return coefficients::Vector{Float64}
 end
