@@ -26,10 +26,9 @@ The `lambda` specifies the strength of the L2 (ridge) regression and `gamma` the
 """
 function _estimate_coefficients(binary_feature_data, outcome, model)
     # Code is based on the definition for MMI.fit inside MLJLinearModels.jl.
-    model = ElasticNetRegressor(; fit_intercept=true, model.lambda, model.gamma)
+    model = ElasticNetRegressor(; fit_intercept=false, model.lambda, model.gamma)
     y = convert(Vector{Float16}, outcome)
-    V = MLJLinearModels.fit(glr(model), binary_feature_data, y)::Vector
-    return V[1:end-1]
+    return MLJLinearModels.fit(glr(model), binary_feature_data, y)::Vector
 end
 
 """
