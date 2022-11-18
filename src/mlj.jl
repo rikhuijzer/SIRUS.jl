@@ -149,7 +149,7 @@ Base.@kwdef mutable struct StableRulesClassifier <: Probabilistic
     min_data_in_leaf::Int=5
     max_rules::Int=10
     lambda::Float64=0.8
-    gamma::Float64=0.05
+    gamma::Float64=0.0
 end
 
 metadata_model(
