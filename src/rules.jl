@@ -358,7 +358,7 @@ end
 struct StableRules{T} <: StableModel
     rules::Vector{Rule}
     classes::Vector{T}
-    weights::Vector{Float64}
+    weights::Vector{Float16}
 end
 _elements(model::StableRules) = zip(model.rules, model.weights)
 function _isempty_error(::StableRules)
@@ -454,7 +454,7 @@ function _probability(row::AbstractVector, rule::Rule)
     return satisfies(row, rule) ? rule.then_probs : rule.else_probs
 end
 
-function _predict(pair::Tuple{Rule,Float64}, row::AbstractVector)
+function _predict(pair::Tuple{Rule,Float16}, row::AbstractVector)
     rule, weight = pair
     probs = _probability(row, rule)
     return weight .* probs

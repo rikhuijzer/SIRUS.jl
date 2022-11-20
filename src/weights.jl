@@ -19,16 +19,19 @@ function _binary_features(rules::Vector{Rule}, data)
 end
 
 """
-    _estimate_coefficients(binary_feature_data, outcome, model)
-
 Return the coefficients obtained when fitting a regularized linear model over the binary features.
-The `lambda` specifies the strength of the L2 (ridge) regression and `gamma` the strenght of the L1 (lasso) regression.
+The `lambda` specifies the strength of the L2 (ridge) regression.
 """
-function _estimate_coefficients(binary_feature_data, outcome, model)
+function _estimate_coefficients(
+        binary_feature_data::Matrix{Float16},
+        outcome::Vector{Float16},
+        model::Probabilistic
+    )
     # Code is based on the definition for MMI.fit inside MLJLinearModels.jl.
-    model = ElasticNetRegressor(; fit_intercept=false, model.lambda, model.gamma)
-    y = convert(Vector{Float16}, outcome)
-    return MLJLinearModels.fit(glr(model), binary_feature_data, y)::Vector
+    # Using Ridge because it allows an analytical solver.
+    # Also, ElasticNet shows no clear benefit in accuracy.
+    model = RidgeRegressor(; fit_intercept=false, model.lambda)
+    return MLJLinearModels.fit(glr(model), binary_feature_data, outcome)::Vector
 end
 
 """
@@ -45,6 +48,7 @@ function _weights(
         model
     )
     binary_feature_data = _binary_features(rules, data)
-    coefficients = _estimate_coefficients(binary_feature_data, outcome, model)
-    return coefficients::Vector{Float64}
+    y = convert(Vector{Float16}, outcome)
+    coefficients = _estimate_coefficients(binary_feature_data, y, model)
+    return coefficients::Vector{Float16}
 end
