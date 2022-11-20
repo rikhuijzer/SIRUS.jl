@@ -365,6 +365,19 @@ function _isempty_error(::StableRules)
     throw(AssertionError("The rule model contains no rules"))
 end
 
+function _remove_zero_weights(rules::Vector{Rule}, weights::Vector{Float16})
+    filtered_rules = Rule[]
+    filtered_weights = Float16[]
+    @assert length(rules) == length(weights)
+    for i in eachindex(rules)
+        if weights[i] != Float16(0.0)
+            push!(filtered_rules, rules[i])
+            push!(filtered_weights, weights[i])
+        end
+    end
+    return filtered_rules, filtered_weights
+end
+
 function StableRules(
         rules::Vector{Rule},
         classes,
@@ -374,9 +387,9 @@ function StableRules(
     )
     processed = _process_rules(rules, model.max_rules)
     rules = first.(processed)
-    # frequencies = last.(processed)
     weights = _weights(rules, classes, data, outcome, model)
-    return StableRules(rules, classes, weights)
+    filtered_rules, filtered_weights = _remove_zero_weights(rules, weights)
+    return StableRules(filtered_rules, classes, filtered_weights)
 end
 
 function StableRules(

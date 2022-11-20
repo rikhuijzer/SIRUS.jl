@@ -31,7 +31,9 @@ function _estimate_coefficients(
     # Using Ridge because it allows an analytical solver.
     # Also, ElasticNet shows no clear benefit in accuracy.
     model = RidgeRegressor(; fit_intercept=false, model.lambda)
-    return MLJLinearModels.fit(glr(model), binary_feature_data, outcome)::Vector
+    coefs = MLJLinearModels.fit(glr(model), binary_feature_data, outcome)::Vector
+    # Avoid negative coefficients.
+    return max.(coefs, 0)
 end
 
 """
