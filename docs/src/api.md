@@ -13,4 +13,5 @@ StableForestClassifier
 feature_names
 directions
 values(::SIRUS.Rule)
+satisfies
 ```

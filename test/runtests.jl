@@ -12,6 +12,10 @@ end
     include("dependent.jl")
 end
 
+@testset "weights" begin
+    include("weights.jl")
+end
+
 @testset "mlj" begin
     include("mlj.jl")
 end

@@ -358,56 +358,51 @@ end
 struct StableRules{T} <: StableModel
     rules::Vector{Rule}
     classes::Vector{T}
-    weights::Vector{Float64}
+    weights::Vector{Float16}
 end
 _elements(model::StableRules) = zip(model.rules, model.weights)
 function _isempty_error(::StableRules)
     throw(AssertionError("The rule model contains no rules"))
 end
 
-const DEFAULT_PENALTY = 0.3
-
-"""
-The weights are regularized slightly since that seems to improve performance.
-A higher `penalty` means a stronger regularization, but also lower interpretability of the rules.
-
-!!! note
-    Make sure to use enough trees (thousands) for best accuracy.
-"""
-function _regularize_weights(
-        V::Vector{<:Real};
-        penalty::Real=DEFAULT_PENALTY
-    )
-    @assert 0.0 ≤ penalty ≤ 1.0
-    m = mean(V)
-    [round(v - (penalty * (v - m)); digits=3) for v in V]
+function _remove_zero_weights(rules::Vector{Rule}, weights::Vector{Float16})
+    filtered_rules = Rule[]
+    filtered_weights = Float16[]
+    @assert length(rules) == length(weights)
+    for i in eachindex(rules)
+        if weights[i] != Float16(0.0)
+            push!(filtered_rules, rules[i])
+            push!(filtered_weights, weights[i])
+        end
+    end
+    return filtered_rules, filtered_weights
 end
 
 function StableRules(
         rules::Vector{Rule},
         classes,
-        max_rules::Int;
-        penalty::Float64=DEFAULT_PENALTY
+        data,
+        outcome,
+        model::Probabilistic
     )
-    processed = _process_rules(rules, max_rules)
+    processed = _process_rules(rules, model.max_rules)
     rules = first.(processed)
-    frequencies = last.(processed)
-    total = sum(frequencies)
-    relative_weights = frequencies ./ total
-    weights = _regularize_weights(relative_weights; penalty)
-    return StableRules(rules, classes, weights)
+    weights = _weights(rules, classes, data, outcome, model)
+    filtered_rules, filtered_weights = _remove_zero_weights(rules, weights)
+    return StableRules(filtered_rules, classes, filtered_weights)
 end
 
 function StableRules(
         forest::StableForest,
-        max_rules::Int;
-        penalty::Float64=DEFAULT_PENALTY
+        data,
+        outcome,
+        model::Probabilistic,
     )
     rules = _rules(forest)
-    return StableRules(rules, forest.classes, max_rules; penalty)
+    return StableRules(rules, forest.classes, data, outcome, model)
 end
 
-"Return only the last result for the binary case because the other is 1 -p anyway."
+"Return only the last result for the binary case because the other is 1 - p anyway."
 function _simplify_binary_probabilities(weight, probs::AbstractVector)
     if length(probs) == 2
         left = first(probs)
@@ -450,8 +445,12 @@ function Base.show(io::IO, model::StableRules)
     println(io, "and $lc classes: $C. $note")
 end
 
-function _predict(pair::Tuple{Rule,Float64}, row::AbstractVector)
-    rule, weight = pair
+"""
+    satisfies(row::AbstractVector, rule::Rule)
+
+Return whether data `row` satisfies `rule`.
+"""
+function satisfies(row::AbstractVector, rule::Rule)
     constraints = map(rule.path.splits) do split
         splitpoint = split.splitpoint
         direction = split.direction
@@ -460,7 +459,17 @@ function _predict(pair::Tuple{Rule,Float64}, row::AbstractVector)
         value = splitpoint.value
         satisfies_constraint = comparison(row[feature], value)
     end
-    probs = all(constraints) ? rule.then_probs : rule.else_probs
+    return all(constraints)
+end
+
+"Return the then or else probabilities for data `row` according to `rule`."
+function _probability(row::AbstractVector, rule::Rule)
+    return satisfies(row, rule) ? rule.then_probs : rule.else_probs
+end
+
+function _predict(pair::Tuple{Rule,Float16}, row::AbstractVector)
+    rule, weight = pair
+    probs = _probability(row, rule)
     return weight .* probs
 end
 
