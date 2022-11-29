@@ -33,7 +33,7 @@ end
 if get(ENV, "BUILD_DOCS_NOTEBOOKS", "true") == "true"
     build()
     cd(tutorials_dir) do
-        mv("stabletrees.md", "index.md"; force=true)
+        mv("sirus.md", "index.md"; force=true)
     end
 end
 
