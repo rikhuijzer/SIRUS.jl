@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.10
+# v0.19.15
 
 using Markdown
 using InteractiveUtils
@@ -25,14 +25,14 @@ begin
 	using CategoricalArrays: categorical
 	using CSV: CSV
 	using DataDeps: DataDeps, DataDep, @datadep_str
-	using DataFrames: DataFrame, Not, dropmissing!, filter!, nrow, rename!, select!
+	using DataFrames
 	using LightGBM.MLJInterface: LGBMClassifier
 	using MLJDecisionTreeInterface: DecisionTree, DecisionTreeClassifier
 	using MLJ: CV, MLJ, Not, PerformanceEvaluation, auc, fit!, evaluate, machine
 	using PlutoUI: TableOfContents # hide
 	using StableRNGs: StableRNG
 	using SIRUS
-	using Statistics: mean
+	using Statistics: mean, std
 end
 
 # ╔═╡ e9028115-d098-4c61-a82f-d4553fe654f8
@@ -245,17 +245,8 @@ md"""
 The interpretation of the fitted model is as follows.
 The model has learned three rules for this dataset.
 For making a prediction for some value at row `i`, the model will first look at the value for the `nodes` feature.
-If that value is below 2.0, then the probability of survival is 0.819 and the probability of not surviving is 1 - 0.819 = 0.181.
-To see that the 0.819 means survival, see the bottom of the result which states showing only the probability for class 1.0.
-The value 0.662 is used when the `nodes` value is greater or equal to 2.0.
-Similarly, the model will obtain the probabilities for rules 2 and 3.
-To obtain the final result, the model will take a weighted average over the three rules.
-
-Intuitively, the 2 of the rules inside the model makes sense.
-A patient is more likely to survive if the `age` of the patient and the number of `nodes` found inside the patient are lower.
-Why patients operated before the `year` 1960 are more likely to survive is unclear to me.
-This could be an indication that the model is wrong or that there is something unexpected going on.
-We investigate this perculiarity by visualizing the model.
+If the value is below the listed number, then the number after `then` is chosen and otherwise the number after `else`.
+This is done for all the rules and, finally, the rules are summed to obtain the final prediction.
 """
 
 # ╔═╡ 3c415a26-803e-4f35-866f-2e582c6c1c45
@@ -266,35 +257,23 @@ Since our rules are relatively simple with only a binary outcome and only one cl
 For multiple clauses, I would not know how to visualize the rules.
 Also, this plot is probably not perfect; let me know if you have suggestions.
 
-What this visualization shows is an arrow for each rule in each fitted model.
-The vertical position is determined by the weight of the rule, the horizontal position by the location of the splitpoint, and the rotation of the arrow by the difference between the "then" and the "else" probability for class 1.0 (survival).
-So, in this case, one arrow located at 41 in the `age` feature at height 0.2 with a small rotation towards the left means that there was rule in one model in the cross-validation folds which concluded that patients with an `age` below 41 are more slightly likely to survive for at least 5 years than patients with an `age` above 41.
-Compared to some arrows having a height of 0.6 in the `nodes` feature, the age plays a not so big role here.
-
-In the background, a histogram of the data is shown.
-The histogram is scaled to the highest arrow in all features meaning that each y-axis in this plot has the same height.
+This figure shows the model uncertainty.
+The x-position on the left shows `log(else-scores / if-scores)`, the vertical lines on the right show the threshold, and the histograms on the right show the data. 
+For example, for the `nodes`, it can be seen that all rules (fitted in the different cross-validation folds) base their decision on whether the `nodes` are below, roughly, 5. 
+Next, the left side indicates that the individuals who had less than 5 nodes are more likely to survive, according to the model. 
+The sizes of the dots indicate the weight that the rule has, so a bigger dot means that a rule plays a larger role in the final outcome. 
+These dots are sized in such a way that a doubling in weight means a doubling in surface size. 
+Finally, the variables are ordered by the sum of the weights.
 """
 
 # ╔═╡ ab5423cd-c8a9-488e-9bb0-bb41e583c2fa
 md"""
 What this plot shows is that the `nodes` feature is on average chosen as the feature with the most predictive power.
-This can be concluded from the fact that the arrows are located higher than the arrows for the other features.
+This can be concluded because the `nodes` feature is shown as the first feature and the tickness of the dots is the biggest.
 Furthermore, there is unfortunately some unstability in the position of the splitpoint for the `nodes` feature.
-Some models split the data at around 3 and others at around 8.
+Some models split the data at around 3 and others at around 5.
 Depending on the context in which this model is used, it might thus be beneficial to decrease the number of empirical quantiles `q` that the model can use to split on.
 By default `q=10`, but maybe something like `q=3` would make more sense here.
-
-For the other features, we can see that `age` is second best in predictive power and `year` the third best, that is, `year` actually performs pretty bad.
-Based on the fact that `year` is very unstable and that the arrow directions don't agree, it might be better to remove the feature altogether.
-
-This visualization might be the solution to the problem posed in the previous section.
-Apparently, the model fitted on `year` even though the feature has little predictive power.
-Indeed, removing the feature from the dataset appears to have almost no effect on the accuracy:
-"""
-
-# ╔═╡ d9d357c9-f381-4266-ad4e-d87d4bcf4298
-md"""
-For comparison removing the `nodes` feature does reduce the predictive performance:
 """
 
 # ╔═╡ e6b880e9-e263-4818-81e9-bb4105e5c2c1
@@ -336,12 +315,20 @@ function _rule_index(model::SIRUS.StableRules, feature_name::String)
 	return nothing
 end;
 
+# ╔═╡ aa93a6c4-d5a0-4c73-9db9-e26c3c3f526b
+# hideall
+function _sum_weights(fitresults::Vector, name::AbstractString)
+	indexes = _rule_index.(fitresults, Ref(name))
+	return sum([isnothing(index) ? 0 : fitresults[i].weights[index] for (i, index) in enumerate(indexes)])
+end;
+
 # ╔═╡ 0e0252e7-87a8-49e4-9a48-5612e0ded41b
 md"""
 ## Acknowledgements
 
 Thanks to Clément Bénard, Gérard Biau, Sébastian da Veiga and Erwan Scornet for creating the SIRUS algorithm and documenting it extensively.
 Special thanks to Clément Bénard for answering my questions regarding the implementation.
+Thanks to Hylke Donker for figuring out a way to visualize these rules.
 Also thanks to my PhD supervisors Ruud den Hartigh, Peter de Jonge and Frank Blaauw, and Age de Wit and colleagues at the Dutch Ministry of Defence for providing the data clarifying the constraints of the problem and for providing many methodological suggestions.
 """
 
@@ -495,51 +482,87 @@ end
 # hideall
 _plot_cutpoints(nodes)
 
-# ╔═╡ 0abd8010-43a4-4aad-aa25-bd2b958988e6
+# ╔═╡ a64dae3c-3b97-4076-98f4-3c9a0e5c0621
 # hideall
-function _rule_plot(e::PerformanceEvaluation)
-	fig = Figure(; resolution=(800, 500))
-	
+function _odds_plot(e::PerformanceEvaluation)
+	w, h = (1000, 300)
+	fig = Figure(; resolution=(w, h))
+	grid = fig[1, 1:2] = GridLayout()
+
 	fitresults = getproperty.(e.fitted_params_per_fold, :fitresult)
-	F = String[]
+	feature_names = String[]
 	for fitresult in fitresults
 		for rule in fitresult.rules
-			name = only(feature_names(rule))
-			push!(F, name)
+			name = only(rule.path.splits).splitpoint.feature_name
+			push!(feature_names, name)
 		end
 	end
 
-	unique_names = sort(unique(F))
+	names = sort(unique(feature_names))
+	subtitle = "Ratio"
 	
 	max_height = maximum(maximum.(getproperty.(fitresults, :weights)))
+
+	importances = _sum_weights.(Ref(fitresults), names)
+
+	matching_rules = DataFrame(; names, importance=importances)
+	sort!(matching_rules, :importance; rev=true)
+	names = matching_rules.names
+	l = length(names)
 	
-	for (i, feature_name) in enumerate(unique_names)
+	for (i, feature_name) in enumerate(names)
+		yticks = (1:1, [feature_name])
+		ax = i == l ? 
+			Axis(grid[i, 1:3]; yticks, xlabel="Ratio") : 
+			Axis(grid[i, 1:3]; yticks)
+		vlines!(ax, [0]; color=:gray, linestyle=:dash)
+		xlims!(ax, -1, 1)
 		ylabel = feature_name
-		ax = Axis(fig[i, 1]; subtitle=feature_name)
 
-		D = data[:, feature_name]
-		hist_kwargs = (;
-			color=:white,
-			strokecolor=:black,
-			strokewidth=1,
-			scale_to=max_height
-		)
-		hist!(ax, D; hist_kwargs...)
+		name = feature_name
 
-		for model in fitresults
-			index = _rule_index(model, feature_name)
-			isnothing(index) && continue
-			rule = model.rules[index]
-			left = last(rule.then_probs)
-			right = last(rule.else_probs)
-			weight = model.weights[index]
-			rotation = _rotation(left, right)
-			marker = '↑'
-			w = model.weights[index]
-			t = _threshold(rule)
-			scatter!(t, w; rotations=[rotation], marker, color=:black, markersize=14)
+		rules_weights = map(fitresults) do fitresult
+			index = _rule_index(fitresult, feature_name)
+			isnothing(index) && return nothing
+			rule = fitresult.rules[index]::SIRUS.Rule
+			return (rule, fitresult.weights[index])
 		end
+		rw::Vector{Tuple{SIRUS.Rule,Float64}} = 
+			filter(!isnothing, rules_weights)
+		thresholds = _threshold.(first.(rw))
+		t_mean = round(mean(thresholds); digits=1)
+		t_std = round(std(thresholds); digits=1)
+		
+		for (rule, weight) in rw
+			left = last(rule.then_probs)::Float64
+			right = last(rule.else_probs)::Float64
+			t::Float64 = _threshold(rule)
+			ratio = log((right) / (left))
+			# area = πr²
+			markersize = 50 * sqrt(weight / π)
+			scatter!(ax, [ratio], [1]; color=:black, markersize)
+		end
+		hideydecorations!(ax; ticklabels=false)
+
+		axr = i == l ?
+			Axis(grid[i, 4:5]; xlabel="Location") :
+			Axis(grid[i, 4:5])
+		D = data[:, feature_name]
+		hist!(axr, D; scale_to=1)
+		vlines!(axr, thresholds; color=:black, linestyle=:dash)
+
+		if i < l
+			hidexdecorations!(ax)
+		else
+			hidexdecorations!(ax; ticks=false, ticklabels=false)
+		end
+	
+		hideydecorations!(axr)
+		hidexdecorations!(axr; ticks=false, ticklabels=false)
 	end
+
+	rowgap!(grid, 5)
+	colgap!(grid, 50)
 	return fig
 end;
 
@@ -592,22 +615,6 @@ let
 	end
 end
 
-# ╔═╡ 03e27cb0-7106-4f17-8a2c-e3fac13ca0b0
-let
-	model = StableRulesClassifier
-	hyperparameters = (; max_depth=1, rng=_rng())
-	e = _evaluate(model, hyperparameters, X[:, Not(:year)], y).e
-	Base.Text(string("Without `year` AUC: ", _score(e)))
-end
-
-# ╔═╡ 8d881e71-3434-401f-bf54-868964dcab9a
-let
-	model = StableRulesClassifier
-	hyperparameters = (; max_depth=1, rng=_rng())
-	e = _evaluate(model, hyperparameters, X[:, Not(:nodes)], y).e
-	Base.Text(string("Without `nodes` AUC: ", _score(e)))
-end
-
 # ╔═╡ ab103b4e-24eb-4575-8c04-ae3fd9ec1673
 # ╠═╡ show_logs = false
 e1 = let
@@ -639,12 +646,9 @@ e4 = let
 	_evaluate(model, hyperparameters, X, y)
 end;
 
-# ╔═╡ e3173bf3-79f3-47d2-9dd3-164346022793
+# ╔═╡ 923affb5-b4ca-4b50-baa5-af29204d2081
 # hideall
-_rule_plot(e4.e)
-
-# ╔═╡ 1e990652-5995-4fec-901a-852bfc3e79cd
-Base.Text(string("Full dataset AUC: ", _score(e4.e)))
+_odds_plot(e4.e)
 
 # ╔═╡ 7fad8dd5-c0a9-4c45-9663-d40a464bca77
 # hideall
@@ -742,13 +746,10 @@ end
 # ╠═c2650040-f398-4a2e-bfe0-ce139c6ca879
 # ╠═6d0b29b6-61fb-4d16-9389-071892a3d9db
 # ╠═3c415a26-803e-4f35-866f-2e582c6c1c45
-# ╠═e3173bf3-79f3-47d2-9dd3-164346022793
-# ╠═0abd8010-43a4-4aad-aa25-bd2b958988e6
+# ╠═aa93a6c4-d5a0-4c73-9db9-e26c3c3f526b
+# ╠═a64dae3c-3b97-4076-98f4-3c9a0e5c0621
+# ╠═923affb5-b4ca-4b50-baa5-af29204d2081
 # ╠═ab5423cd-c8a9-488e-9bb0-bb41e583c2fa
-# ╠═1e990652-5995-4fec-901a-852bfc3e79cd
-# ╠═03e27cb0-7106-4f17-8a2c-e3fac13ca0b0
-# ╠═d9d357c9-f381-4266-ad4e-d87d4bcf4298
-# ╠═8d881e71-3434-401f-bf54-868964dcab9a
 # ╠═e6b880e9-e263-4818-81e9-bb4105e5c2c1
 # ╠═7fad8dd5-c0a9-4c45-9663-d40a464bca77
 # ╠═cfd908a0-1ee9-461d-9309-d4ffe738ba8e
