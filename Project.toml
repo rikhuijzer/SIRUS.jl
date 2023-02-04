@@ -1,7 +1,7 @@
 name = "SIRUS"
 uuid = "cdeec39e-fb35-4959-aadb-a1dd5dede958"
 authors = ["Rik Huijzer <t.h.huijzer@rug.nl>"]
-version = "1.1.0"
+version = "1.1.1"
 
 [deps]
 AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
