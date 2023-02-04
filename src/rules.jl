@@ -71,7 +71,7 @@ end
 Return a feature name that can be shown as `[:, 1]` or `[:, :some_var]`.
 """
 function _pretty_feature_name(feature::Int, feature_name::String255)
-    name = string(feature_name)::String
+    name = String(feature_name)::String
     s = string(feature)::String
     if s == name
         return s
@@ -110,7 +110,7 @@ _splits(rule::Rule) = rule.path.splits
 Return a vector of feature names; one for each clause in `rule`.
 """
 function feature_names(rule::Rule)::Vector{String}
-    return [string(_feature_name(split))::String for split in _splits(rule)]
+    return [String(_feature_name(split))::String for split in _splits(rule)]
 end
 
 """
