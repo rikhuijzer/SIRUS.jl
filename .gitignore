@@ -27,3 +27,6 @@ docs/src/**/index.md
 
 profile.pb.gz
 tmp**
+
+paper/*.pdf
+paper/*.jats
