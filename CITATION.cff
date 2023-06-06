@@ -4,6 +4,6 @@ authors:
   - family-names: Huijzer
     given-names: Rik
     orcid: https://orcid.org/0000-0001-9445-8466
-title: rikhuijzer/SIRUS.jl: v1.1.2
-version: v1.1.2
-date-released: 2023-04-28
+title: rikhuijzer/SIRUS.jl
+doi: 10.5281/zenodo.7875577
+url: https://doi.org/10.5281/zenodo.7875577
