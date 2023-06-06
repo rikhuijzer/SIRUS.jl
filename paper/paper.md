@@ -21,47 +21,29 @@ affiliations:
    index: 2
 date: '06 July 2023'
 bibliography: paper.bib
-
-# Optional fields if submitting to a AAS journal too, see this blog post:
-# https://blog.joss.theoj.org/2018/12/a-new-collaboration-with-aas-publishing
-aas-doi: 10.3847/xxxxx <- update this with the DOI from AAS once you know it.
-aas-journal: Astrophysical Journal <- The name of the AAS journal.
 ---
+
+**Note-to-self: Focus on the implementation and keep this a 2-3 page document, in line with other JOSS papers.**
 
 # Summary
 
-The random forest algorithm archieves high predictive performance for many machine learning tasks; especially when the number of observations is low relative to the number of variables.
-The algorithm does this by fitting a large number of trees.
-However, it can be difficult to fully interpret the model predictions since that would require inspecting all trees.
-Visualization techniques, such as SHAP, alleviate this problem but do not fully solve it.
-SHAP does allow for inspecting feature importances, but does not allow each prediction to be reproduced from the interpretable information alone.
-This may lead to unsafe or unreliable predictions.
-The SIRUS algorithm was created to solve this problem and does so by first restricting the split points in the random forest algorithm to a stable subset of points, and by then extracting a small and interpretable rule set.
-This original algorithm was implemented in C++ and R.
-In `SIRUS.jl`, we re-implemented the original SIRUS algorithm in pure Julia to reproduce the results and make the code easier to read.
-Furthermore, in this paper we aim to clearly document the algorithm implementation in order for others to build upon the implementation or port it to production environments.
+`SIRUS.jl` is a pure Julia implementation of the original Stable and Interpretable RUle Sets (SIRUS) algorithm.
+The SIRUS algorithm is a fully interpretable version of random forests, that is, it reduces the large amount of trees in the forest to a small amount of interpretable rules.
+With our Julia implementation, we aimed to reproduce the original C++ and R implementation in a high-level language to verify the algorithm as well as making the code easier to read.
+In turn, this allows others to build upon this Julia implementation or port the algorithm to production environments.
 
 # Statement of need
 
-`Gala` is an Astropy-affiliated Python package for galactic dynamics. Python
-enables wrapping low-level languages (e.g., C) for speed without losing
-flexibility or ease-of-use in the user-interface. The API for `Gala` was
-designed to provide a class-based and user-friendly interface to fast (C or
-Cython-optimized) implementations of common operations such as gravitational
-potential and force evaluation, orbit integration, dynamical transformations,
-and chaos indicators for nonlinear dynamics. `Gala` also relies heavily on and
-interfaces well with the implementations of physical units and astronomical
-coordinate systems in the `Astropy` package [@astropy] (`astropy.units` and
-`astropy.coordinates`).
-
-`Gala` was designed to be used by both astronomical researchers and by
-students in courses on gravitational dynamics or astronomy. It has already been
-used in a number of scientific publications [@Pearson:2017] and has also been
-used in graduate courses on Galactic dynamics to, e.g., provide interactive
-visualizations of textbook material [@Binney:2008]. The combination of speed,
-design, and support for Astropy functionality in `Gala` will enable exciting
-scientific explorations of forthcoming data releases from the *Gaia* mission
-[@gaia] by students and experts alike.
+The random forest algorithm [@breiman2001random] archieves high predictive performance for many machine learning tasks; especially when the number of observations is low relative to the number of variables [@biau2016random].
+The algorithm does this by fitting a large number of trees.
+However, it can be difficult to fully interpret the model predictions since that would require inspecting all trees.
+Visualization techniques, such as SHAP [@lundberg2017unified], alleviate this problem but do not fully solve it.
+SHAP does allow for inspecting feature importances, but does not allow each prediction to be reproduced from the interpretable information alone.
+This may lead to unsafe or unreliable predictions [@doshi2017towards, @barredo2020explainable].
+The SIRUS algorithm was created to solve this problem and does so by first restricting the split points in the random forest algorithm to a stable subset of points, and by then extracting a small and interpretable rule set [@benard2021interpretable].
+This original algorithm was implemented in C++ and R, which makes it hard to read.
+A pure Julia implementation allows the results to be reproduced and makes the code easier to read.
+In turn, this could allow others to research further algorithmic improvements or to port the algorithm to production environments.
 
 # Mathematics
 
@@ -105,7 +87,8 @@ Figure sizes can be customized by adding an optional second parameter:
 
 # Acknowledgements
 
-We acknowledge contributions from Brigitta Sipocz, Syrtis Major, and Semyeong
-Oh, and support from Kathryn Johnston during the genesis of this project.
+We acknowledge contributions from Clément Bénard for his help in re-implementing the SIRUS algorithm.
+Also, we acknowledge contributions from Hylke Cornelis Donker for discussions about the analysis and for his help in the visualizations.
+Furthermore, Anthony Bloam and Dávid Hanák (Cursor Insight) contributed by respectively doing code reviews and by finding a critical bug.
 
 # References
