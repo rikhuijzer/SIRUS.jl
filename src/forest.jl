@@ -97,17 +97,6 @@ function _cutpoints(X, q::Int)
 end
 
 """
-Return a view on all `y` for which the `comparison` holds in `data`.
-`indexes_in_region` is re-used between calls.
-"""
-function _view_y!(mask, data, y, comparison, cutpoint)
-    for i in eachindex(data)
-        mask[i] = comparison(data[i], cutpoint)
-    end
-    return view(y, mask)
-end
-
-"""
     SplitPoint(feature::Int, value::Float, feature_name::String)
 
 A location where the tree splits.
@@ -131,9 +120,14 @@ _feature(sp::SplitPoint) = sp.feature
 _value(sp::SplitPoint) = sp.value
 _feature_name(sp::SplitPoint) = sp.feature_name
 
-function _information_gain(y, y_left, y_right, classes)
+function _information_gain(
+        y,
+        y_left,
+        y_right,
+        classes,
+        starting_impurity::Real
+    )
     p = length(y_left) / length(y)
-    starting_impurity = _gini(y, classes)
     impurity_change = p * _gini(y_left, classes) + (1 - p) * _gini(y_right, classes)
     return starting_impurity - impurity_change
 end
@@ -141,6 +135,18 @@ end
 "Return a random subset of `V` sampled without replacement."
 function _rand_subset(rng::AbstractRNG, V::AbstractVector, n::Int)
     return view(shuffle(rng, V), 1:n)
+end
+
+"""
+Return a view on all `y` for which the `comparison` holds in `data`.
+`mask` is re-used between calls.
+"""
+function _view_y!(mask, X, feature::Int, y, comparison, cutpoint)
+    for i in eachindex(y)
+        value = @inbounds X[i, feature]
+        mask[i] = comparison(value, cutpoint)
+    end
+    return @inbounds view(y, mask)
 end
 
 """
@@ -157,21 +163,21 @@ function _split(
         cutpoints::Vector{Cutpoints};
         max_split_candidates::Int=_p(X)
     )
-    best_score = Float(0)
+    best_score = 0.0
     best_score_feature = 0
-    best_score_cutpoint = Float(0)
+    best_score_cutpoint = 0.0
     p = _p(X)
     mc = max_split_candidates
     possible_features = mc == p ? (1:p) : _rand_subset(rng, 1:p, mc)
     mask = Vector{Bool}(undef, length(y))
+    starting_impurity = _gini(y, classes)
     for feature in possible_features
-        data = view(X, :, feature)
         for cutpoint in cutpoints[feature]
-            y_left = _view_y!(mask, data, y, <, cutpoint)
+            y_left = _view_y!(mask, X, feature, y, <, cutpoint)
             isempty(y_left) && continue
-            y_right = _view_y!(mask, data, y, ≥, cutpoint)
+            y_right = _view_y!(mask, X, feature, y, ≥, cutpoint)
             isempty(y_right) && continue
-            gain = _information_gain(y, y_left, y_right, classes)
+            gain = _information_gain(y, y_left, y_right, classes, starting_impurity)
             if best_score ≤ gain
                 best_score = gain
                 best_score_feature = feature

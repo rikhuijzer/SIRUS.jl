@@ -177,12 +177,13 @@ let
     e = _evaluate_baseline!(results, "boston")
 end
 
-let
+function _evaluate_boston()
     hyper = (; rng=_rng(), n_trees=1_500)
     e = _evaluate!(results, "boston", StableForestClassifier, hyper)
 
     e = _evaluate!(results, "boston", StableRulesClassifier, hyper)
 end
+_evaluate_boston()
 
 pretty = rename(results, :se => "1.96*SE")
 rename!(pretty, :nfolds => "`nfolds`")

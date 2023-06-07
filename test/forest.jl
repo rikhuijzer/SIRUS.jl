@@ -8,8 +8,9 @@ X = [1 2;
 y = [1, 2]
 
 indexes = Vector{Bool}(undef, 2)
-@test collect(ST._view_y!(indexes, X[:, 1], [1 2], <, 2)) == [1]
-@test collect(ST._view_y!(indexes, X[:, 1], [1 2], >, 2)) == [2]
+feature = 1
+@test collect(ST._view_y!(indexes, X, feature, [1 2], <, 2)) == [1]
+@test collect(ST._view_y!(indexes, X, feature, [1 2], >, 2)) == [2]
 
 @test ST._cutpoints([3, 1, 2], 2) == Float[1, 2]
 @test ST._cutpoints(1:9, 3) == Float[3, 5, 7]
