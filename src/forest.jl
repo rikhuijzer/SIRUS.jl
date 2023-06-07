@@ -1,18 +1,4 @@
 """
-Return the number of elements in `V` being equal to `x`.
-This method allocates less memory than `count(V .== y)`.
-"""
-function _count_equal(V::AbstractVector, x)::Int
-    c = 0
-    for v in V
-        if x == v
-            c += 1
-        end
-    end
-    return c
-end
-
-"""
     _gini(y::AbstractVector, classes::AbstractVector)
 
 Return the Gini index for a vector outcomes `y` and `classes`.
@@ -27,11 +13,23 @@ function _gini(y::AbstractVector, classes)
     len_y = length(y)
     impurity = 1.0
     for class in classes
-        c = _count_equal(y, class)
+        c = count(==(class), y)
         proportion = c / len_y
         impurity -= proportion^2
     end
     return impurity
+end
+
+function _information_gain(
+        y,
+        yl,
+        yr,
+        classes,
+        starting_impurity::Real
+    )
+    p = length(yl) / length(y)
+    impurity_change = p * _gini(yl, classes) + (1 - p) * _gini(yr, classes)
+    return starting_impurity - impurity_change
 end
 
 """
@@ -120,18 +118,6 @@ _feature(sp::SplitPoint) = sp.feature
 _value(sp::SplitPoint) = sp.value
 _feature_name(sp::SplitPoint) = sp.feature_name
 
-function _information_gain(
-        y,
-        yl,
-        yr,
-        classes,
-        starting_impurity::Real
-    )
-    p = length(yl) / length(y)
-    impurity_change = p * _gini(yl, classes) + (1 - p) * _gini(yr, classes)
-    return starting_impurity - impurity_change
-end
-
 "Return a random subset of `V` sampled without replacement."
 function _rand_subset(rng::AbstractRNG, V::AbstractVector, n::Int)
     return view(shuffle(rng, V), 1:n)
@@ -139,10 +125,12 @@ end
 
 """
 Return a view on all `y` for which the `comparison` holds in `data`.
+
+The mutable `y_view` is used to have a view of `y` in continuous memory.
 """
 function _view_y!(y_view, X, feature::Int, y, comparison, cutpoint)
     len = 0
-    for i in eachindex(y)
+    @inbounds for i in eachindex(y)
         value = @inbounds X[i, feature]
         result = comparison(value, cutpoint)
         if result
