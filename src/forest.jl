@@ -13,7 +13,7 @@ function _gini(y::AbstractVector, classes)
     len_y = length(y)
     impurity = 1.0
     for class in classes
-        c = count(==(class), y)
+        c = @inbounds count(==(class), y)
         proportion = c / len_y
         impurity -= proportion^2
     end

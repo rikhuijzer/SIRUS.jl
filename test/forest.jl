@@ -39,7 +39,8 @@ let
          3 4] # 2
     y = [1, 2]
     classes = y
-    node = ST._tree(_rng(), X, y, classes; min_data_in_leaf=1, q=2)
+    mask = Vector{Bool}(undef, length(y))
+    node = ST._tree!(_rng(), mask, X, y, classes; min_data_in_leaf=1, q=2)
     # @test node.splitpoint == ST.SplitPoint(1, Float(3))
     # @test node.left.probabilities == [1.0, 0.0]
     # @test node.right.probabilities == [0.0, 1.0]
@@ -64,7 +65,8 @@ function _binary_accuracy(stree::ST.Node, classes, data, y)
 end
 
 classes = ST._classes(y)
-stree = ST._tree(_rng(), data, y, classes, min_data_in_leaf=1, q=10)
+mask = Vector{Bool}(undef, length(y))
+stree = ST._tree!(_rng(), mask, data, y, classes, min_data_in_leaf=1, q=10)
 @test 0.95 < _binary_accuracy(stree, classes, data, y)
 
 @testset "data_subset" begin
@@ -79,7 +81,8 @@ stree = ST._tree(_rng(), data, y, classes, min_data_in_leaf=1, q=10)
     dpreds = DecisionTree.apply_tree(dtree, _data)
     @test 0.95 < accuracy(dpreds, _y)
 
-    stree = ST._tree(_rng(), _data, _y, classes, q=10)
+    mask = Vector{Bool}(undef, length(_y))
+    stree = ST._tree!(_rng(), mask, _data, _y, classes, q=10)
     @test 0.95 < _binary_accuracy(stree, classes, _data, _y)
 end
 
