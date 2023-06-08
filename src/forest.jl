@@ -140,10 +140,10 @@ Return a view on all `y` for which the `comparison` holds in `data`.
 
 The mutable `y_view` is used to have a view of `y` in continuous memory.
 """
-function _view_y!(y_view, X, feature::Int, y, comparison, cutpoint)
+function _view_y!(y_view, data, y, comparison, cutpoint)
     len = 0
-    @inbounds for i in eachindex(y)
-        value = @inbounds X[i, feature]
+    @inbounds for i in eachindex(data)
+        value = @inbounds data[i]
         result = comparison(value, cutpoint)
         if result
             len += 1
@@ -178,10 +178,11 @@ function _split(
     yl = Vector{eltype(y)}(undef, length(y))
     yr = Vector{eltype(y)}(undef, length(y))
     for feature in possible_features
+        data = X[:, feature]
         for cutpoint in cutpoints[feature]
-            vl = _view_y!(yl, X, feature, y, <, cutpoint)
+            vl = _view_y!(yl, data, y, <, cutpoint)
             isempty(vl) && continue
-            vr = _view_y!(yr, X, feature, y, ≥, cutpoint)
+            vr = _view_y!(yr, data, y, ≥, cutpoint)
             isempty(vr) && continue
             gain = _information_gain(y, vl, vr, classes, starting_impurity)
             if best_score ≤ gain
