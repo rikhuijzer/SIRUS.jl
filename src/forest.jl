@@ -179,7 +179,7 @@ function _split(
             end
         end
     end
-    if best_score == Float(0)
+    if best_score == 0.0
         return nothing
     end
     feature_name = colnames[best_score_feature]
@@ -217,11 +217,17 @@ nodevalue(node::Node) = node.splitpoint
 """
 Return a view on all rows in `X` and `y` for which the `comparison` holds in `X[:, feature]`.
 """
-function _view_X_y(X, y, splitpoint::SplitPoint, comparison)
-    data = view(X, :, splitpoint.feature)
-    mask = comparison.(data, splitpoint.value)
-    X_view = view(X, mask, :)
-    y_view = view(y, mask)
+function _view_X_y!(mask, X, y, splitpoint::SplitPoint, comparison)
+    data = @inbounds view(X, :, splitpoint.feature)
+    @assert length(data) == length(y)
+    len = 0
+    for i in eachindex(y)
+        value = @inbounds data[i]
+        result = comparison(value, splitpoint.value)
+        @inbounds mask[i] = result
+    end
+    X_view = @inbounds view(X, mask, :)
+    y_view = @inbounds view(y, mask)
     return (X_view, y_view)
 end
 
@@ -281,13 +287,15 @@ function _tree(
         return Leaf(classes, y)
     end
     depth += 1
+
+    mask = Vector{Bool}(undef, length(y))
     left = let
-        _X, _y = _view_X_y(X, y, sp, <)
-        _tree(rng, _X, _y, classes, colnames; cutpoints, depth, max_depth)
+        _X, yl = _view_X_y!(mask, X, y, sp, <)
+        _tree(rng, _X, yl, classes, colnames; cutpoints, depth, max_depth)
     end
     right = let
-        _X, _y = _view_X_y(X, y, sp, ≥)
-        _tree(rng, _X, _y, classes, colnames; cutpoints, depth, max_depth)
+        _X, yr = _view_X_y!(mask, X, y, sp, ≥)
+        _tree(rng, _X, yr, classes, colnames; cutpoints, depth, max_depth)
     end
     node = Node(sp, left, right)
     return node
