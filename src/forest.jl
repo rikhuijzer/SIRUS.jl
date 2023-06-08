@@ -177,12 +177,15 @@ function _split(
 
     yl = Vector{eltype(y)}(undef, length(y))
     yr = Vector{eltype(y)}(undef, length(y))
+    feat_data = Vector{eltype(X)}(undef, length(y))
     for feature in possible_features
-        data = X[:, feature]
+        @inbounds for i in eachindex(feat_data)
+            feat_data[i] = X[i, feature]
+        end
         for cutpoint in cutpoints[feature]
-            vl = _view_y!(yl, data, y, <, cutpoint)
+            vl = _view_y!(yl, feat_data, y, <, cutpoint)
             isempty(vl) && continue
-            vr = _view_y!(yr, data, y, ≥, cutpoint)
+            vr = _view_y!(yr, feat_data, y, ≥, cutpoint)
             isempty(vr) && continue
             gain = _information_gain(y, vl, vr, classes, starting_impurity)
             if best_score ≤ gain
