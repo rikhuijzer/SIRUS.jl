@@ -1,3 +1,14 @@
+"Return the number of elements in `V` being equal to `x`."
+function _count_equal(V::AbstractVector, x)::Int
+    c = 0
+    @inbounds @simd for v in V
+        if x == v
+            c += 1
+        end
+    end
+    return c
+end
+
 """
     _gini(y::AbstractVector, classes::AbstractVector)
 
@@ -12,8 +23,9 @@ for ``p_i`` be the fraction (proportion) of items labeled with class ``i`` in th
 function _gini(y::AbstractVector, classes)
     len_y = length(y)
     impurity = 1.0
+
     for class in classes
-        c = @inbounds count(==(class), y)
+        c = _count_equal(y, class)
         proportion = c / len_y
         impurity -= proportion^2
     end
