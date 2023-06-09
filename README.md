@@ -8,7 +8,7 @@
     <a href="https://github.com/rikhuijzer/SIRUS.jl/actions?query=workflow%3ACI+branch%3Amain">
         <img src="https://github.com/rikhuijzer/SIRUS.jl/workflows/CI/badge.svg" alt="CI">
     </a>
-    <a href="https://huijzer.xyz/StableTrees.jl/dev/">
+    <a href="https://sirusdocs.xyz/dev/">
         <img src="https://img.shields.io/badge/Docs-main-blue" alt="Documentation">
     </a>
     <a href="https://github.com/invenia/BlueStyle">
