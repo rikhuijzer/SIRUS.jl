@@ -8,6 +8,10 @@ end
     include("forest.jl")
 end
 
+# @testset "regression" begin
+#     include("regression.jl")
+# end
+
 @testset "rules" begin
     include("rules.jl")
 end

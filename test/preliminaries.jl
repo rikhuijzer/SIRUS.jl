@@ -80,6 +80,7 @@ function boston()
     target = :MEDV
     m = mean(df[:, target]) # 22.5 thousand dollars.
     y = categorical([value < m ? 0 : 1 for value in df[:, target]])
+    # y = df[:, target]
     X = MLJBase.table(MLJBase.matrix(df[:, Not(target)]))
     return (X, y)
 end

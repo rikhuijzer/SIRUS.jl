@@ -118,7 +118,7 @@ function _split(
     feat_data = Vector{eltype(X)}(undef, length(y))
     for feature in possible_features
         @inbounds for i in eachindex(feat_data)
-            feat_data[i] = X[i, feature]
+            feat_data[i] = @inbounds X[i, feature]
         end
         for cutpoint in cps[feature]
             vl = _view_y!(yl, feat_data, y, <, cutpoint)
@@ -341,10 +341,9 @@ function _forest(
     Threads.@threads for i in 1:n_trees
         _rng = copy(rng)
         _change_rng_state!(_rng, i)
-        # Don't change this to sampling without replacement.
-        # When doing that at DecisionTree.jl, the accuracy decreases.
+        # Note that this is sampling with replacement; keep it this way.
         rows = rand(_rng, 1:length(y), n_samples)
-        _X = view(X, rows, :)
+        _X = X[rows, :]
         _y = view(y, rows)
         mask = Vector{Bool}(undef, length(y))
         tree = _tree!(
