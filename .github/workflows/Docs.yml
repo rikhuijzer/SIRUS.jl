@@ -8,10 +8,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  Documenter:
+  Build:
     permissions:
       contents: write
-    name: Documentation
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -20,5 +20,23 @@ jobs:
       - uses: julia-actions/julia-docdeploy@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  Configure:
+    needs: Build
+    if: ${{ github.event_name != 'pull_request' }}
+    permissions:
+      contents: write
+    name: Configure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: 'docs-output'
       - run: echo "sirusdocs.huijzer.xyz" > CNAME
       - run: echo "<meta http-equiv=\"refresh\" content=\"0; url=./dev/\"/>" > index.html
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          force_orphan: true
+          publish_dir: .
+          publish_branch: 'docs-output'
+
