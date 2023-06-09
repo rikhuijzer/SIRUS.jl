@@ -9,7 +9,7 @@ struct Split
     direction::Symbol # :L or :R
 end
 
-function Split(feature::Int, name::String, splitval::Float, direction::Symbol)
+function Split(feature::Int, name::String, splitval::Float32, direction::Symbol)
     return Split(SplitPoint(feature, splitval, name), direction)
 end
 
@@ -45,7 +45,7 @@ function TreePath(text::String)
             feature = parse(Int, feature_text)
             splitval = let
                 start = direction == :L ? findfirst('<', c) + 1 : findfirst('≥', c) + 3
-                parse(Float, c[start:end])
+                parse(Float32, c[start:end])
             end
             feature_name = string(feature)::String
             Split(feature, feature_name, splitval, direction)
@@ -467,7 +467,7 @@ function _probability(row::AbstractVector, rule::Rule)
     return satisfies(row, rule) ? rule.then_probs : rule.else_probs
 end
 
-function _predict(pair::Tuple{Rule,Float16}, row::AbstractVector)
+function _predict(pair::Tuple{Rule, Float16}, row::AbstractVector)
     rule, weight = pair
     probs = _probability(row, rule)
     return weight .* probs

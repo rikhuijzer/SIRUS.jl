@@ -14,10 +14,15 @@ using Random: AbstractRNG, default_rng, seed!, shuffle
 using Statistics: mean, median
 using Tables: Tables, matrix
 
-const Float = Float32
-
 export StableForestClassifier, StableRulesClassifier
 export feature_names, directions, satisfies
+
+include("helpers.jl")
+using .Helpers: nfeatures, view_feature
+
+include("empiricalquantiles.jl")
+using .EmpiricalQuantiles: Cutpoints, cutpoints
+export Cutpoints, cutpoints
 
 include("forest.jl")
 include("rules.jl")

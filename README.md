@@ -9,7 +9,7 @@
         <img src="https://github.com/rikhuijzer/SIRUS.jl/workflows/CI/badge.svg" alt="CI">
     </a>
     <a href="https://huijzer.xyz/StableTrees.jl/dev/">
-        <img src="https://img.shields.io/badge/Documentation-main-blue" alt="Documentation">
+        <img src="https://img.shields.io/badge/Docs-main-blue" alt="Documentation">
     </a>
     <a href="https://github.com/invenia/BlueStyle">
         <img src="https://img.shields.io/badge/Code%20Style-Blue-4495d1.svg" alt="Code Style Blue">

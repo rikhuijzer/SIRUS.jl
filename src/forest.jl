@@ -45,69 +45,7 @@ function _information_gain(
 end
 
 """
-Return a rough estimate for the index of the cutpoint.
-Choose the highest suitable index if there is more than one suitable index.
-The reason is that this will split the data nicely in combination with the `<` used later on.
-For example, for [1, 2, 3, 4], both 2 and 3 satisfy the 0.5 quantile.
-In this case, we pick the ceil, so 3.
-Next, the tree will split on 3, causing left (<) to contain 1 and 2 and right (≥) to contain 3 and 4.
-"""
-_rough_cutpoint_index_estimate(n::Int, quantile::Real) = Int(ceil(quantile * n))
-
-"Return the empirical `quantile` for data `V`."
-function _empirical_quantile(V::AbstractVector, quantile::Real)
-    @assert 0.0 ≤ quantile ≤ 1.0
-    n = length(V)
-    index = _rough_cutpoint_index_estimate(n, quantile)
-    if index == 0
-        index = 1
-    end
-    if index == n + 1
-        index = n
-    end
-    sorted = sort(V)
-    return Float(sorted[index])
-end
-
-"Return a vector of `q` cutpoints taken from the empirical distribution from data `V`."
-function _cutpoints(V::AbstractVector, q::Int)
-    @assert 2 ≤ q
-    # Taking 2 extra to avoid getting minimum(V) and maximum(V) becoming cutpoints.
-    # Tree on left and right have always respectively length 0 and 1 then anyway.
-    length = q + 2
-    quantiles = range(0.0; stop=1.0, length)[2:end-1]
-    return Float[_empirical_quantile(V, quantile) for quantile in quantiles]
-end
-
-"Return the number of features `p` in a dataset `X`."
-_p(X::AbstractMatrix) = size(X, 2)
-_p(X) = length(Tables.columnnames(X))
-
-"Set of possible cutpoints, that is, numbers from the empirical quantiles."
-const Cutpoints = Vector{Float}
-
-_view_feature(X::AbstractMatrix, feature::Int) = view(X, :, feature)
-_view_feature(X, feature::Int) = X[feature]
-
-"""
-Return a vector of vectors containing
-- one inner vector for each feature in the dataset and
-- inner vectors containing the unique cutpoints, that is, `length(V[i])` ≤ `q` for all i in V.
-
-Using unique here to avoid checking splits twice.
-"""
-function _cutpoints(X, q::Int)
-    p = _p(X)
-    cutpoints = Vector{Cutpoints}(undef, p)
-    for feature in 1:p
-        V = _view_feature(X, feature)
-        cutpoints[feature] = unique(_cutpoints(V, q))
-    end
-    return cutpoints
-end
-
-"""
-    SplitPoint(feature::Int, value::Float, feature_name::String)
+    SplitPoint(feature::Int, value::Float32, feature_name::String)
 
 A location where the tree splits.
 
@@ -118,10 +56,10 @@ Arguments:
 """
 struct SplitPoint
     feature::Int
-    value::Float
+    value::Float32
     feature_name::String255
 
-    function SplitPoint(feature::Int, value::Float, feature_name::String)
+    function SplitPoint(feature::Int, value::Float32, feature_name::String)
         return new(feature, value, String255(feature_name))
     end
 end
@@ -164,13 +102,13 @@ function _split(
         y::AbstractVector,
         classes::AbstractVector,
         colnames::Vector{String},
-        cutpoints::Vector{Cutpoints};
-        max_split_candidates::Int=_p(X)
+        cps::Vector{Cutpoints};
+        max_split_candidates::Int=nfeatures(X)
     )
     best_score = 0.0
     best_score_feature = 0
     best_score_cutpoint = 0.0
-    p = _p(X)
+    p = nfeatures(X)
     mc = max_split_candidates
     possible_features = mc == p ? (1:p) : _rand_subset(rng, 1:p, mc)
     starting_impurity = _gini(y, classes)
@@ -182,7 +120,7 @@ function _split(
         @inbounds for i in eachindex(feat_data)
             feat_data[i] = X[i, feature]
         end
-        for cutpoint in cutpoints[feature]
+        for cutpoint in cps[feature]
             vl = _view_y!(yl, feat_data, y, <, cutpoint)
             isempty(vl) && continue
             vr = _view_y!(yr, feat_data, y, ≥, cutpoint)
@@ -258,7 +196,7 @@ end
 
 "Return `names(X)` if defined for `X` and string numbers otherwise."
 function _colnames(X)::Vector{String}
-    fallback() = string.(1:_p(X))
+    fallback() = string.(1:nfeatures(X))
     try
         names = collect(string.(Tables.columnnames(X)))
         if isempty(names)
@@ -286,11 +224,11 @@ function _tree!(
         y::AbstractVector,
         classes::AbstractVector,
         colnames::Vector{String}=_colnames(X);
-        max_split_candidates=_p(X),
+        max_split_candidates=nfeatures(X),
         depth=0,
         max_depth=2,
         q=10,
-        cutpoints::Vector{Cutpoints}=_cutpoints(X, q),
+        cps::Vector{Cutpoints}=cutpoints(X, q),
         min_data_in_leaf=5
     )
     if X isa Tables.MatrixTable
@@ -300,7 +238,7 @@ function _tree!(
     if depth == max_depth
         return Leaf(classes, y)
     end
-    sp = _split(rng, X, y, classes, colnames, cutpoints; max_split_candidates)
+    sp = _split(rng, X, y, classes, colnames, cps; max_split_candidates)
     if isnothing(sp) || length(y) ≤ min_data_in_leaf
         return Leaf(classes, y)
     end
@@ -308,11 +246,11 @@ function _tree!(
 
     left = let
         _X, yl = _view_X_y!(mask, X, y, sp, <)
-        _tree!(rng, mask, _X, yl, classes, colnames; cutpoints, depth, max_depth)
+        _tree!(rng, mask, _X, yl, classes, colnames; cps, depth, max_depth)
     end
     right = let
         _X, yr = _view_X_y!(mask, X, y, sp, ≥)
-        _tree!(rng, mask, _X, yr, classes, colnames; cutpoints, depth, max_depth)
+        _tree!(rng, mask, _X, yr, classes, colnames; cps, depth, max_depth)
     end
     node = Node(sp, left, right)
     return node
@@ -393,10 +331,10 @@ function _forest(
         error("Minimum tree depth is 1; got $max_depth")
     end
     # It is essential for the stability to determine the cutpoints over the whole dataset.
-    cutpoints = _cutpoints(X, q)
+    cps = cutpoints(X, q)
     classes = _classes(y)
 
-    max_split_candidates = round(Int, sqrt(_p(X)))
+    max_split_candidates = round(Int, sqrt(nfeatures(X)))
     n_samples = floor(Int, partial_sampling * length(y))
 
     trees = Vector{Union{Node,Leaf}}(undef, n_trees)
@@ -419,7 +357,7 @@ function _forest(
             max_split_candidates,
             max_depth,
             q,
-            cutpoints,
+            cps,
             min_data_in_leaf
         )
         trees[i] = tree
