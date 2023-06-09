@@ -23,4 +23,4 @@
 
 This package is a pure Julia implementation of the **S**table and **I**nterpretable **RU**le **S**ets (SIRUS) algorithm.
 
-See the [documentation](https://huijzer.xyz/StableTrees.jl/) for more information.
+See the [documentation](https://sirusdocs.huijzer.xyz/dev/) for more information.
