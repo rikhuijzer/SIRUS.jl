@@ -24,7 +24,7 @@ using Random: AbstractRNG, default_rng
 using SIRUS:
     StableForest,
     StableRules,
-    _colnames,
+    colnames,
     _forest,
     _mean,
     _predict,
@@ -197,7 +197,7 @@ function fit(model::StableForestClassifier, verbosity::Int, X, y)
         model.rng,
         matrix(X),
         _float(y),
-        _colnames(X);
+        colnames(X);
         model.partial_sampling,
         model.n_trees,
         model.max_depth,
@@ -222,7 +222,7 @@ function fit(model::StableRulesClassifier, verbosity::Int, X, y)
         model.rng,
         data,
         outcome,
-        _colnames(X);
+        colnames(X);
         model.partial_sampling,
         model.n_trees,
         model.max_depth,

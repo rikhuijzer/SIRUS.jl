@@ -101,7 +101,7 @@ function _split(
         X,
         y::AbstractVector,
         classes::AbstractVector,
-        colnames::Vector{String},
+        colnms::Vector{String},
         cps::Vector{Cutpoints};
         max_split_candidates::Int=nfeatures(X)
     )
@@ -136,7 +136,7 @@ function _split(
     if best_score == 0.0
         return nothing
     end
-    feature_name = colnames[best_score_feature]
+    feature_name = colnms[best_score_feature]
     return SplitPoint(best_score_feature, best_score_cutpoint, feature_name)
 end
 
@@ -194,21 +194,6 @@ function _verify_lengths(X, y)
     end
 end
 
-"Return `names(X)` if defined for `X` and string numbers otherwise."
-function _colnames(X)::Vector{String}
-    fallback() = string.(1:nfeatures(X))
-    try
-        names = collect(string.(Tables.columnnames(X)))
-        if isempty(names)
-            return fallback()
-        else
-            return names
-        end
-    catch
-        return fallback()
-    end
-end
-
 """
 Return the root node of a stable decision tree fitted on `X` and `y`.
 
@@ -223,7 +208,7 @@ function _tree!(
         X,
         y::AbstractVector,
         classes::AbstractVector,
-        colnames::Vector{String}=_colnames(X);
+        colnms::Vector{String}=colnames(X);
         max_split_candidates=nfeatures(X),
         depth=0,
         max_depth=2,
@@ -238,7 +223,7 @@ function _tree!(
     if depth == max_depth
         return Leaf(classes, y)
     end
-    sp = _split(rng, X, y, classes, colnames, cps; max_split_candidates)
+    sp = _split(rng, X, y, classes, colnms, cps; max_split_candidates)
     if isnothing(sp) || length(y) ≤ min_data_in_leaf
         return Leaf(classes, y)
     end
@@ -246,11 +231,11 @@ function _tree!(
 
     left = let
         _X, yl = _view_X_y!(mask, X, y, sp, <)
-        _tree!(rng, mask, _X, yl, classes, colnames; cps, depth, max_depth)
+        _tree!(rng, mask, _X, yl, classes, colnms; cps, depth, max_depth)
     end
     right = let
         _X, yr = _view_X_y!(mask, X, y, sp, ≥)
-        _tree!(rng, mask, _X, yr, classes, colnames; cps, depth, max_depth)
+        _tree!(rng, mask, _X, yr, classes, colnms; cps, depth, max_depth)
     end
     node = Node(sp, left, right)
     return node
@@ -317,7 +302,7 @@ function _forest(
         rng::AbstractRNG,
         X::AbstractMatrix,
         y::AbstractVector,
-        colnames::Vector{String};
+        colnms::Vector{String};
         partial_sampling::Real=PARTIAL_SAMPLING_DEFAULT,
         n_trees::Int=N_TREES_DEFAULT,
         max_depth::Int=MAX_DEPTH_DEFAULT,
@@ -325,7 +310,10 @@ function _forest(
         min_data_in_leaf::Int=5
     )
     if 2 < max_depth
-        error("Tree depth is too high. Rule filtering for a higher depth is not implemented.")
+        error("""
+              Tree depth is too high. Rule filtering for a depth above 2 is not implemented.
+              In the original paper, the authors also advice to use a depth of no more than 2.
+              """)
     end
     if max_depth < 1
         error("Minimum tree depth is 1; got $max_depth")
@@ -352,7 +340,7 @@ function _forest(
             _X,
             _y,
             classes,
-            colnames;
+            colnms;
             max_split_candidates,
             max_depth,
             q,
@@ -370,7 +358,7 @@ function _forest(rng::AbstractRNG, X, y; kwargs...)
     end
     # Tables doesn't assume the data fits in memory so that complicates things a lot.
     # Implementing out-of-memory trees is a problem for later.
-    return _forest(rng, matrix(X), y, _colnames(X); kwargs...)
+    return _forest(rng, matrix(X), y, colnames(X); kwargs...)
 end
 
 function _isempty_error(::StableForest)

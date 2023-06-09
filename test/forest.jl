@@ -41,7 +41,7 @@ end
 n = 200
 p = 70
 X, y = make_blobs(n, p; centers=2, rng=_rng(), shuffle=true)
-colnames = ST._colnames(X)
+colnames = ST.colnames(X)
 
 n_subfeatures = 0
 max_depth = 2
