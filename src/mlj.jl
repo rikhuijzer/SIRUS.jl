@@ -193,8 +193,10 @@ function _float(A::CategoricalArray{T}) where T
 end
 
 function fit(model::StableForestClassifier, verbosity::Int, X, y)
+    output_type = :classification
     forest = _forest(
         model.rng,
+        output_type,
         matrix(X),
         _float(y),
         colnames(X);
@@ -216,10 +218,12 @@ function predict(model::StableForestClassifier, fitresult::StableForest, Xnew)
 end
 
 function fit(model::StableRulesClassifier, verbosity::Int, X, y)
+    output_type = :classification
     data = matrix(X)
     outcome = _float(y)
     forest = _forest(
         model.rng,
+        output_type,
         data,
         outcome,
         colnames(X);

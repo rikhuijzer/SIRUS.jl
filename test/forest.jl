@@ -1,3 +1,5 @@
+output_type = :regression
+
 @test ST._gini([1, 1], [1]) == 0.0
 @test ST._gini([1, 0], [0, 1]) == 0.5
 @test ST._gini([1, 2, 3, 4, 5], [1, 2, 3, 4, 5]) ≈ 0.8
@@ -32,7 +34,7 @@ let
     y = [1, 2]
     classes = y
     mask = Vector{Bool}(undef, length(y))
-    node = ST._tree!(_rng(), mask, X, y, classes; min_data_in_leaf=1, q=2)
+    node = ST._tree!(_rng(), output_type, mask, X, y, classes; min_data_in_leaf=1, q=2)
     # @test node.splitpoint == ST.SplitPoint(1, Float32(3))
     # @test node.left.probabilities == [1.0, 0.0]
     # @test node.right.probabilities == [0.0, 1.0]
@@ -58,7 +60,7 @@ end
 
 classes = ST._classes(y)
 mask = Vector{Bool}(undef, length(y))
-stree = ST._tree!(_rng(), mask, data, y, classes, min_data_in_leaf=1, q=10)
+stree = ST._tree!(_rng(), output_type, mask, data, y, classes, min_data_in_leaf=1, q=10)
 @test 0.95 < _binary_accuracy(stree, classes, data, y)
 
 @testset "data_subset" begin
@@ -74,7 +76,7 @@ stree = ST._tree!(_rng(), mask, data, y, classes, min_data_in_leaf=1, q=10)
     @test 0.95 < accuracy(dpreds, _y)
 
     mask = Vector{Bool}(undef, length(_y))
-    stree = ST._tree!(_rng(), mask, _data, _y, classes, q=10)
+    stree = ST._tree!(_rng(), output_type, mask, _data, _y, classes, q=10)
     @test 0.95 < _binary_accuracy(stree, classes, _data, _y)
 end
 
@@ -87,7 +89,7 @@ dforest = let
 end
 # DecisionTree.print_tree.(dforest.trees);
 
-sforest = ST._forest(_rng(), data, y, colnames; n_trees=10, max_depth=2)
+sforest = ST._forest(_rng(), output_type, data, y, colnames; n_trees=10, max_depth=2)
 
 @testset "max_depth is adhered to" begin
     some_children(forest) = ST.AbstractTrees.children(forest.trees[1])
@@ -95,7 +97,7 @@ sforest = ST._forest(_rng(), data, y, colnames; n_trees=10, max_depth=2)
     # ST.print_tree.(sforest.trees);
     @test !(all(child -> child isa ST.Leaf, some_children(sforest)))
 
-    undeep_forest = ST._forest(_rng(), data, y, colnames; n_trees=10, max_depth=1)
+    undeep_forest = ST._forest(_rng(), output_type, data, y, colnames; n_trees=10, max_depth=1)
     @test all(child -> child isa ST.Leaf, some_children(undeep_forest))
 end
 

@@ -85,7 +85,8 @@ end
 end
 
 function generate_rules()
-    forest = ST._forest(_rng(), X, y)
+    output_type = :classification
+    forest = ST._forest(_rng(), output_type, X, y)
     rulesmodel = let
         rules = ST._rules(forest)
         weights = repeat(Float16[1.0], length(rules))

@@ -201,9 +201,11 @@ Arguments:
 - `max_split_candidates`:
     During random forest creation, the number of split candidates is limited to make the trees less correlated.
     See Section 8.2.2 of https://doi.org/10.1007/978-1-0716-1418-1 for details.
+- `output_type`: This should have been an enum, but Julia doesn't provide proper enums.
 """
 function _tree!(
         rng::AbstractRNG,
+        output_type::Symbol,
         mask::Vector{Bool},
         X,
         y::AbstractVector,
@@ -231,11 +233,11 @@ function _tree!(
 
     left = let
         _X, yl = _view_X_y!(mask, X, y, sp, <)
-        _tree!(rng, mask, _X, yl, classes, colnms; cps, depth, max_depth)
+        _tree!(rng, output_type, mask, _X, yl, classes, colnms; cps, depth, max_depth)
     end
     right = let
         _X, yr = _view_X_y!(mask, X, y, sp, ≥)
-        _tree!(rng, mask, _X, yr, classes, colnms; cps, depth, max_depth)
+        _tree!(rng, output_type, mask, _X, yr, classes, colnms; cps, depth, max_depth)
     end
     node = Node(sp, left, right)
     return node
@@ -300,6 +302,7 @@ Arguments:
 """
 function _forest(
         rng::AbstractRNG,
+        output_type::Symbol,
         X::AbstractMatrix,
         y::AbstractVector,
         colnms::Vector{String};
@@ -336,6 +339,7 @@ function _forest(
         mask = Vector{Bool}(undef, length(y))
         tree = _tree!(
             _rng,
+            output_type,
             mask,
             _X,
             _y,
@@ -352,13 +356,13 @@ function _forest(
     return StableForest(trees, classes)
 end
 
-function _forest(rng::AbstractRNG, X, y; kwargs...)
+function _forest(rng::AbstractRNG, output_type::Symbol, X, y; kwargs...)
     if !(X isa AbstractMatrix || Tables.istable(X))
         error("Input `X` doesn't satisfy the Tables.jl interface.")
     end
     # Tables doesn't assume the data fits in memory so that complicates things a lot.
     # Implementing out-of-memory trees is a problem for later.
-    return _forest(rng, matrix(X), y, colnames(X); kwargs...)
+    return _forest(rng, output_type, matrix(X), y, colnames(X); kwargs...)
 end
 
 function _isempty_error(::StableForest)
