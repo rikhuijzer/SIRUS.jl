@@ -363,11 +363,11 @@ ST = SIRUS;
 function _plot_cutpoints(data::AbstractVector)
 	fig = Figure(; resolution=(800, 100))
 	ax = Axis(fig[1, 1])
-	cutpoints = Float64.(unique(ST._cutpoints(data, 10)))
+	cps = Float64.(unique(cutpoints(data, 10)))
 	scatter!(ax, data, fill(1, length(data)))
-	vlines!(ax, cutpoints; color=:black, linestyle=:dash)
-	textlocs = [(c, 1.1) for c in cutpoints]
-	for cutpoint in cutpoints
+	vlines!(ax, cps; color=:black, linestyle=:dash)
+	textlocs = [(c, 1.1) for c in cps]
+	for cutpoint in cps
 		annotation = string(round(cutpoint; digits=2))::String
 		text!(ax, cutpoint + 0.2, 1.08; text=annotation, textsize=13)
 	end
