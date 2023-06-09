@@ -11,7 +11,7 @@ jobs:
   Build:
     permissions:
       contents: write
-    name: Build
+    name: BuildDocs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -22,11 +22,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   Configure:
-    needs: Build
+    needs: BuildDocs
     if: ${{ github.event_name != 'pull_request' }}
     permissions:
       contents: write
-    name: Configure
+    name: ConfigureDocs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
