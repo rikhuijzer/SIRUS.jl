@@ -37,7 +37,6 @@ using Tables: Tables
 using Test
 
 ST = SIRUS
-Float = ST.Float
 _rng(seed::Int=1) = StableRNG(seed)
 
 if !haskey(ENV, "REGISTERED_HABERMAN")
@@ -85,7 +84,7 @@ function boston()
     return (X, y)
 end
 
-function _Split(feature::Int, splitval::Float, direction::Symbol)
+function _Split(feature::Int, splitval::Float32, direction::Symbol)
     return ST.Split(feature, string(feature), splitval, direction)
 end
 

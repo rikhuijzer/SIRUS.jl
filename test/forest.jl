@@ -12,26 +12,18 @@ feature = 1
 @test collect(ST._view_y!(y_view, X[:, feature], [1 2], <, 2)) == [1]
 @test collect(ST._view_y!(y_view, X[:, feature], [1 2], >, 2)) == [2]
 
-@test ST._cutpoints([3, 1, 2], 2) == Float[1, 2]
-@test ST._cutpoints(1:9, 3) == Float[3, 5, 7]
-@test ST._cutpoints(1:4, 3) == Float[1, 2, 3]
-@test ST._cutpoints([1, 3, 5, 7], 2) == Float[3, 5]
-
-@test ST._cutpoints(X, 2) == [Float[1, 3], Float[2, 4]]
-@test ST._cutpoints([3 4; 1 5; 2 6], 2) == [Float[1, 2], Float[4, 5]]
-
 let
     X = [1 1;
          1 3]
     classes = unique(y)
     colnames = ["A", "B"]
-    cutpoints = ST._cutpoints(X, 2)
-    splitpoint = ST._split(StableRNG(1), X, y, classes, colnames, cutpoints)
+    cp = cutpoints(X, 2)
+    splitpoint = ST._split(StableRNG(1), X, y, classes, colnames, cp)
     # Obviously, feature (column) 2 is more informative to split on than feature 1.
     @test splitpoint.feature == 2
     @test splitpoint.feature_name == "B"
     # Given that the split does < and ≥, then 3 is the best place since it separates 1 (left) and 3 (right).
-    @test splitpoint.value == Float(3)
+    @test splitpoint.value == Float32(3)
 end
 
 let
@@ -41,7 +33,7 @@ let
     classes = y
     mask = Vector{Bool}(undef, length(y))
     node = ST._tree!(_rng(), mask, X, y, classes; min_data_in_leaf=1, q=2)
-    # @test node.splitpoint == ST.SplitPoint(1, Float(3))
+    # @test node.splitpoint == ST.SplitPoint(1, Float32(3))
     # @test node.left.probabilities == [1.0, 0.0]
     # @test node.right.probabilities == [0.0, 1.0]
 end
@@ -72,7 +64,7 @@ stree = ST._tree!(_rng(), mask, data, y, classes, min_data_in_leaf=1, q=10)
 @testset "data_subset" begin
     n_features = round(Int, sqrt(p))
     n_samples = round(Int, n/2)
-    cols = rand(_rng(), 1:ST._p(data), n_features)
+    cols = rand(_rng(), 1:ST.nfeatures(data), n_features)
     rows = rand(_rng(), 1:length(y), n_samples)
     _data = view(data, rows, cols)
     _y = view(y, rows)

@@ -1,5 +1,9 @@
 include("preliminaries.jl")
 
+@testset "empiricalquantiles" begin
+    include("empiricalquantiles.jl")
+end
+
 @testset "forest" begin
     include("forest.jl")
 end
