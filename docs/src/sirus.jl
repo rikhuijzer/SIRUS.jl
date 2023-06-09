@@ -43,8 +43,8 @@ TableOfContents()
 md"""
 This package is a pure Julia implementation of the **S**table and **I**nterpretable **RU**le **S**ets (SIRUS) algorithm.
 The algorithm was originally created by Clément Bénard, Gérard Biau, Sébastien Da Veiga, and Erwan Scornet.
-This package has only implemented binary classification for now.
-Regression and multiclass-classification will be implemented later.
+This package has only implemented binary classification and regression for now.
+Multiclass-classification will be implemented later.
 For R users, the original version of the SIRUS algorithm is available via [CRAN](https://cran.r-project.org/web/packages/sirus/index.html).
 
 The algorithm is based on random forests.
