@@ -1,3 +1,11 @@
+"Supertype for random forests modes: classification or regression."
+abstract type Algorithm end
+
+"Supertype for leafs: classification or regression."
+abstract type Leaf end
+
+const Probabilities = Vector{Float64}
+
 "Return the number of elements in `V` being equal to `x`."
 function _count_equal(V::AbstractVector, x)::Int
     c = 0
@@ -7,42 +15,6 @@ function _count_equal(V::AbstractVector, x)::Int
         end
     end
     return c
-end
-
-"""
-    _gini(y::AbstractVector, classes::AbstractVector)
-
-Return the Gini index for a vector outcomes `y` and `classes`.
-Here, `y` is usually a view on the outcome values in some region.
-Inside that region, `gini` is a measure of node purity.
-If all values in the region have the same class, then gini is zero.
-The equation is mentioned on Wikipedia as
-``1 - \\sum{class \\in classes} p_i^2,``
-where ``p_i`` denotes the fraction (proportion) of items labeled
-with class ``i`` in the set.
-"""
-function _gini(y::AbstractVector, classes)
-    len_y = length(y)
-    impurity = 1.0
-
-    for class in classes
-        c = _count_equal(y, class)
-        proportion = c / len_y
-        impurity -= proportion^2
-    end
-    return impurity
-end
-
-function _information_gain(
-        y,
-        yl,
-        yr,
-        classes,
-        starting_impurity::Real
-    )
-    p = length(yl) / length(y)
-    impurity_change = p * _gini(yl, classes) + (1 - p) * _gini(yr, classes)
-    return starting_impurity - impurity_change
 end
 
 """
@@ -145,46 +117,6 @@ function _split(
     return SplitPoint(best_score_feature, best_score_cutpoint, feature_name)
 end
 
-const Probabilities = Vector{Float64}
-
-abstract type Algorithm end
-struct Classification <: Algorithm end
-struct Regression <: Algorithm end
-
-abstract type Leaf end
-
-"""
-    ClassificationLeaf
-
-Leaf of a decision tree when running classification.
-The probabilities are based on the `y`'s falling into the region associated with this leaf.
-The meaning of each index in the probabilities vector is given by the `classes` vector.
-"""
-struct ClassificationLeaf <: Leaf
-    probabilities::Probabilities
-end
-
-function Leaf(::Classification, classes, y)
-    l = length(y)
-    probabilities::Probabilities = [_count_equal(y, c) / l for c in classes]
-    # Not creating a UnivariateFinite because it requires MLJBase
-    return ClassificationLeaf(probabilities)
-end
-
-"""
-    RegressionLeaf
-
-Leaf of a decision tree when running regression.
-The value is the mean of the `y`'s falling into the region associated with this leaf.
-"""
-struct RegressionLeaf <: Leaf
-    value::Float64
-end
-
-function Leaf(::Regression, _, y)
-    return RegressionLeaf(mean(y))
-end
-
 struct Node
     splitpoint::SplitPoint
     left::Union{Node, Leaf}
@@ -220,15 +152,7 @@ function _verify_lengths(X, y)
     end
 end
 
-"""
-Return the root node of a stable decision tree fitted on `X` and `y`.
-
-Arguments:
-- `max_split_candidates`:
-    During random forest creation, the number of split candidates is limited to make the trees less correlated.
-    See Section 8.2.2 of https://doi.org/10.1007/978-1-0716-1418-1 for details.
-- `output_type`: This should have been an enum, but Julia doesn't provide proper enums.
-"""
+"Return the root node of a stable decision tree fitted on `X` and `y`."
 function _tree!(
         rng::AbstractRNG,
         output_type::Algorithm,
@@ -268,8 +192,6 @@ function _tree!(
     node = Node(sp, left, right)
     return node
 end
-
-_predict(leaf::Leaf, x::AbstractVector) = leaf.probabilities
 
 """
 Predict `y` for a data vector defined by `x`.

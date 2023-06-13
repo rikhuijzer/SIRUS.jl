@@ -25,6 +25,8 @@ using .EmpiricalQuantiles: Cutpoints, cutpoints
 export Cutpoints, cutpoints
 
 include("forest.jl")
+include("classification.jl")
+include("regression.jl")
 include("rules.jl")
 include("weights.jl")
 export TreePath
