@@ -9,10 +9,14 @@ let
 end
 
 classes = [:a, :b, :c]
-left = ST.Leaf([1.0, 0.0, 0.0])
+left = ST.ClassificationLeaf([1.0, 0.0, 0.0])
 feature_name = "1"
 splitpoint = ST.SplitPoint(1, Float32(1), feature_name)
-right = ST.Node(splitpoint, ST.Leaf([0.0, 1.0, 0.0]), ST.Leaf([0.0, 0.0, 1.0]))
+right = ST.Node(
+            splitpoint,
+            ST.ClassificationLeaf([0.0, 1.0, 0.0]),
+            ST.ClassificationLeaf([0.0, 0.0, 1.0])
+        )
 
 left_rule = ST.Rule(ST.TreePath(" X[i, 1] < 32000 "), [0.61], [0.408])
 right_rule = ST.Rule(ST.TreePath(" X[i, 1] ≥ 32000 "), [0.408], [0.61])

@@ -24,9 +24,39 @@ Specifically, the subsets are as follows:
     If you choose the subset only at the start of the tree building, then an important feature might not end up in the tree at all, which results in poor predictive performance.
     So, chosing this at each split is the best of both worlds since it (1) avoids that each tree splits the root node on the same feature and (2) does still allow the important features to all be used inside the tree.
 
-What is different from vanilla random forest implementations, is that the SIRUS algorithm calculates the cutpoints before splitting.
-These cutpoints are calculated over the whole dataset and then the location of the splits are restricted to these pre-determined cutpoints.
-In other words, the location of the splits is only allowed to be on one of the pre-determined cutpoints.
-Regarding the cutpoints calculation, the cutpoints are calculated by taking `q`-empirical quantiles.
-Simply put, taking `q`-empirical quantiles means determining `q` quantiles (cutpoints) which divide the dataset in nearly equal sizes.
+Before continuing with the algorithm description, we need a small digression on the splitpoints that the algorithm uses.
+What is different in the SIRUS algorithm compared to vanilla random forest implementations, is that the SIRUS algorithm calculates the splitpoints before splitting.
+These splitpoints are calculated over the whole dataset and then the location of the splits are restricted to these pre-determined splitpoints.
+In other words, the location of the splits is only allowed to be on one of the pre-determined splitpoints.
+Regarding the splitpoints calculation, the splitpoints are calculated by taking `q`-empirical quantiles.
+Simply put, taking `q`-empirical quantiles means determining `q` quantiles (splitpoints) which divide the dataset in nearly equal sizes.
 The _empirical_ part denotes that we determine the quantiles for data instead of a probability distribution.
+
+On this subset, then fit a tree.
+For both trees, we apply the _top-down_, _greedy_ approach of _recursive binary splitting_, where each split aims to find the best split point.
+Finding the best splitpoint means looping through each possible splitpoint from the aforementioned set of pre-determined splitpoints and for each splitpoint determine two half-planes (or regions).
+In the left half-plane, take all the points in the feature under consideration which are lower than the splitpoint, that is,
+`` R_1 = \{ X \: | \: X_j < s \: \} ``.
+In the right half-plane, take all the points in the feature under consideration which are higher or equal than the splitpoint, that is,
+`` R_2 = \{ X \: | \: X_j \geq s \: \} ``.
+Then for each of this combination of two half-planes, find the best splitpoint.
+Finding the best splitpoint boils down to find the split which "summarizes" the data in the best way.
+For regression, the best split point is found by finding the splitpoint for which we lose the least information when taking the average of ``R_1`` and ``R_2``.
+More formally, the split is found by minimizing
+
+```math
+\sum_{x_i \in R_1} (y_i - \hat{y}_{R_1})^2 + \sum_{x_i \in R_2} (y_i - \hat{y}_{R_2})^2,
+```
+
+where ``\hat{y}_{R_1}`` and ``\hat{y}_{R_2}`` denote the mean response for the training observations in respectively ``R_1`` and ``R_2``.
+For classification, the best split point is found by determining the classes beforehand and then using these to calculate the Gini index.
+The Gini index is needed because classification deals with an unordered set of classes.
+The Gini index is a way to determine the most informative splitpoint via _node purity_ and defined as:
+
+```math
+1 - \sum_{\text{class} \in \text{classes}} p_{\text{class}}^2,
+```
+
+where ``p_\text{classes}`` denotes the fraction (proportion) of items from the current region that are from `class`.
+Note that this equation is optimized for computational efficiency.
+For the full derivation from the original equation, see _Gini impurity_ at [Wikipedia](https://en.wikipedia.org/wiki/Decision_tree_learning#Gini_impurity).

@@ -17,8 +17,9 @@ Here, `y` is usually a view on the outcome values in some region.
 Inside that region, `gini` is a measure of node purity.
 If all values in the region have the same class, then gini is zero.
 The equation is mentioned on Wikipedia as
-``1 - \\sum{class \\in classes} p_i^2``
-for ``p_i`` be the fraction (proportion) of items labeled with class ``i`` in the set.
+``1 - \\sum{class \\in classes} p_i^2,``
+where ``p_i`` denotes the fraction (proportion) of items labeled
+with class ``i`` in the set.
 """
 function _gini(y::AbstractVector, classes)
     len_y = length(y)
@@ -146,21 +147,42 @@ end
 
 const Probabilities = Vector{Float64}
 
-"""
-    Leaf
+abstract type Algorithm end
+struct Classification <: Algorithm end
+struct Regression <: Algorithm end
 
-Leaf of a decision tree.
-The probabilities are based on the `y`'s falling into the region associated with this leaf.
+abstract type Leaf end
+
 """
-struct Leaf
+    ClassificationLeaf
+
+Leaf of a decision tree when running classification.
+The probabilities are based on the `y`'s falling into the region associated with this leaf.
+The meaning of each index in the probabilities vector is given by the `classes` vector.
+"""
+struct ClassificationLeaf <: Leaf
     probabilities::Probabilities
 end
 
-function Leaf(classes, y)
+function Leaf(::Classification, classes, y)
     l = length(y)
-    probabilities = [count(y .== class) / l for class in classes]
+    probabilities::Probabilities = [_count_equal(y, c) / l for c in classes]
     # Not creating a UnivariateFinite because it requires MLJBase
-    return Leaf(probabilities)
+    return ClassificationLeaf(probabilities)
+end
+
+"""
+    RegressionLeaf
+
+Leaf of a decision tree when running regression.
+The value is the mean of the `y`'s falling into the region associated with this leaf.
+"""
+struct RegressionLeaf <: Leaf
+    value::Float64
+end
+
+function Leaf(::Regression, _, y)
+    return RegressionLeaf(mean(y))
 end
 
 struct Node
@@ -198,10 +220,6 @@ function _verify_lengths(X, y)
     end
 end
 
-abstract type Algorithm end
-struct Classification <: Algorithm end
-struct Regression <: Algorithm end
-
 """
 Return the root node of a stable decision tree fitted on `X` and `y`.
 
@@ -231,11 +249,11 @@ function _tree!(
     end
     _verify_lengths(X, y)
     if depth == max_depth
-        return Leaf(classes, y)
+        return Leaf(output_type, classes, y)
     end
     sp = _split(rng, X, y, classes, colnms, cps; max_split_candidates)
     if isnothing(sp) || length(y) ≤ min_data_in_leaf
-        return Leaf(classes, y)
+        return Leaf(output_type, classes, y)
     end
     depth += 1
 

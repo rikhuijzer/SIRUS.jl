@@ -6,4 +6,4 @@ SIRUS = "cdeec39e-fb35-4959-aadb-a1dd5dede958"
 
 [compat]
 Documenter = "0.27"
-PlutoStaticHTML = "5"
+PlutoStaticHTML = "6"
