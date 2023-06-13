@@ -1,4 +1,4 @@
-output_type = :regression
+output_type = SIRUS.Classification()
 
 @test ST._gini([1, 1], [1]) == 0.0
 @test ST._gini([1, 0], [0, 1]) == 0.5
@@ -20,7 +20,8 @@ let
     classes = unique(y)
     colnames = ["A", "B"]
     cp = cutpoints(X, 2)
-    splitpoint = ST._split(StableRNG(1), X, y, classes, colnames, cp)
+    max_split_candidates::Int = SIRUS.nfeatures(X)
+    splitpoint = ST._split(StableRNG(1), X, y, classes, colnames, cp; max_split_candidates)
     # Obviously, feature (column) 2 is more informative to split on than feature 1.
     @test splitpoint.feature == 2
     @test splitpoint.feature_name == "B"

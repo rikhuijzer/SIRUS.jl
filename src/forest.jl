@@ -91,6 +91,10 @@ function _view_y!(y_view, data, y, comparison, cutpoint)
     return @inbounds view(y_view, 1:len)
 end
 
+function _max_split_candidates(X)::Int
+    return round(Int, sqrt(nfeatures(X)))
+end
+
 """
 Return the split for which the gini index is maximized.
 This function receives the cutpoints for the whole dataset `D` because `X` can be a subset of `D`.
@@ -103,7 +107,7 @@ function _split(
         classes::AbstractVector,
         colnms::Vector{String},
         cps::Vector{Cutpoints};
-        max_split_candidates::Int=nfeatures(X)
+        max_split_candidates::Int=_max_split_candidates(X)
     )
     best_score = 0.0
     best_score_feature = 0
@@ -194,6 +198,10 @@ function _verify_lengths(X, y)
     end
 end
 
+abstract type Algorithm end
+struct Classification <: Algorithm end
+struct Regression <: Algorithm end
+
 """
 Return the root node of a stable decision tree fitted on `X` and `y`.
 
@@ -205,13 +213,13 @@ Arguments:
 """
 function _tree!(
         rng::AbstractRNG,
-        output_type::Symbol,
+        output_type::Algorithm,
         mask::Vector{Bool},
         X,
         y::AbstractVector,
         classes::AbstractVector,
         colnms::Vector{String}=colnames(X);
-        max_split_candidates=nfeatures(X),
+        max_split_candidates=_max_split_candidates(X),
         depth=0,
         max_depth=2,
         q=10,
@@ -302,7 +310,7 @@ Arguments:
 """
 function _forest(
         rng::AbstractRNG,
-        output_type::Symbol,
+        output_type::Algorithm,
         X::AbstractMatrix,
         y::AbstractVector,
         colnms::Vector{String};
@@ -325,7 +333,7 @@ function _forest(
     cps = cutpoints(X, q)
     classes = _classes(y)
 
-    max_split_candidates = round(Int, sqrt(nfeatures(X)))
+    max_split_candidates = _max_split_candidates(X)
     n_samples = floor(Int, partial_sampling * length(y))
 
     trees = Vector{Union{Node,Leaf}}(undef, n_trees)
@@ -356,7 +364,7 @@ function _forest(
     return StableForest(trees, classes)
 end
 
-function _forest(rng::AbstractRNG, output_type::Symbol, X, y; kwargs...)
+function _forest(rng::AbstractRNG, output_type::Algorithm, X, y; kwargs...)
     if !(X isa AbstractMatrix || Tables.istable(X))
         error("Input `X` doesn't satisfy the Tables.jl interface.")
     end

@@ -85,7 +85,7 @@ end
 end
 
 function generate_rules()
-    output_type = :classification
+    output_type = SIRUS.Classification()
     forest = ST._forest(_rng(), output_type, X, y)
     rulesmodel = let
         rules = ST._rules(forest)
