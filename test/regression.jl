@@ -8,3 +8,5 @@ y = [0.5, 0.6]
 algo = SIRUS.Regression()
 
 sforest = ST._forest(_rng(), algo, data, y, colnames; n_trees=10, max_depth=2)
+
+nothing

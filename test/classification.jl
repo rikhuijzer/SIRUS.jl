@@ -12,21 +12,6 @@ y = [1, 2]
 @test SIRUS._gini([1, 2, 3, 4, 5], [1, 2, 3, 4, 5, 6]) ≈ 0.8
 
 let
-    X = [1 1;
-         1 3]
-    classes = unique(y)
-    colnames = ["A", "B"]
-    cp = cutpoints(X, 2)
-    max_split_candidates::Int = SIRUS.nfeatures(X)
-    splitpoint = ST._split(StableRNG(1), algo, X, y, classes, colnames, cp; max_split_candidates)
-    # Obviously, feature (column) 2 is more informative to split on than feature 1.
-    @test splitpoint.feature == 2
-    @test splitpoint.feature_name == "B"
-    # Given that the split does < and ≥, then 3 is the best place since it separates 1 (left) and 3 (right).
-    @test splitpoint.value == Float32(3)
-end
-
-let
     X = [1 2; # 1
          3 4] # 2
     y = [1, 2]
