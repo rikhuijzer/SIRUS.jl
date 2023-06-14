@@ -83,14 +83,15 @@ function _split(
         cps::Vector{Cutpoints};
         max_split_candidates::Int=_max_split_candidates(X)
     )::Union{Nothing, SplitPoint}
-    best_score = 0.0
+    score_improved::Bool = false
+    best_score = _start_score(algo)
     best_score_feature = 0
     best_score_cutpoint = 0.0
 
     p = nfeatures(X)
     mc = max_split_candidates
     possible_features = mc == p ? (1:p) : _rand_subset(rng, 1:p, mc)
-    start_score = _start_score(algo, y, classes)
+    reused_data = _reused_data(algo, y, classes)
 
     yl = Vector{eltype(y)}(undef, length(y))
     yr = Vector{eltype(y)}(undef, length(y))
@@ -104,20 +105,21 @@ function _split(
             isempty(vl) && continue
             vr = _view_y!(yr, feat_data, y, ≥, cutpoint)
             isempty(vr) && continue
-            # gain = _information_gain(y, vl, vr, classes, start_score)
-            current_score = _current_score(algo, y, vl, vr, classes, start_score)
+            current_score = _current_score(algo, y, vl, vr, classes, reused_data)
             if _score_improved(algo, best_score, current_score)
+                score_improved = true
                 best_score = current_score
                 best_score_feature = feature
                 best_score_cutpoint = cutpoint
             end
         end
     end
-    if best_score == 0.0
+    if score_improved
+        feature_name = colnms[best_score_feature]
+        return SplitPoint(best_score_feature, best_score_cutpoint, feature_name)
+    else
         return nothing
     end
-    feature_name = colnms[best_score_feature]
-    return SplitPoint(best_score_feature, best_score_cutpoint, feature_name)
 end
 
 struct Node

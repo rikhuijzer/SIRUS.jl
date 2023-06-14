@@ -36,7 +36,8 @@ function _information_gain(
     return starting_impurity - impurity_change
 end
 
-function _start_score(
+"Data to be re-used in the loop on features and splitpoints."
+function _reused_data(
         ::Classification,
         y::AbstractVector,
         classes
@@ -44,15 +45,18 @@ function _start_score(
     return _gini(y, classes)
 end
 
+"Return the start score for the maximization problem."
+_start_score(::Classification) = 0.0
+
 function _current_score(
         ::Classification,
         y::AbstractVector,
         vl::AbstractVector,
         vr::AbstractVector,
         classes,
-        start_score::Real
+        reused_data::Real
     )::Real
-    return _information_gain(y, vl, vr, classes, start_score)
+    return _information_gain(y, vl, vr, classes, reused_data)
 end
 
 function _score_improved(

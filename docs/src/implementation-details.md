@@ -42,7 +42,7 @@ In the right half-plane, take all the points in the feature under consideration 
 Then for each of this combination of two half-planes, find the best splitpoint.
 Finding the best splitpoint boils down to find the split which "summarizes" the data in the best way.
 For regression, the best split point is found by finding the splitpoint for which we lose the least information when taking the average of ``R_1`` and ``R_2``.
-More formally, the split is found by minimizing
+More formally, the split is found by minimizing the Residual Sum of Squares (RSS):
 
 ```math
 \sum_{x_i \in R_1} (y_i - \hat{y}_{R_1})^2 + \sum_{x_i \in R_2} (y_i - \hat{y}_{R_2})^2,
