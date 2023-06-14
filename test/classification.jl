@@ -1,4 +1,4 @@
-output_type = SIRUS.Classification()
+algo = SIRUS.Classification()
 
 X = [1 2;
      3 4]
@@ -12,12 +12,27 @@ y = [1, 2]
 @test SIRUS._gini([1, 2, 3, 4, 5], [1, 2, 3, 4, 5, 6]) ≈ 0.8
 
 let
+    X = [1 1;
+         1 3]
+    classes = unique(y)
+    colnames = ["A", "B"]
+    cp = cutpoints(X, 2)
+    max_split_candidates::Int = SIRUS.nfeatures(X)
+    splitpoint = ST._split(StableRNG(1), algo, X, y, classes, colnames, cp; max_split_candidates)
+    # Obviously, feature (column) 2 is more informative to split on than feature 1.
+    @test splitpoint.feature == 2
+    @test splitpoint.feature_name == "B"
+    # Given that the split does < and ≥, then 3 is the best place since it separates 1 (left) and 3 (right).
+    @test splitpoint.value == Float32(3)
+end
+
+let
     X = [1 2; # 1
          3 4] # 2
     y = [1, 2]
     classes = y
     mask = Vector{Bool}(undef, length(y))
-    node = SIRUS._tree!(_rng(), output_type, mask, X, y, classes; min_data_in_leaf=1, q=2)
+    node = SIRUS._tree!(_rng(), algo, mask, X, y, classes; min_data_in_leaf=1, q=2)
     # @test node.splitpoint == SIRUS.SplitPoint(1, Float32(3))
     # @test node.left.probabilities == [1.0, 0.0]
     # @test node.right.probabilities == [0.0, 1.0]
@@ -43,7 +58,7 @@ end
 
 classes = SIRUS._classes(y)
 mask = Vector{Bool}(undef, length(y))
-stree = SIRUS._tree!(_rng(), output_type, mask, data, y, classes, min_data_in_leaf=1, q=10)
+stree = SIRUS._tree!(_rng(), algo, mask, data, y, classes, min_data_in_leaf=1, q=10)
 @test 0.95 < _binary_accuracy(stree, classes, data, y)
 
 @testset "data_subset" begin
@@ -59,7 +74,7 @@ stree = SIRUS._tree!(_rng(), output_type, mask, data, y, classes, min_data_in_le
     @test 0.95 < accuracy(dpreds, _y)
 
     mask = Vector{Bool}(undef, length(_y))
-    stree = SIRUS._tree!(_rng(), output_type, mask, _data, _y, classes, q=10)
+    stree = SIRUS._tree!(_rng(), algo, mask, _data, _y, classes, q=10)
     @test 0.95 < _binary_accuracy(stree, classes, _data, _y)
 end
 
@@ -72,7 +87,7 @@ dforest = let
 end
 # DecisionTree.print_tree.(dforest.trees);
 
-sforest = SIRUS._forest(_rng(), output_type, data, y, colnames; n_trees=10, max_depth=2)
+sforest = SIRUS._forest(_rng(), algo, data, y, colnames; n_trees=10, max_depth=2)
 
 @testset "max_depth is adhered to" begin
     some_children(forest) = SIRUS.AbstractTrees.children(forest.trees[1])
@@ -80,7 +95,7 @@ sforest = SIRUS._forest(_rng(), output_type, data, y, colnames; n_trees=10, max_
     # SIRUS.print_tree.(sforest.trees);
     @test !(all(child -> child isa SIRUS.Leaf, some_children(sforest)))
 
-    undeep_forest = SIRUS._forest(_rng(), output_type, data, y, colnames; n_trees=10, max_depth=1)
+    undeep_forest = SIRUS._forest(_rng(), algo, data, y, colnames; n_trees=10, max_depth=1)
     @test all(child -> child isa SIRUS.Leaf, some_children(undeep_forest))
 end
 

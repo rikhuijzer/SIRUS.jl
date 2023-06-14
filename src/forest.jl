@@ -75,20 +75,22 @@ For a walkthrough of the CART algorithm, see https://youtu.be/LDRbO9a6XPU.
 """
 function _split(
         rng,
+        algo::Algorithm,
         X,
         y::AbstractVector,
         classes::AbstractVector,
         colnms::Vector{String},
         cps::Vector{Cutpoints};
         max_split_candidates::Int=_max_split_candidates(X)
-    )
+    )::Union{Nothing, SplitPoint}
     best_score = 0.0
     best_score_feature = 0
     best_score_cutpoint = 0.0
+
     p = nfeatures(X)
     mc = max_split_candidates
     possible_features = mc == p ? (1:p) : _rand_subset(rng, 1:p, mc)
-    starting_impurity = _gini(y, classes)
+    start_score = _start_score(algo, y, classes)
 
     yl = Vector{eltype(y)}(undef, length(y))
     yr = Vector{eltype(y)}(undef, length(y))
@@ -102,9 +104,10 @@ function _split(
             isempty(vl) && continue
             vr = _view_y!(yr, feat_data, y, ≥, cutpoint)
             isempty(vr) && continue
-            gain = _information_gain(y, vl, vr, classes, starting_impurity)
-            if best_score ≤ gain
-                best_score = gain
+            # gain = _information_gain(y, vl, vr, classes, start_score)
+            current_score = _current_score(algo, y, vl, vr, classes, start_score)
+            if _score_improved(algo, best_score, current_score)
+                best_score = current_score
                 best_score_feature = feature
                 best_score_cutpoint = cutpoint
             end
@@ -155,7 +158,7 @@ end
 "Return the root node of a stable decision tree fitted on `X` and `y`."
 function _tree!(
         rng::AbstractRNG,
-        output_type::Algorithm,
+        algo::Algorithm,
         mask::Vector{Bool},
         X,
         y::AbstractVector,
@@ -173,21 +176,21 @@ function _tree!(
     end
     _verify_lengths(X, y)
     if depth == max_depth
-        return Leaf(output_type, classes, y)
+        return Leaf(algo, classes, y)
     end
-    sp = _split(rng, X, y, classes, colnms, cps; max_split_candidates)
+    sp = _split(rng, algo, X, y, classes, colnms, cps; max_split_candidates)
     if isnothing(sp) || length(y) ≤ min_data_in_leaf
-        return Leaf(output_type, classes, y)
+        return Leaf(algo, classes, y)
     end
     depth += 1
 
     left = let
         _X, yl = _view_X_y!(mask, X, y, sp, <)
-        _tree!(rng, output_type, mask, _X, yl, classes, colnms; cps, depth, max_depth)
+        _tree!(rng, algo, mask, _X, yl, classes, colnms; cps, depth, max_depth)
     end
     right = let
         _X, yr = _view_X_y!(mask, X, y, sp, ≥)
-        _tree!(rng, output_type, mask, _X, yr, classes, colnms; cps, depth, max_depth)
+        _tree!(rng, algo, mask, _X, yr, classes, colnms; cps, depth, max_depth)
     end
     node = Node(sp, left, right)
     return node
@@ -250,7 +253,7 @@ Arguments:
 """
 function _forest(
         rng::AbstractRNG,
-        output_type::Algorithm,
+        algo::Algorithm,
         X::AbstractMatrix,
         y::AbstractVector,
         colnms::Vector{String};
@@ -287,7 +290,7 @@ function _forest(
         mask = Vector{Bool}(undef, length(y))
         tree = _tree!(
             _rng,
-            output_type,
+            algo,
             mask,
             _X,
             _y,
@@ -304,13 +307,13 @@ function _forest(
     return StableForest(trees, classes)
 end
 
-function _forest(rng::AbstractRNG, output_type::Algorithm, X, y; kwargs...)
+function _forest(rng::AbstractRNG, algo::Algorithm, X, y; kwargs...)
     if !(X isa AbstractMatrix || Tables.istable(X))
         error("Input `X` doesn't satisfy the Tables.jl interface.")
     end
     # Tables doesn't assume the data fits in memory so that complicates things a lot.
     # Implementing out-of-memory trees is a problem for later.
-    return _forest(rng, output_type, matrix(X), y, colnames(X); kwargs...)
+    return _forest(rng, algo, matrix(X), y, colnames(X); kwargs...)
 end
 
 function _isempty_error(::StableForest)

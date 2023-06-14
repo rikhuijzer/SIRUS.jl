@@ -25,15 +25,42 @@ function _gini(y::AbstractVector, classes)
 end
 
 function _information_gain(
-        y,
-        yl,
-        yr,
+        y::AbstractVector,
+        yl::AbstractVector,
+        yr::AbstractVector,
         classes,
         starting_impurity::Real
-    )
+    )::Real
     p = length(yl) / length(y)
     impurity_change = p * _gini(yl, classes) + (1 - p) * _gini(yr, classes)
     return starting_impurity - impurity_change
+end
+
+function _start_score(
+        ::Classification,
+        y::AbstractVector,
+        classes
+    )::Real
+    return _gini(y, classes)
+end
+
+function _current_score(
+        ::Classification,
+        y::AbstractVector,
+        vl::AbstractVector,
+        vr::AbstractVector,
+        classes,
+        start_score::Real
+    )::Real
+    return _information_gain(y, vl, vr, classes, start_score)
+end
+
+function _score_improved(
+    ::Classification,
+    best_score::Real,
+    current_score::Real
+)::Bool
+    return best_score ≤ current_score
 end
 
 """
