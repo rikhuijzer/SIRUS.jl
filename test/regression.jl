@@ -1,12 +1,31 @@
 @test SIRUS._rss([1, 2, 3]) == 2.0
 @test SIRUS._rss(1:100) == 83325.0
 
-X = [1.0 2.0;
-     3.0 4.0]
-y = [0.5, 0.6]
-
 algo = SIRUS.Regression()
 
-sforest = ST._forest(_rng(), algo, data, y, colnames; n_trees=10, max_depth=2)
+X, y = tmp_boston()
+colnames = SIRUS.colnames(X)
+
+data = Tables.matrix(X)
+
+d_preds = let
+    n_subfeatures = 0
+    max_depth = 2
+    dtree = DecisionTree.build_tree(y, data, n_subfeatures, max_depth; rng=_rng())
+    DecisionTree.apply_tree(dtree, data)
+end
+
+s_preds = let
+    classes = []
+    mask = Vector{Bool}(undef, length(y))
+    stree = SIRUS._tree!(_rng(), algo, mask, data, y, classes, min_data_in_leaf=1, q=100)
+    SIRUS._predict(stree, data)
+end
+
+# Note that this low performance is for one tree only.
+@test 0.6 < rsq(d_preds, y)
+@test rsq(d_preds, y) ≈ rsq(s_preds, y) atol=0.15
+
+# TODO: test a forest.
 
 nothing

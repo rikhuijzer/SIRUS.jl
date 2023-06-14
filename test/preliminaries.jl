@@ -27,6 +27,8 @@ using MLJBase:
     machine,
     make_blobs,
     make_moons,
+    make_regression,
+    rsq,
     predict
 using MLJDecisionTreeInterface: DecisionTree
 using LightGBM.MLJInterface: LGBMClassifier
@@ -81,6 +83,22 @@ function boston()
     m = mean(df[:, target]) # 22.5 thousand dollars.
     y = categorical([value < m ? 0 : 1 for value in df[:, target]])
     # y = df[:, target]
+    X = MLJBase.table(MLJBase.matrix(df[:, Not(target)]))
+    return (X, y)
+end
+
+function tmp_boston()
+    @warn "This is a temp func"
+    data = BostonHousing()
+    df = hcat(data.features, data.targets)
+    dropmissing!(df)
+    for col in names(df)
+        df[!, col] = float.(df[:, col])
+    end
+    # Median value of owner-occupied homes in 1000's of dollars.
+    target = :MEDV
+    m = mean(df[:, target]) # 22.5 thousand dollars.
+    y = df[:, target]
     X = MLJBase.table(MLJBase.matrix(df[:, Not(target)]))
     return (X, y)
 end
