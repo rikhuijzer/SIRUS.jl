@@ -30,6 +30,15 @@ function _score(e::PerformanceEvaluation)
     return round(only(e.measurement); sigdigits=2)
 end
 
+function _with_trailing_zero(score::Real)::String
+    text = string(score)::String
+    if length(text) == 3
+        return text * '0'
+    else
+        return text
+    end
+end
+
 function _evaluate(model, X, y, nfolds=10)
     resampling = CV(; nfolds, shuffle=true, rng=_rng())
     acceleration = MLJBase.CPUThreads()
@@ -41,8 +50,8 @@ results = DataFrame(;
         Model=String[],
         Hyperparameters=String[],
         nfolds=Int[],
-        AUC=Float64[],
-        se=Float64[]
+        AUC=String[],
+        se=String[]
     )
 
 _filter_rng(hyper::NamedTuple) = Base.structdiff(hyper, (; rng=:foo))
@@ -59,13 +68,17 @@ function _evaluate!(
     nfolds = 10
     model = modeltype(; hyperparameters...)
     e = _evaluate(model, X, y, nfolds)
+    se = let
+        val = round(only(MLJBase._standard_errors(e)); digits=2)
+        _with_trailing_zero(val)
+    end
     row = (;
         Dataset=dataset,
         Model=_pretty_name(modeltype),
         Hyperparameters=_hyper2str(_filter_rng(hyperparameters)),
         nfolds,
-        AUC=_score(e),
-        se=round(only(MLJBase._standard_errors(e)); digits=2)
+        AUC=_with_trailing_zero(_score(e)),
+        se
     )
     push!(results, row)
     return e
