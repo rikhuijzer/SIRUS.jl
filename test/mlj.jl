@@ -208,7 +208,10 @@ let
     @test 0.65 < _score(elgbm)
 end
 
-er = _evaluate!(results, "boston", StableRulesRegressor, hyper; measure=rsq)
+let
+    hyper = (; rng=_rng(), n_trees=1_500)
+    er = _evaluate!(results, "boston", StableRulesRegressor, hyper; measure=rsq)
+end
 
 pretty = rename(results, :se => "1.96*SE")
 rename!(pretty, :nfolds => "`nfolds`")
