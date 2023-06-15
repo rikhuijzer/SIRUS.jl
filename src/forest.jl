@@ -351,11 +351,6 @@ function _predict(model::StableModel, X::AbstractMatrix)
     end
 end
 
-# function _predict(model::StableForestRegressor, X::AbstractMatrix)
-#    predictions = [_predict(model, row) for row in eachrow(X)]
-#    return predictions
-# end
-
 function _predict(model::StableModel, X)
     if !Tables.istable(X)
         error("Expected a Table but got $(typeof(X))")

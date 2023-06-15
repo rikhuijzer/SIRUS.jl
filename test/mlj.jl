@@ -199,8 +199,11 @@ end
 function _evaluate_boston()
     hyper = (;)
     measure = rsq
-    e = _evaluate!(results, "boston", LinearRegressor, hyper; measure)
-    e = _evaluate!(results, "boston", StableForestRegressor, hyper; measure)
+    el = _evaluate!(results, "boston", LinearRegressor, hyper; measure)
+    ef = _evaluate!(results, "boston", StableForestRegressor, hyper; measure)
+
+    @test 0.65 < _score(el)
+    @test _score(el) ≈ _score(ef) atol=0.05
 end
 _evaluate_boston()
 

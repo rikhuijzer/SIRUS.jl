@@ -26,6 +26,4 @@ end
 @test 0.6 < rsq(d_preds, y)
 @test rsq(d_preds, y) ≈ rsq(s_preds, y) atol=0.15
 
-# TODO: test a forest.
-
 nothing
