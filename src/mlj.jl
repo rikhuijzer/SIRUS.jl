@@ -184,6 +184,32 @@ Base.@kwdef mutable struct StableForestRegressor <: Probabilistic
     min_data_in_leaf::Int=5
 end
 
+"""
+    StableRulesRegressor(;
+        rng::AbstractRNG=default_rng(),
+        partial_sampling::Real=0.7,
+        n_trees::Int=1_000,
+        max_depth::Int=2,
+        q::Int=10,
+        min_data_in_leaf::Int=5,
+        max_rules::Int=10
+    ) -> MLJModelInterface.Probabilistic
+
+Explainable rule-based regression model based on a random forest.
+See the documentation for the `StableRulesClassifier` for more information about
+the model and the hyperparameters.
+"""
+Base.@kwdef mutable struct StableRulesRegressor <: Probabilistic
+    rng::AbstractRNG=default_rng()
+    partial_sampling::Real=0.7
+    n_trees::Int=1_000
+    max_depth::Int=2
+    q::Int=10
+    min_data_in_leaf::Int=5
+    max_rules::Int=10
+    lambda::Float64=5
+end
+
 metadata_model(
     StableForestClassifier;
     input_scitype=Table(Continuous, Count),
@@ -198,7 +224,7 @@ metadata_model(
     input_scitype=Table(Continuous, Count),
     target_scitype=AbstractVector{<:Finite},
     supports_weights=false,
-    docstring="Stable rule-based classifier",
+    docstring="Stable and Interpretable RUle Sets (SIRUS) classifier",
     path="SIRUS.StableForestClassifier"
 )
 
@@ -211,11 +237,21 @@ metadata_model(
     path="SIRUS.StableForestRegressor"
 )
 
+metadata_model(
+    StableRulesRegressor;
+    input_scitype=Table(Continuous, Count),
+    target_scitype=AbstractVector{<:Continuous},
+    supports_weights=false,
+    docstring="Stable and Interpretable RUle Sets (SIRUS) regressor",
+    path="SIRUS.StableForestRegressor"
+)
+
 metadata_pkg.(
     [
         StableForestClassifier,
         StableRulesClassifier,
-        StableForestRegressor
+        StableForestRegressor,
+        StableRulesRegressor
     ];
     name="SIRUS",
     uuid="9113e207-2504-4b06-8eee-d78e288bee65",
@@ -286,13 +322,18 @@ function predict(
     return _predict(forest, matrix(Xnew))
 end
 
-function fit(model::StableRulesClassifier, verbosity::Int, X, y)
-    output_type = Classification()
+function fit(
+        model::Union{StableRulesClassifier, StableRulesRegressor},
+        algo::Algorithm,
+        verbosity::Int,
+        X,
+        y
+    )
     data = matrix(X)
     outcome = _float(y)
     forest = _forest(
         model.rng,
-        output_type,
+        algo,
         data,
         outcome,
         colnames(X);
@@ -308,7 +349,21 @@ function fit(model::StableRulesClassifier, verbosity::Int, X, y)
     return fitresult, cache, report
 end
 
-function predict(model::StableRulesClassifier, fitresult::StableRules, Xnew)
+function fit(model::StableRulesClassifier, verbosity::Int, X, y)
+    algo = Classification()
+    return fit(model, algo, verbosity, X, y)
+end
+
+function fit(model::StableRulesRegressor, verbosity::Int, X, y)
+    algo = Regression()
+    return fit(model, algo, verbosity, X, y)
+end
+
+function predict(
+        model::Union{StableRulesClassifier, StableRulesRegressor},
+        fitresult::StableRules,
+        Xnew
+    )
     isempty(fitresult.rules) && error("Zero rules")
     return _predict(fitresult, matrix(Xnew))
 end

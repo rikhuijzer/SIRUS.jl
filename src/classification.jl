@@ -75,14 +75,18 @@ The probabilities are based on the `y`'s falling into the region associated with
 The meaning of each index in the probabilities vector is given by the `classes` vector.
 """
 struct ClassificationLeaf <: Leaf
-    probabilities::Probabilities
+    values::ClassificationValues
+end
+
+function ClassificationLeaf(values::AbstractVector)
+    return ClassificationLeaf(ClassificationValues(values))
 end
 
 function Leaf(::Classification, classes, y)
     l = length(y)
-    probabilities::Probabilities = [_count_equal(y, c) / l for c in classes]
+    probabilities = [_count_equal(y, c) / l for c in classes]
     # Not creating a UnivariateFinite because it requires MLJBase
     return ClassificationLeaf(probabilities)
 end
 
-_predict(leaf::ClassificationLeaf, x::AbstractVector) = leaf.probabilities
+_predict(leaf::ClassificationLeaf, x::AbstractVector) = leaf.values.probabilities

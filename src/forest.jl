@@ -4,7 +4,28 @@ abstract type Algorithm end
 "Supertype for leafs: classification or regression."
 abstract type Leaf end
 
-const Probabilities = Vector{Float64}
+"""
+Type which holds the values inside a leaf.
+For classification, this is a vector of probabilities of each class.
+For regression, this is a vector of one element.
+
+!!! note
+    Vectors of one element are not as performant as scalars, but the
+    alternative here is to have two different types of leafs, which
+    results in different types of trees also, which basically
+    requires most functions then to become parametric.
+"""
+struct LeafContent
+    values::Vector{Float64}
+end
+
+function _values(v::Values)::Vector{Float64}
+    return v.values
+end
+
+function Base.:(==)(a::Values, b::Values)
+    return _values(a) == _values(b)
+end
 
 "Return the number of elements in `V` being equal to `x`."
 function _count_equal(V::AbstractVector, x)::Int
@@ -219,11 +240,14 @@ function _predict(node::Node, X::AbstractMatrix)
 end
 
 abstract type StableModel end
-struct StableForest{T} <: StableModel
+struct StableForest{A<:Algorithm, CT} <: StableModel
     trees::Vector{Union{Node,Leaf}}
-    algo::Algorithm
-    classes::Vector{T}
+    classes::Vector{CT}
 end
+function StableForest(trees, algo::Algorithm, classes{T}) where {T}
+    return StableForest{algo, T}(trees, classes)
+end
+
 _elements(model::StableForest) = model.trees
 
 "Increase the state of `rng` by `i`."
@@ -328,8 +352,14 @@ function _apply_statistic(V::AbstractVector{<:AbstractVector}, f::Function)
     return [round(f(row); sigdigits=3) for row in eachrow(M)]
 end
 
+function _apply_statistic(V::AbstractVector{ClassificationValues}, f::Function)
+    ClassificationValues(_apply_statistic(getproperty.(V, :probabilities), f))
+end
+
 _mean(V::AbstractVector{<:AbstractVector}) = _apply_statistic(V, mean)
+_mean(V::AbstractVector{ClassificationValues}) = _apply_statistic(V, mean)
 _median(V::AbstractVector{<:AbstractVector}) = _apply_statistic(V, median)
+_median(V::AbstractVector{ClassificationValues}) = _apply_statistic(V, median)
 
 function _predict(forest::StableForest, row::AbstractVector)
     isempty(_elements(forest)) && _isempty_error(forest)
