@@ -14,7 +14,6 @@ using Random: AbstractRNG, default_rng, seed!, shuffle
 using Statistics: mean, median
 using Tables: Tables, matrix
 
-export StableForestClassifier, StableRulesClassifier
 export feature_names, directions, satisfies
 
 include("helpers.jl")
@@ -34,7 +33,11 @@ include("dependent.jl")
 
 include("mlj.jl")
 const StableForestClassifier = MLJImplementation.StableForestClassifier
+export StableForestClassifier
 const StableRulesClassifier = MLJImplementation.StableRulesClassifier
+export StableRulesClassifier
+const StableForestRegressor = MLJImplementation.StableForestRegressor
+export StableForestRegressor
 
 @precompile_signatures(SIRUS)
 

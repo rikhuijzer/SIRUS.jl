@@ -39,10 +39,10 @@ function _with_trailing_zero(score::Real)::String
     end
 end
 
-function _evaluate(model, X, y, nfolds=10)
+function _evaluate(model, X, y, nfolds=10, measure=auc)
     resampling = CV(; nfolds, shuffle=true, rng=_rng())
     acceleration = MLJBase.CPUThreads()
-    evaluate(model, X, y; acceleration, verbosity=0, resampling, measure=auc)
+    evaluate(model, X, y; acceleration, verbosity=0, resampling, measure)
 end
 
 results = DataFrame(;
@@ -51,6 +51,7 @@ results = DataFrame(;
         Hyperparameters=String[],
         nfolds=Int[],
         AUC=String[],
+        RMS=String[],
         se=String[]
     )
 
@@ -62,12 +63,16 @@ function _evaluate!(
         results::DataFrame,
         dataset::String,
         modeltype::DataType,
-        hyperparameters::NamedTuple=(; )
+        hyperparameters::NamedTuple=(; );
+        measure=auc
     )
     X, y = datasets[dataset]
     nfolds = 10
     model = modeltype(; hyperparameters...)
-    e = _evaluate(model, X, y, nfolds)
+    e = _evaluate(model, X, y, nfolds, measure)
+    score = _with_trailing_zero(_score(e))
+    classification_score = measure == auc ? score : ""
+    regression_score = measure == auc ? "" : score
     se = let
         val = round(only(MLJBase._standard_errors(e)); digits=2)
         _with_trailing_zero(val)
@@ -77,7 +82,8 @@ function _evaluate!(
         Model=_pretty_name(modeltype),
         Hyperparameters=_hyper2str(_filter_rng(hyperparameters)),
         nfolds,
-        AUC=_with_trailing_zero(_score(e)),
+        AUC=classification_score,
+        RMS=regression_score,
         se
     )
     push!(results, row)
@@ -187,14 +193,14 @@ let
 end
 
 let
-    e = _evaluate_baseline!(results, "boston")
+    # e = _evaluate_baseline!(results, "boston")
 end
 
 function _evaluate_boston()
-    hyper = (; rng=_rng(), n_trees=1_500)
-    e = _evaluate!(results, "boston", StableForestClassifier, hyper)
-
-    e = _evaluate!(results, "boston", StableRulesClassifier, hyper)
+    hyper = (;)
+    measure = rsq
+    e = _evaluate!(results, "boston", LinearRegressor, hyper; measure)
+    e = _evaluate!(results, "boston", StableForestRegressor, hyper; measure)
 end
 _evaluate_boston()
 

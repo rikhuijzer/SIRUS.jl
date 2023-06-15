@@ -8,7 +8,7 @@
     <a href="https://github.com/rikhuijzer/SIRUS.jl/actions?query=workflow%3ACI+branch%3Amain">
         <img src="https://github.com/rikhuijzer/SIRUS.jl/workflows/CI/badge.svg" alt="CI">
     </a>
-    <a href="https://sirusdocs.xyz/dev/">
+    <a href="https://sirus.xyz/dev/">
         <img src="https://img.shields.io/badge/Docs-main-blue" alt="Documentation">
     </a>
     <a href="https://github.com/invenia/BlueStyle">
@@ -23,4 +23,4 @@
 
 This package is a pure Julia implementation of the **S**table and **I**nterpretable **RU**le **S**ets (SIRUS) algorithm.
 
-See the [documentation](https://sirusdocs.huijzer.xyz/dev/) for more information.
+See the [documentation](https://sirus.huijzer.xyz/dev/) for more information.

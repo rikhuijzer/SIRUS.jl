@@ -100,7 +100,7 @@ sfpreds = SIRUS._predict(sforest, data)
 @show accuracy(mode.(sfpreds), y)
 @test 0.95 < accuracy(mode.(sfpreds), y)
 
-empty_forest = SIRUS.StableForest(Union{SIRUS.Leaf, SIRUS.Node}[], [1])
+empty_forest = SIRUS.StableForest(Union{SIRUS.Leaf, SIRUS.Node}[], algo, [1])
 @test_throws AssertionError SIRUS._predict(empty_forest, data)
 
 nothing

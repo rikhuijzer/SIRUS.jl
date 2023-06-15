@@ -3,7 +3,7 @@
 
 algo = SIRUS.Regression()
 
-X, y = tmp_boston()
+X, y = boston()
 colnames = SIRUS.colnames(X)
 
 data = Tables.matrix(X)

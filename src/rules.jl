@@ -178,14 +178,6 @@ function _else_output!(not_node::Union{Node,Leaf}, node::Node, probs::Probs=Prob
     return probs
 end
 
-function _apply_statistic(V::AbstractVector{<:AbstractVector}, f::Function)
-    M = reduce(hcat, V)
-    return [round(f(row); sigdigits=3) for row in eachrow(M)]
-end
-
-_mean(V::AbstractVector{<:AbstractVector}) = _apply_statistic(V, mean)
-_median(V::AbstractVector{<:AbstractVector}) = _apply_statistic(V, median)
-
 function _frequency_sort(V::AbstractVector)
     counts = _count_unique(V)
     sorted = sort(collect(counts); by=last, rev=true)
