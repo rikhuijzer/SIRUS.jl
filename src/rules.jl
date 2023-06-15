@@ -98,8 +98,8 @@ end
 
 struct Rule
     path::TreePath
-    then_probs::Probabilities
-    else_probs::Probabilities
+    then_probs::LeafContent
+    else_probs::LeafContent
 end
 
 _splits(rule::Rule) = rule.path.splits
@@ -155,21 +155,37 @@ function _rules!(leaf::Leaf, splits::Vector{Split}, rules::Vector{Rule})
     return nothing
 end
 
-const Probs = Vector{Probabilities}
-
-_then_output!(leaf::Leaf, probs::Probs=Probs()) = push!(probs, leaf.probabilities)
+function _then_output!(
+        leaf::Leaf,
+        probs::Vector{LeafContent}
+    )
+    return push!(probs, _content(leaf))
+end
 
 "Return the output average of the training points which satisfy the rule."
-function _then_output!(node::Node, probs::Probs=Probs())
+function _then_output!(
+        node::Node,
+        probs::Vector{LeafContent}
+    )
     _then_output!(node.left, probs)
     _then_output!(node.right, probs)
     return probs
 end
 
-_else_output!(_, leaf::Leaf, probs::Probs) = push!(probs, leaf.probabilities)
+function _else_output!(
+        _,
+        leaf::Leaf,
+        probs::Vector{LeafContent}
+    )
+    return push!(probs, _content(leaf))
+end
 
 "Return the output average of the training points not covered by the rule."
-function _else_output!(not_node::Union{Node,Leaf}, node::Node, probs::Probs=Probs())
+function _else_output!(
+        not_node::Union{Node,Leaf},
+        node::Node,
+        probs::Vector{LeafContent}
+    )
     if node == not_node
         return probs
     end
@@ -186,9 +202,9 @@ end
 
 function Rule(root::Node, node::Union{Node, Leaf}, splits::Vector{Split})
     path = TreePath(splits)
-    then_output = _then_output!(node)
+    then_output = _then_output!(node, Vector{LeafContent}())
     then_probs = _mean(then_output)
-    else_output = _else_output!(node, root)
+    else_output = _else_output!(node, root, Vector{LeafContent}())
     else_probs = _mean(else_output)
     return Rule(path, then_probs, else_probs)
 end

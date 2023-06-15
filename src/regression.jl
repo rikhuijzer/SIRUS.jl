@@ -50,6 +50,8 @@ struct RegressionLeaf <: Leaf
     value::Float64
 end
 
+_content(leaf::RegressionLeaf)::LeafContent = Float64[leaf.value]
+
 function Leaf(::Regression, _, y)
     return RegressionLeaf(mean(y))
 end

@@ -4,7 +4,22 @@ abstract type Algorithm end
 "Supertype for leafs: classification or regression."
 abstract type Leaf end
 
-const Probabilities = Vector{Float64}
+"""
+Type which holds the values inside a leaf.
+For classification, this is a vector of probabilities of each class.
+For regression, this is a vector of one element.
+
+In some sense, regression can be thought of as a special case of
+classification, namely as classification with only one class.
+
+!!! note
+    Vectors of one element are not as performant as scalars, but the
+    alternative here is to have two different types of leafs, which
+    results in different types of trees also, which basically
+    requires most functions then to become parametric; especially
+    in `src/rules.jl`.
+"""
+const LeafContent = Vector{Float64}
 
 "Return the number of elements in `V` being equal to `x`."
 function _count_equal(V::AbstractVector, x)::Int
