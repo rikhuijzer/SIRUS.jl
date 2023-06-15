@@ -3,7 +3,7 @@
 
 algo = SIRUS.Regression()
 
-X, y = tmp_boston()
+X, y = boston()
 colnames = SIRUS.colnames(X)
 
 data = Tables.matrix(X)
@@ -25,7 +25,5 @@ end
 # Note that this low performance is for one tree only.
 @test 0.6 < rsq(d_preds, y)
 @test rsq(d_preds, y) ≈ rsq(s_preds, y) atol=0.15
-
-# TODO: test a forest.
 
 nothing

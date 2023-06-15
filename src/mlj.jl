@@ -22,7 +22,9 @@ using MLJModelInterface:
     Table
 using Random: AbstractRNG, default_rng
 using SIRUS:
+    Algorithm,
     Classification,
+    Regression,
     StableForest,
     StableRules,
     colnames,
@@ -149,6 +151,39 @@ Base.@kwdef mutable struct StableRulesClassifier <: Probabilistic
     lambda::Float64=5
 end
 
+"""
+    StableForestRegressor(;
+        rng::AbstractRNG=default_rng(),
+        partial_sampling::Real=0.7,
+        n_trees::Int=1_000,
+        max_depth::Int=2,
+        q::Int=10,
+        min_data_in_leaf::Int=5
+    ) <: MLJModelInterface.Probabilistic
+
+Random forest regressor with a stabilized forest structure (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html)).
+See the documentation for the `StableForestClassifier` for more information about the hyperparameters.
+
+# Example
+
+The classifier satisfies the MLJ interface, so it can be used like any other MLJ model.
+For example, it can be used to create a machine:
+
+```julia
+julia> using SIRUS, MLJ
+
+julia> mach = machine(StableForestRegressor(), X, y);
+```
+"""
+Base.@kwdef mutable struct StableForestRegressor <: Probabilistic
+    rng::AbstractRNG=default_rng()
+    partial_sampling::Real=0.7
+    n_trees::Int=1_000
+    max_depth::Int=2
+    q::Int=10
+    min_data_in_leaf::Int=5
+end
+
 metadata_model(
     StableForestClassifier;
     input_scitype=Table(Continuous, Count),
@@ -167,8 +202,21 @@ metadata_model(
     path="SIRUS.StableForestClassifier"
 )
 
+metadata_model(
+    StableForestRegressor;
+    input_scitype=Table(Continuous, Count),
+    target_scitype=AbstractVector{<:Continuous},
+    supports_weights=false,
+    docstring="Random forest regressor with a stabilized forest structure",
+    path="SIRUS.StableForestRegressor"
+)
+
 metadata_pkg.(
-    [StableForestClassifier, StableRulesClassifier];
+    [
+        StableForestClassifier,
+        StableRulesClassifier,
+        StableForestRegressor
+    ];
     name="SIRUS",
     uuid="9113e207-2504-4b06-8eee-d78e288bee65",
     url="https://github.com/rikhuijzer/SIRUS.jl",
@@ -192,12 +240,18 @@ function _float(A::CategoricalArray{T}) where T
     end
     return float(A)
 end
+_float(A::AbstractVector) = float.(A)
 
-function fit(model::StableForestClassifier, verbosity::Int, X, y)
-    output_type = Classification()
+function fit(
+        model::Union{StableForestClassifier, StableForestRegressor},
+        algo::Algorithm,
+        verbosity::Int,
+        X,
+        y
+    )
     forest = _forest(
         model.rng,
-        output_type,
+        algo,
         matrix(X),
         _float(y),
         colnames(X);
@@ -213,7 +267,21 @@ function fit(model::StableForestClassifier, verbosity::Int, X, y)
     return fitresult, cache, report
 end
 
-function predict(model::StableForestClassifier, fitresult::StableForest, Xnew)
+function fit(model::StableForestClassifier, verbosity::Int, X, y)
+    algo = Classification()
+    return fit(model, algo, verbosity, X, y)
+end
+
+function fit(model::StableForestRegressor, verbosity::Int, X, y)
+    algo = Regression()
+    return fit(model, algo, verbosity, X, y)
+end
+
+function predict(
+        model::Union{StableForestClassifier, StableForestRegressor},
+        fitresult::StableForest,
+        Xnew
+    )
     forest = fitresult
     return _predict(forest, matrix(Xnew))
 end

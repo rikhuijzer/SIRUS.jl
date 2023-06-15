@@ -178,14 +178,6 @@ function _else_output!(not_node::Union{Node,Leaf}, node::Node, probs::Probs=Prob
     return probs
 end
 
-function _apply_statistic(V::AbstractVector{<:AbstractVector}, f::Function)
-    M = reduce(hcat, V)
-    return [round(f(row); sigdigits=3) for row in eachrow(M)]
-end
-
-_mean(V::AbstractVector{<:AbstractVector}) = _apply_statistic(V, mean)
-_median(V::AbstractVector{<:AbstractVector}) = _apply_statistic(V, median)
-
 function _frequency_sort(V::AbstractVector)
     counts = _count_unique(V)
     sorted = sort(collect(counts); by=last, rev=true)
@@ -357,6 +349,7 @@ end
 
 struct StableRules{T} <: StableModel
     rules::Vector{Rule}
+    algo::Algorithm
     classes::Vector{T}
     weights::Vector{Float16}
 end
@@ -380,6 +373,7 @@ end
 
 function StableRules(
         rules::Vector{Rule},
+        algo::Algorithm,
         classes,
         data,
         outcome,
@@ -389,7 +383,7 @@ function StableRules(
     rules = first.(processed)
     weights = _weights(rules, classes, data, outcome, model)
     filtered_rules, filtered_weights = _remove_zero_weights(rules, weights)
-    return StableRules(filtered_rules, classes, filtered_weights)
+    return StableRules(filtered_rules, algo, classes, filtered_weights)
 end
 
 function StableRules(
@@ -399,7 +393,7 @@ function StableRules(
         model::Probabilistic,
     )
     rules = _rules(forest)
-    return StableRules(rules, forest.classes, data, outcome, model)
+    return StableRules(rules, forest.algo, forest.classes, data, outcome, model)
 end
 
 "Return only the last result for the binary case because the other is 1 - p anyway."

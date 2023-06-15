@@ -221,6 +221,7 @@ end
 abstract type StableModel end
 struct StableForest{T} <: StableModel
     trees::Vector{Union{Node,Leaf}}
+    algo::Algorithm
     classes::Vector{T}
 end
 _elements(model::StableForest) = model.trees
@@ -276,7 +277,7 @@ function _forest(
     end
     # It is essential for the stability to determine the cutpoints over the whole dataset.
     cps = cutpoints(X, q)
-    classes = _classes(y)
+    classes = algo isa Classification ? _classes(y) : []
 
     max_split_candidates = _max_split_candidates(X)
     n_samples = floor(Int, partial_sampling * length(y))
@@ -306,7 +307,7 @@ function _forest(
         )
         trees[i] = tree
     end
-    return StableForest(trees, classes)
+    return StableForest(trees, algo, classes)
 end
 
 function _forest(rng::AbstractRNG, algo::Algorithm, X, y; kwargs...)
@@ -322,16 +323,32 @@ function _isempty_error(::StableForest)
     throw(AssertionError("The forest contains no trees"))
 end
 
+function _apply_statistic(V::AbstractVector{<:AbstractVector}, f::Function)
+    M = reduce(hcat, V)
+    return [round(f(row); sigdigits=3) for row in eachrow(M)]
+end
+
+_mean(V::AbstractVector{<:AbstractVector}) = _apply_statistic(V, mean)
+_median(V::AbstractVector{<:AbstractVector}) = _apply_statistic(V, median)
+
 function _predict(forest::StableForest, row::AbstractVector)
     isempty(_elements(forest)) && _isempty_error(forest)
-    probs = [_predict(tree, row) for tree in forest.trees]
-    return _median(probs)
+    predictions = [_predict(tree, row) for tree in forest.trees]
+    if forest.algo isa Classification
+        return _median(predictions)
+    else
+        return mean(predictions)
+    end
 end
 
 function _predict(model::StableModel, X::AbstractMatrix)
-    probs = [_predict(model, row) for row in eachrow(X)]
-    P = reduce(hcat, probs)'
-    return UnivariateFinite(model.classes, P; pool=missing)
+    if model.algo isa Classification
+        probs = [_predict(model, row) for row in eachrow(X)]
+        P = reduce(hcat, probs)'
+        return UnivariateFinite(model.classes, P; pool=missing)
+    else
+        return [_predict(model, row) for row in eachrow(X)]
+    end
 end
 
 function _predict(model::StableModel, X)
