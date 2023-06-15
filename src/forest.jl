@@ -1,3 +1,11 @@
+"Supertype for random forests modes: classification or regression."
+abstract type Algorithm end
+
+"Supertype for leafs: classification or regression."
+abstract type Leaf end
+
+const Probabilities = Vector{Float64}
+
 "Return the number of elements in `V` being equal to `x`."
 function _count_equal(V::AbstractVector, x)::Int
     c = 0
@@ -7,41 +15,6 @@ function _count_equal(V::AbstractVector, x)::Int
         end
     end
     return c
-end
-
-"""
-    _gini(y::AbstractVector, classes::AbstractVector)
-
-Return the Gini index for a vector outcomes `y` and `classes`.
-Here, `y` is usually a view on the outcome values in some region.
-Inside that region, `gini` is a measure of node purity.
-If all values in the region have the same class, then gini is zero.
-The equation is mentioned on Wikipedia as
-``1 - \\sum{class \\in classes} p_i^2``
-for ``p_i`` be the fraction (proportion) of items labeled with class ``i`` in the set.
-"""
-function _gini(y::AbstractVector, classes)
-    len_y = length(y)
-    impurity = 1.0
-
-    for class in classes
-        c = _count_equal(y, class)
-        proportion = c / len_y
-        impurity -= proportion^2
-    end
-    return impurity
-end
-
-function _information_gain(
-        y,
-        yl,
-        yr,
-        classes,
-        starting_impurity::Real
-    )
-    p = length(yl) / length(y)
-    impurity_change = p * _gini(yl, classes) + (1 - p) * _gini(yr, classes)
-    return starting_impurity - impurity_change
 end
 
 """
@@ -91,6 +64,10 @@ function _view_y!(y_view, data, y, comparison, cutpoint)
     return @inbounds view(y_view, 1:len)
 end
 
+function _max_split_candidates(X)::Int
+    return round(Int, sqrt(nfeatures(X)))
+end
+
 """
 Return the split for which the gini index is maximized.
 This function receives the cutpoints for the whole dataset `D` because `X` can be a subset of `D`.
@@ -98,65 +75,51 @@ For a walkthrough of the CART algorithm, see https://youtu.be/LDRbO9a6XPU.
 """
 function _split(
         rng,
+        algo::Algorithm,
         X,
         y::AbstractVector,
         classes::AbstractVector,
-        colnames::Vector{String},
+        colnms::Vector{String},
         cps::Vector{Cutpoints};
-        max_split_candidates::Int=nfeatures(X)
-    )
-    best_score = 0.0
+        max_split_candidates::Int=_max_split_candidates(X)
+    )::Union{Nothing, SplitPoint}
+    score_improved::Bool = false
+    best_score = _start_score(algo)
     best_score_feature = 0
     best_score_cutpoint = 0.0
+
     p = nfeatures(X)
     mc = max_split_candidates
     possible_features = mc == p ? (1:p) : _rand_subset(rng, 1:p, mc)
-    starting_impurity = _gini(y, classes)
+    reused_data = _reused_data(algo, y, classes)
 
     yl = Vector{eltype(y)}(undef, length(y))
     yr = Vector{eltype(y)}(undef, length(y))
     feat_data = Vector{eltype(X)}(undef, length(y))
     for feature in possible_features
         @inbounds for i in eachindex(feat_data)
-            feat_data[i] = X[i, feature]
+            feat_data[i] = @inbounds X[i, feature]
         end
         for cutpoint in cps[feature]
             vl = _view_y!(yl, feat_data, y, <, cutpoint)
             isempty(vl) && continue
             vr = _view_y!(yr, feat_data, y, ≥, cutpoint)
             isempty(vr) && continue
-            gain = _information_gain(y, vl, vr, classes, starting_impurity)
-            if best_score ≤ gain
-                best_score = gain
+            current_score = _current_score(algo, y, vl, vr, classes, reused_data)
+            if _score_improved(algo, best_score, current_score)
+                score_improved = true
+                best_score = current_score
                 best_score_feature = feature
                 best_score_cutpoint = cutpoint
             end
         end
     end
-    if best_score == 0.0
+    if score_improved
+        feature_name = colnms[best_score_feature]
+        return SplitPoint(best_score_feature, best_score_cutpoint, feature_name)
+    else
         return nothing
     end
-    feature_name = colnames[best_score_feature]
-    return SplitPoint(best_score_feature, best_score_cutpoint, feature_name)
-end
-
-const Probabilities = Vector{Float64}
-
-"""
-    Leaf
-
-Leaf of a decision tree.
-The probabilities are based on the `y`'s falling into the region associated with this leaf.
-"""
-struct Leaf
-    probabilities::Probabilities
-end
-
-function Leaf(classes, y)
-    l = length(y)
-    probabilities = [count(y .== class) / l for class in classes]
-    # Not creating a UnivariateFinite because it requires MLJBase
-    return Leaf(probabilities)
 end
 
 struct Node
@@ -194,37 +157,16 @@ function _verify_lengths(X, y)
     end
 end
 
-"Return `names(X)` if defined for `X` and string numbers otherwise."
-function _colnames(X)::Vector{String}
-    fallback() = string.(1:nfeatures(X))
-    try
-        names = collect(string.(Tables.columnnames(X)))
-        if isempty(names)
-            return fallback()
-        else
-            return names
-        end
-    catch
-        return fallback()
-    end
-end
-
-"""
-Return the root node of a stable decision tree fitted on `X` and `y`.
-
-Arguments:
-- `max_split_candidates`:
-    During random forest creation, the number of split candidates is limited to make the trees less correlated.
-    See Section 8.2.2 of https://doi.org/10.1007/978-1-0716-1418-1 for details.
-"""
+"Return the root node of a stable decision tree fitted on `X` and `y`."
 function _tree!(
         rng::AbstractRNG,
+        algo::Algorithm,
         mask::Vector{Bool},
         X,
         y::AbstractVector,
         classes::AbstractVector,
-        colnames::Vector{String}=_colnames(X);
-        max_split_candidates=nfeatures(X),
+        colnms::Vector{String}=colnames(X);
+        max_split_candidates=_max_split_candidates(X),
         depth=0,
         max_depth=2,
         q=10,
@@ -236,27 +178,25 @@ function _tree!(
     end
     _verify_lengths(X, y)
     if depth == max_depth
-        return Leaf(classes, y)
+        return Leaf(algo, classes, y)
     end
-    sp = _split(rng, X, y, classes, colnames, cps; max_split_candidates)
+    sp = _split(rng, algo, X, y, classes, colnms, cps; max_split_candidates)
     if isnothing(sp) || length(y) ≤ min_data_in_leaf
-        return Leaf(classes, y)
+        return Leaf(algo, classes, y)
     end
     depth += 1
 
     left = let
         _X, yl = _view_X_y!(mask, X, y, sp, <)
-        _tree!(rng, mask, _X, yl, classes, colnames; cps, depth, max_depth)
+        _tree!(rng, algo, mask, _X, yl, classes, colnms; cps, depth, max_depth)
     end
     right = let
         _X, yr = _view_X_y!(mask, X, y, sp, ≥)
-        _tree!(rng, mask, _X, yr, classes, colnames; cps, depth, max_depth)
+        _tree!(rng, algo, mask, _X, yr, classes, colnms; cps, depth, max_depth)
     end
     node = Node(sp, left, right)
     return node
 end
-
-_predict(leaf::Leaf, x::AbstractVector) = leaf.probabilities
 
 """
 Predict `y` for a data vector defined by `x`.
@@ -315,9 +255,10 @@ Arguments:
 """
 function _forest(
         rng::AbstractRNG,
+        algo::Algorithm,
         X::AbstractMatrix,
         y::AbstractVector,
-        colnames::Vector{String};
+        colnms::Vector{String};
         partial_sampling::Real=PARTIAL_SAMPLING_DEFAULT,
         n_trees::Int=N_TREES_DEFAULT,
         max_depth::Int=MAX_DEPTH_DEFAULT,
@@ -325,7 +266,10 @@ function _forest(
         min_data_in_leaf::Int=5
     )
     if 2 < max_depth
-        error("Tree depth is too high. Rule filtering for a higher depth is not implemented.")
+        error("""
+              Tree depth is too high. Rule filtering for a depth above 2 is not implemented.
+              In the original paper, the authors also advice to use a depth of no more than 2.
+              """)
     end
     if max_depth < 1
         error("Minimum tree depth is 1; got $max_depth")
@@ -334,26 +278,26 @@ function _forest(
     cps = cutpoints(X, q)
     classes = _classes(y)
 
-    max_split_candidates = round(Int, sqrt(nfeatures(X)))
+    max_split_candidates = _max_split_candidates(X)
     n_samples = floor(Int, partial_sampling * length(y))
 
     trees = Vector{Union{Node,Leaf}}(undef, n_trees)
     Threads.@threads for i in 1:n_trees
         _rng = copy(rng)
         _change_rng_state!(_rng, i)
-        # Don't change this to sampling without replacement.
-        # When doing that at DecisionTree.jl, the accuracy decreases.
+        # Note that this is sampling with replacement; keep it this way.
         rows = rand(_rng, 1:length(y), n_samples)
-        _X = view(X, rows, :)
+        _X = X[rows, :]
         _y = view(y, rows)
         mask = Vector{Bool}(undef, length(y))
         tree = _tree!(
             _rng,
+            algo,
             mask,
             _X,
             _y,
             classes,
-            colnames;
+            colnms;
             max_split_candidates,
             max_depth,
             q,
@@ -365,13 +309,13 @@ function _forest(
     return StableForest(trees, classes)
 end
 
-function _forest(rng::AbstractRNG, X, y; kwargs...)
+function _forest(rng::AbstractRNG, algo::Algorithm, X, y; kwargs...)
     if !(X isa AbstractMatrix || Tables.istable(X))
         error("Input `X` doesn't satisfy the Tables.jl interface.")
     end
     # Tables doesn't assume the data fits in memory so that complicates things a lot.
     # Implementing out-of-memory trees is a problem for later.
-    return _forest(rng, matrix(X), y, _colnames(X); kwargs...)
+    return _forest(rng, algo, matrix(X), y, colnames(X); kwargs...)
 end
 
 function _isempty_error(::StableForest)

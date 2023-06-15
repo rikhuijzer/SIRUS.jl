@@ -22,9 +22,10 @@ using MLJModelInterface:
     Table
 using Random: AbstractRNG, default_rng
 using SIRUS:
+    Classification,
     StableForest,
     StableRules,
-    _colnames,
+    colnames,
     _forest,
     _mean,
     _predict,
@@ -193,11 +194,13 @@ function _float(A::CategoricalArray{T}) where T
 end
 
 function fit(model::StableForestClassifier, verbosity::Int, X, y)
+    output_type = Classification()
     forest = _forest(
         model.rng,
+        output_type,
         matrix(X),
         _float(y),
-        _colnames(X);
+        colnames(X);
         model.partial_sampling,
         model.n_trees,
         model.max_depth,
@@ -216,13 +219,15 @@ function predict(model::StableForestClassifier, fitresult::StableForest, Xnew)
 end
 
 function fit(model::StableRulesClassifier, verbosity::Int, X, y)
+    output_type = Classification()
     data = matrix(X)
     outcome = _float(y)
     forest = _forest(
         model.rng,
+        output_type,
         data,
         outcome,
-        _colnames(X);
+        colnames(X);
         model.partial_sampling,
         model.n_trees,
         model.max_depth,

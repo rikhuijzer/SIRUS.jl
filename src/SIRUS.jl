@@ -18,13 +18,15 @@ export StableForestClassifier, StableRulesClassifier
 export feature_names, directions, satisfies
 
 include("helpers.jl")
-using .Helpers: nfeatures, view_feature
+using .Helpers: colnames, nfeatures, view_feature
 
 include("empiricalquantiles.jl")
 using .EmpiricalQuantiles: Cutpoints, cutpoints
 export Cutpoints, cutpoints
 
 include("forest.jl")
+include("classification.jl")
+include("regression.jl")
 include("rules.jl")
 include("weights.jl")
 export TreePath

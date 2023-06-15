@@ -29,23 +29,26 @@ function build()
     return nothing
 end
 
-# Build the notebooks; defaults to "true".
-if get(ENV, "BUILD_DOCS_NOTEBOOKS", "true") == "true"
+pages = [
+    "Implementation Details" => "implementation-details.md",
+    "API" => "api.md"
+]
+
+# Whether to build the notebooks; defaults to "true".
+do_build_notebooks = get(ENV, "BUILD_DOCS_NOTEBOOKS", "true") == "true"
+
+if do_build_notebooks
     build()
     cd(tutorials_dir) do
         mv("sirus.md", "index.md"; force=true)
     end
+    pushfirst!(pages, "SIRUS" => "index.md")
 end
-
-pages = [
-    "SIRUS" => "index.md",
-    "API" => "api.md"
-]
 
 prettyurls = get(ENV, "CI", nothing) == "true"
 format = HTML(; mathengine=MathJax3(), prettyurls)
 modules = [SIRUS]
-strict = true
+strict = do_build_notebooks
 checkdocs = :none
 makedocs(; sitename, pages, format, modules, strict, checkdocs)
 
