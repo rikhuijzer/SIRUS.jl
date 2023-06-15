@@ -333,15 +333,28 @@ _median(V::AbstractVector{<:AbstractVector}) = _apply_statistic(V, median)
 
 function _predict(forest::StableForest, row::AbstractVector)
     isempty(_elements(forest)) && _isempty_error(forest)
-    probs = [_predict(tree, row) for tree in forest.trees]
-    return _median(probs)
+    predictions = [_predict(tree, row) for tree in forest.trees]
+    if forest.algo isa Classification
+        return _median(predictions)
+    else
+        return mean(predictions)
+    end
 end
 
 function _predict(model::StableModel, X::AbstractMatrix)
-    probs = [_predict(model, row) for row in eachrow(X)]
-    P = reduce(hcat, probs)'
-    return UnivariateFinite(model.classes, P; pool=missing)
+    if model.algo isa Classification
+        probs = [_predict(model, row) for row in eachrow(X)]
+        P = reduce(hcat, probs)'
+        return UnivariateFinite(model.classes, P; pool=missing)
+    else
+        return [_predict(model, row) for row in eachrow(X)]
+    end
 end
+
+# function _predict(model::StableForestRegressor, X::AbstractMatrix)
+#    predictions = [_predict(model, row) for row in eachrow(X)]
+#    return predictions
+# end
 
 function _predict(model::StableModel, X)
     if !Tables.istable(X)
