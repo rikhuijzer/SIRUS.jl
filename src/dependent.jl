@@ -1,6 +1,6 @@
 _unique_features(split::Split) = split.splitpoint.feature
 _unique_features(rule::Rule) = unique(_unique_features.(rule.path.splits))
-_unique_features(rules::Vector{<:Rule}) = unique(reduce(vcat, _unique_features.(rules)))
+_unique_features(rules::Vector{Rule}) = unique(reduce(vcat, _unique_features.(rules)))
 
 """
 Return a point which satisifies `A` and `B`.
@@ -40,7 +40,7 @@ In each column, answer whether the rule holds for some point that satisifies the
 This trick of taking specifically these rows is briliant.
 Credits go to D.W. on StackExchange (https://cs.stackexchange.com/a/152819/98402).
 """
-function _feature_space(rules::AbstractVector{<:Rule}, A::Split, B::Split)
+function _feature_space(rules::AbstractVector{Rule}, A::Split, B::Split)
     l = length(rules)
     data = BitArray(undef, 4, l + 1)
     for i in 1:4
@@ -65,7 +65,7 @@ Return a vector of booleans with a true for every rule in `rules` that is linear
 To find rules for this method, collect all rules containing some feature for each pair of features.
 That should be a fairly quick way to find subsets that are easy to process.
 """
-function _linearly_dependent(rules::AbstractVector{<:Rule}, A::Split, B::Split)
+function _linearly_dependent(rules::AbstractVector{Rule}, A::Split, B::Split)
     data = _feature_space(rules, A, B)
     l = length(rules)
     results = BitArray(undef, l)
@@ -87,7 +87,7 @@ end
 Return a vector of unique left splits for `rules`.
 These splits are required to form `[A, B]` pairs in the next step.
 """
-function _unique_left_splits(rules::Vector{<:Rule})
+function _unique_left_splits(rules::Vector{Rule})
     splits = Split[]
     for rule in rules
         for split in _splits(rule)
@@ -141,7 +141,7 @@ function _related_rule(rule::Rule, A::Split, B::Split)
     end
 end
 
-function _linearly_dependent(rules::Vector{<:Rule})
+function _linearly_dependent(rules::Vector{Rule})
     S = _unique_left_splits(rules)
     P = _left_triangular_product(S)
     # A `BitVector(undef, length(rules))` here will cause randomness.

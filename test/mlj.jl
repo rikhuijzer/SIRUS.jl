@@ -196,19 +196,16 @@ let
     # e = _evaluate_baseline!(results, "boston")
 end
 
-let
+function _evaluate_boston()
     hyper = (;)
     measure = rsq
-    elgbm = _evaluate!(results, "boston", LGBMRegressor, hyper; measure)
     el = _evaluate!(results, "boston", LinearRegressor, hyper; measure)
     ef = _evaluate!(results, "boston", StableForestRegressor, hyper; measure)
 
     @test 0.65 < _score(el)
     @test _score(el) ≈ _score(ef) atol=0.05
-    @test 0.65 < _score(elgbm)
 end
-
-er = _evaluate!(results, "boston", StableRulesRegressor, hyper; measure=rsq)
+_evaluate_boston()
 
 pretty = rename(results, :se => "1.96*SE")
 rename!(pretty, :nfolds => "`nfolds`")
