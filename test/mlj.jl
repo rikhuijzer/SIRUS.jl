@@ -196,31 +196,36 @@ let
     # e = _evaluate_baseline!(results, "boston")
 end
 
-function _evaluate_boston()
+el = let
     hyper = (;)
     measure = rsq
+    elgbm = _evaluate!(results, "boston", LGBMRegressor, hyper; measure)
     el = _evaluate!(results, "boston", LinearRegressor, hyper; measure)
     ef = _evaluate!(results, "boston", StableForestRegressor, hyper; measure)
 
     @test 0.65 < _score(el)
     @test _score(el) ≈ _score(ef) atol=0.05
+    @test 0.65 < _score(elgbm)
+    el
 end
-_evaluate_boston()
+
+er = let
+    hyper = (; rng=_rng(), n_trees=1_500)
+    er = _evaluate!(results, "boston", StableRulesRegressor, hyper; measure=rsq)
+end
 
 pretty = rename(results, :se => "1.96*SE")
-rename!(pretty, :nfolds => "`nfolds`")
+# rename!(pretty, :nfolds => "`nfolds`")
 print('\n' * repr(pretty) * "\n\n")
 
-if haskey(ENV, "GITHUB_STEP_SUMMARY")
+step_summary_path = get(ENV, "GITHUB_STEP_SUMMARY", "nothing")
+if step_summary_path != "nothing"
     job_summary = """
         ```
         $(repr(pretty))
         ```
         """
-    path = ENV["GITHUB_STEP_SUMMARY"]
-    open(path, "a") do io
-        write(io, job_summary)
-    end
+    write(step_summary_path, job_summary)
 end
 
 nothing

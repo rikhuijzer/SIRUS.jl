@@ -32,14 +32,14 @@ using MLJBase:
     predict
 using MLJDecisionTreeInterface: DecisionTree
 using MLJLinearModels: LinearRegressor
-using LightGBM.MLJInterface: LGBMClassifier
+using LightGBM.MLJInterface: LGBMClassifier, LGBMRegressor
 using StableRNGs: StableRNG
 using SIRUS
 using Statistics: mean, var
 using Tables: Tables
 using Test
 
-ST = SIRUS
+const S = SIRUS
 _rng(seed::Int=1) = StableRNG(seed)
 
 if !haskey(ENV, "REGISTERED_HABERMAN")
@@ -89,7 +89,7 @@ function boston()
 end
 
 function _Split(feature::Int, splitval::Float32, direction::Symbol)
-    return ST.Split(feature, string(feature), splitval, direction)
+    return S.Split(feature, string(feature), splitval, direction)
 end
 
 nothing

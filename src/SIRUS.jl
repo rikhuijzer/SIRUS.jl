@@ -38,6 +38,8 @@ const StableRulesClassifier = MLJImplementation.StableRulesClassifier
 export StableRulesClassifier
 const StableForestRegressor = MLJImplementation.StableForestRegressor
 export StableForestRegressor
+const StableRulesRegressor = MLJImplementation.StableRulesRegressor
+export StableRulesRegressor
 
 @precompile_signatures(SIRUS)
 
