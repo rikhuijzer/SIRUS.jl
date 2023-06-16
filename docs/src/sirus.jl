@@ -357,7 +357,7 @@ end;
 
 # ╔═╡ 0ca8bb9a-aac1-41a7-b43d-314a4029c205
 # hideall
-ST = SIRUS;
+S = SIRUS;
 
 # ╔═╡ ede038b3-d92e-4208-b8ab-984f3ca1810e
 function _plot_cutpoints(data::AbstractVector)
@@ -454,7 +454,7 @@ end
 
 # ╔═╡ bfcb5e17-8937-4448-b090-2782818c6b6c
 # hideall
-subset = collect(ST._rand_subset(_rng(3), nodes, round(Int, 0.7 * ln)));
+subset = collect(S._rand_subset(_rng(3), nodes, round(Int, 0.7 * ln)));
 
 # ╔═╡ dff9eb71-a853-4186-8245-a64206379b6f
 # hideall

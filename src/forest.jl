@@ -346,13 +346,13 @@ end
 _mean(V::AbstractVector{<:AbstractVector}) = _apply_statistic(V, mean)
 _median(V::AbstractVector{<:AbstractVector}) = _apply_statistic(V, median)
 
-function _predict(forest::StableForest, row::AbstractVector)
+function _predict(forest::StableForest, row::AbstractVector)::AbstractVector
     isempty(_elements(forest)) && _isempty_error(forest)
     predictions = [_predict(tree, row) for tree in forest.trees]
     if forest.algo isa Classification
         return _median(predictions)
     else
-        return mean(predictions)
+        return [mean(predictions)]
     end
 end
 
