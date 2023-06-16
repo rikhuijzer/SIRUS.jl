@@ -90,12 +90,12 @@ end
 end
 
 function generate_rules()
-    output_type = SIRUS.Classification()
-    forest = S._forest(_rng(), output_type, X, y)
+    algo = S.Classification()
+    forest = S._forest(_rng(), algo, X, y)
     rulesmodel = let
         rules = S._rules(forest)
         weights = repeat(Float16[1.0], length(rules))
-        S.StableRules(rules, algo, forest.classes, weights)
+        S.StableRules(rules, forest.algo, forest.classes, weights)
     end
     model = StableRulesClassifier(; max_rules=10)
     processed = S.StableRules(forest, X, y, model)
@@ -106,7 +106,8 @@ generated = map(i -> generate_rules(), 1:10)
 
 """
 Return whether the score for the model is roughly equal to check whether RNG is used correctly.
-Checking the scores is easier than the raw models since those seem to differ slightly.
+Checking the scores is easier than the raw models since those seem to differ slightly (probably
+due to mutli-threading, which can change the order).
 """
 function equal_output(stage::Symbol)
     V = getproperty.(generated, stage)
