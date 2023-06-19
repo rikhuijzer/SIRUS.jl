@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.15
+# v0.19.26
 
 using Markdown
 using InteractiveUtils
@@ -337,6 +337,23 @@ md"""
 ## Appendix
 """
 
+# ╔═╡ ede038b3-d92e-4208-b8ab-984f3ca1810e
+function _plot_cutpoints(data::AbstractVector)
+	fig = Figure(; resolution=(800, 100))
+	ax = Axis(fig[1, 1])
+	cps = Float64.(unique(cutpoints(data, 10)))
+	scatter!(ax, data, fill(1, length(data)))
+	vlines!(ax, cps; color=:black, linestyle=:dash)
+	textlocs = [(c, 1.1) for c in cps]
+	for cutpoint in cps
+		annotation = string(round(cutpoint; digits=2))::String
+		text!(ax, cutpoint + 0.2, 1.08; text=annotation, textsize=13)
+	end
+	ylims!(ax, 0.9, 1.2)
+	hideydecorations!(ax)
+	return fig
+end;
+
 # ╔═╡ 93a7dd3b-7810-4021-bf6e-ae9c04acea46
 _rng(seed::Int=1) = StableRNG(seed);
 
@@ -358,23 +375,6 @@ end;
 # ╔═╡ 0ca8bb9a-aac1-41a7-b43d-314a4029c205
 # hideall
 S = SIRUS;
-
-# ╔═╡ ede038b3-d92e-4208-b8ab-984f3ca1810e
-function _plot_cutpoints(data::AbstractVector)
-	fig = Figure(; resolution=(800, 100))
-	ax = Axis(fig[1, 1])
-	cps = Float64.(unique(cutpoints(data, 10)))
-	scatter!(ax, data, fill(1, length(data)))
-	vlines!(ax, cps; color=:black, linestyle=:dash)
-	textlocs = [(c, 1.1) for c in cps]
-	for cutpoint in cps
-		annotation = string(round(cutpoint; digits=2))::String
-		text!(ax, cutpoint + 0.2, 1.08; text=annotation, textsize=13)
-	end
-	ylims!(ax, 0.9, 1.2)
-	hideydecorations!(ax)
-	return fig
-end;
 
 # ╔═╡ 9db18ac7-4508-4861-8854-3e19d5218309
 function register_haberman()

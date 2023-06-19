@@ -5,7 +5,7 @@ In essence, this overview is a combination of three things:
 
 1. Section 8.1.1 Regression Trees and 8.1.2 Classification trees (James et al., [2021](https://doi.org/10.1007/978-1-0716-1418-1)).
 2. The SIRUS algorithm description (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html)).
-3. Some implementation details which were missing from aforementioned sources.
+3. Some implementation details, as obtained by trial and error and the help of Clement Bénard, which were missing from aforementioned sources.
 
 ## Fit stabilized trees
 
@@ -60,3 +60,103 @@ The Gini index is a way to determine the most informative splitpoint via _node p
 where ``p_\text{classes}`` denotes the fraction (proportion) of items from the current region that are from `class`.
 Note that this equation is optimized for computational efficiency.
 For the full derivation from the original equation, see _Gini impurity_ at [Wikipedia](https://en.wikipedia.org/wiki/Decision_tree_learning#Gini_impurity).
+
+## Convert the trees to rules
+
+After creating many trees, the SIRUS algorithm converts these trees to rules.
+One of the first of such rule-based models was the RuleFit algorithm (Friedman & Popescu, [2008](http://www.jstor.org/stable/30245114)).
+The idea behind these models is that any tree can be expressed as a set of rules.
+For example, take the following tree with nodes ``n_1, n_2, ..., n_5``.
+
+```@setup tree
+using CairoMakie
+
+empty_theme = Theme(
+    Axis = (
+        backgroundcolor = :transparent,
+        leftspinevisible = false,
+        rightspinevisible = false,
+        bottomspinevisible = false,
+        topspinevisible = false,
+        xticklabelsvisible = false,
+        yticklabelsvisible = false,
+        xgridcolor = :transparent,
+        ygridcolor = :transparent,
+        xminorticksvisible = false,
+        yminorticksvisible = false,
+        xticksvisible = false,
+        yticksvisible = false,
+        xautolimitmargin = (0.0,0.0),
+        yautolimitmargin = (0.0,0.0),
+    )
+)
+
+function plot_tree()
+    with_theme(empty_theme) do
+        fig = Figure()
+        ax = Axis(fig[1, 1])
+        linesopts = (
+            color = :black,
+            space = :relative,
+        )
+        scatteropts = (
+            color = :white,
+            markersize = 100,
+            strokewidth = 2,
+            space = :relative,
+            transparency = true
+        )
+        textopts = (
+            space = :relative,
+            fontsize = 30,
+            justification = :center,
+            align = (:center, :center)
+        )
+
+        lines!(ax, [0.5, 0.3], [0.9, 0.5]; linesopts...)
+        lines!(ax, [0.5, 0.7], [0.9, 0.5]; linesopts...)
+
+        lines!(ax, [0.3, 0.12], [0.5, 0.1]; linesopts...)
+        lines!(ax, [0.3, 0.48], [0.5, 0.1]; linesopts...)
+
+        scatter!(ax, 0.5, 0.9; scatteropts...)
+        text!(ax, 0.5, 0.9; text=L"n_1", textopts...)
+        scatter!(ax, 0.3, 0.5; scatteropts...)
+        text!(ax, 0.3, 0.5; text=L"n_2", textopts...)
+        scatter!(ax, 0.7, 0.5; scatteropts...)
+        text!(ax, 0.7, 0.5; text=L"n_3", textopts...)
+
+        scatter!(ax, 0.12, 0.1; scatteropts...)
+        text!(ax, 0.12, 0.1; text=L"n_4", textopts...)
+        scatter!(ax, 0.48, 0.1; scatteropts...)
+        text!(ax, 0.48, 0.1; text=L"n_5", textopts...)
+
+        text!(ax, 0.35, 0.75; text=L"x_1 < 3", textopts...)
+        text!(ax, 0.65, 0.75; text=L"x_1 \geq 3", textopts...)
+
+        text!(ax, 0.16, 0.33; text=L"x_2 < 5", textopts...)
+        text!(ax, 0.45, 0.33; text=L"x_2 \geq 5", textopts...)
+
+        hidedecorations!(ax)
+        return fig
+    end
+end
+```
+
+```@example tree
+plot_tree() # hide
+```
+
+and let's say that this tree was generated from a tree fitting procedure as described above.
+From this representation, we can see that node ``n_1`` splits the feature ``x_1`` on 3.
+If ``x_1 < 3``, then the prediction will go to ``n_2`` and if ``x \geq 3``, then the prediction will take the content of ``n_3``.
+In ``n_2``, the prediction will be made based on ``n_4`` or ``n_5`` depending on whether feature ``x_2`` is smaller than or greater or equal to 5.
+
+To convert such a tree to rules, note that each path to a leaf can be converted to one rule.
+For example, the path to ``n_3`` can be converted to
+
+```math
+\text{if } x_1 \geq 3, \text{ then } A \text{ else } B,
+```
+
+where ``A`` considers all points that satisfy ``n_3`` and ``B`` considers all points that do not satisfy the rule constraints.

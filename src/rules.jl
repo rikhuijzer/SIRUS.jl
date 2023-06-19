@@ -131,6 +131,13 @@ function Base.values(rule::Rule)::Vector{Float64}
     return [Float64(_value(split)) for split in _splits(rule)]
 end
 
+"""
+    _reverse(rule::Rule)
+
+Return a reversed version of the `rule`.
+Assumes that the rule has only one split (clause) since two splits
+cannot be reversed.
+"""
 function _reverse(rule::Rule)
     splits = _splits(rule)
     @assert length(splits) == 1
@@ -158,15 +165,18 @@ end
 function _then_output!(
         leaf::Leaf,
         probs::Vector{LeafContent}
-    )
+    )::Vector{LeafContent}
     return push!(probs, _content(leaf))
 end
 
-"Return the output average of the training points which satisfy the rule."
+"""
+Add the leaf contents for the training points which satisfy the
+rule to the `probs` vector.
+"""
 function _then_output!(
         node::Node,
         probs::Vector{LeafContent}
-    )
+    )::Vector{LeafContent}
     _then_output!(node.left, probs)
     _then_output!(node.right, probs)
     return probs
@@ -176,16 +186,19 @@ function _else_output!(
         _,
         leaf::Leaf,
         probs::Vector{LeafContent}
-    )
+    )::Vector{LeafContent}
     return push!(probs, _content(leaf))
 end
 
-"Return the output average of the training points not covered by the rule."
+"""
+Add the leaf contents for the training points which do not satisfy
+the rule to the `probs` vector.
+"""
 function _else_output!(
         not_node::Union{Node,Leaf},
         node::Node,
         probs::Vector{LeafContent}
-    )
+    )::Vector{LeafContent}
     if node == not_node
         return probs
     end
