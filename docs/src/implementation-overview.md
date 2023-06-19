@@ -1,6 +1,6 @@
-# Implementation details
+# Implementation Overview
 
-This page describes an high-level overview of the implementation.
+This page provides a high-level overview of the implementation.
 In essence, this overview is a combination of three things:
 
 1. Section 8.1.1 Regression Trees and 8.1.2 Classification trees (James et al., [2021](https://doi.org/10.1007/978-1-0716-1418-1)).
