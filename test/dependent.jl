@@ -106,10 +106,11 @@ let
     expected = [r1, r3, r5, r7, r8, r10, r13, r14, r16]
     @test wrap_filter(allrules) == expected
 
-    @test length(S._process_rules(allrules, 9)) == 9
-    @test length(S._process_rules(allrules, 10)) == 9
-    @test length(S._process_rules([r1], 9)) == 1
-    @test length(S._process_rules(repeat(allrules, 200), 9)) == 9
+    algo = SIRUS.Classification()
+    @test length(S._process_rules(allrules, algo, 9)) == 9
+    @test length(S._process_rules(allrules, algo, 10)) == 9
+    @test length(S._process_rules([r1], algo, 9)) == 1
+    @test length(S._process_rules(repeat(allrules, 200), algo, 9)) == 9
 end
 
 nothing

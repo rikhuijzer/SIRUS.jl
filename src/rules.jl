@@ -98,8 +98,9 @@ end
 
 struct Rule
     path::TreePath
-    then_probs::LeafContent
-    else_probs::LeafContent
+    then::LeafContent
+    # Cannot use `else` since it is a reserved keyword
+    otherwise::LeafContent
 end
 
 _splits(rule::Rule) = rule.path.splits
@@ -143,7 +144,7 @@ function _reverse(rule::Rule)
     @assert length(splits) == 1
     split = splits[1]
     path = TreePath([_reverse(split)])
-    return Rule(path, rule.else_probs, rule.then_probs)
+    return Rule(path, rule.otherwise, rule.then)
 end
 
 function _left_rule(rule::Rule)
@@ -154,10 +155,6 @@ function _left_rule(rule::Rule)
 end
 
 function _rules!(leaf::Leaf, splits::Vector{Split}, rules::Vector{Rule})
-    path = TreePath(splits)
-    # This assumes that the opposite of a combined rules is the opposite of the last comparison.
-    then_probs = leaf.probabilities
-    else_probs = 1
     push!(rules, rule)
     return nothing
 end
@@ -216,10 +213,10 @@ end
 function Rule(root::Node, node::Union{Node, Leaf}, splits::Vector{Split})
     path = TreePath(splits)
     then_output = _then_output!(node, Vector{LeafContent}())
-    then_probs = _mean(then_output)
+    then = _mean(then_output)
     else_output = _else_output!(node, root, Vector{LeafContent}())
-    else_probs = _mean(else_output)
-    return Rule(path, then_probs, else_probs)
+    otherwise = _mean(else_output)
+    return Rule(path, then, otherwise)
 end
 
 function _rules!(leaf::Leaf, splits::Vector{Split}; rules::Vector{Rule}, root::Node)
@@ -296,12 +293,15 @@ end
 
 """
 Return a sorted subset of `rules` where all the `rule.paths` are unique.
-This is done by averaging the `then_probs` and `else_probs`.
+This is done by averaging the `then` and `otherwise` contents.
 
 This is not mentioned in the SIRUS paper, but probably necessary because not sorting the rules by the occurence frequency didn't really affect accuracy.
 So, that could mean that the most important rules aren't correct selected which could be caused by multiple paths having different then else probabilities.
 """
-function _combine_paths(rules::Vector{Rule})
+function _combine_paths(
+        rules::Vector{Rule},
+        algo::Algorithm
+    )::Vector{Pair{Rule, Int}}
     U = unique(getproperty.(rules, :path))
     init = zip(U, repeat([Vector{Rule}[]], length(U)))
     duplicate_paths = Dict{TreePath,Vector{Rule}}(init)
@@ -314,11 +314,11 @@ function _combine_paths(rules::Vector{Rule})
         # Taking the mode because that might make more sense here.
         # Doesn't seem to affect accuracy so much.
         #
-        # ## This has to be mean for classification.
-        then_probs = _median(getproperty.(rules, :then_probs))
-        else_probs = _median(getproperty.(rules, :else_probs))
-        combined_rule = Rule(path, then_probs, else_probs)
-        averaged_rules[i] = Pair(combined_rule, length(rules))
+        aggregate = algo isa Classification ? _median : _mean
+        then = aggregate(getproperty.(rules, :then))
+        otherwise = aggregate(getproperty.(rules, :otherwise))
+        combined_rule = Rule(path, then, otherwise)
+        averaged_rules[i] = Pair(combined_rule, length(rules)::Int)
     end
     sorted = sort(averaged_rules; by=last, rev=true)
     return sorted
@@ -337,11 +337,11 @@ function Base.:(==)(a::TreePath, b::TreePath)
 end
 
 function Base.:(==)(a::Rule, b::Rule)
-    return a.path == b.path && a.then_probs == b.then_probs && a.else_probs == b.else_probs
+    return a.path == b.path && a.then == b.then && a.otherwise == b.otherwise
 end
 
 function Base.hash(rule::Rule)
-    hash([rule.path.splits, rule.then_probs, rule.else_probs])
+    hash([rule.path.splits, rule.then, rule.otherwise])
 end
 
 function _count_unique(V::AbstractVector{T}) where T
@@ -362,9 +362,13 @@ Return a subset of `rules` of length `max_rules`.
     The problem, IMO, with p0 is that it is very difficult to decide beforehand what p0 is suitable and so it requires hyperparameter tuning.
     Instead, luckily, the linearly dependent filter is quite fast here, so passing a load of rules into that and then selecting the first `max_rules` is feasible.
 """
-function _process_rules(rules::Vector{Rule}, max_rules::Int)
+function _process_rules(
+        rules::Vector{Rule},
+        algo::Algorithm,
+        max_rules::Int
+    )::Vector{Pair{Rule, Int}}
     flipped = _flip_left(rules)
-    combined = _combine_paths(flipped)
+    combined = _combine_paths(flipped, algo)
     # This loop is an optimization which manually takes a p0 and checks whether we end up with
     # enough rules. If not, we loop again with more rules.
     for i in 1:3
@@ -413,7 +417,7 @@ function StableRules(
         outcome,
         model::Probabilistic
     )
-    processed = _process_rules(rules, model.max_rules)
+    processed = _process_rules(rules, algo, model.max_rules)
     rules = first.(processed)
     weights = _weights(rules, classes, data, outcome, model)
     filtered_rules, filtered_weights = _remove_zero_weights(rules, weights)
@@ -450,10 +454,10 @@ end
 
 "Return a pretty formatted so that it is easy to understand."
 function _pretty_rule(weight, rule::Rule)
-    then_probs = _simplify_binary_probabilities(weight, rule.then_probs)
-    else_probs = _simplify_binary_probabilities(weight, rule.else_probs)
+    then = _simplify_binary_probabilities(weight, rule.then)
+    otherwise = _simplify_binary_probabilities(weight, rule.otherwise)
     condition = _pretty_path(rule.path)
-    return "if $condition then $then_probs else $else_probs"
+    return "if $condition then $then else $otherwise"
 end
 
 function Base.show(io::IO, model::StableRules)
@@ -492,7 +496,7 @@ end
 
 "Return the then or else probabilities for data `row` according to `rule`."
 function _probability(row::AbstractVector, rule::Rule)
-    return satisfies(row, rule) ? rule.then_probs : rule.else_probs
+    return satisfies(row, rule) ? rule.then : rule.otherwise
 end
 
 function _predict(pair::Tuple{Rule, Float16}, row::AbstractVector)
