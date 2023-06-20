@@ -295,7 +295,7 @@ function _flip_left(rules::Vector{Rule})
 end
 
 """
-Return a subset of `rules` where all the `rule.paths` are unique.
+Return a sorted subset of `rules` where all the `rule.paths` are unique.
 This is done by averaging the `then_probs` and `else_probs`.
 
 This is not mentioned in the SIRUS paper, but probably necessary because not sorting the rules by the occurence frequency didn't really affect accuracy.
@@ -313,6 +313,8 @@ function _combine_paths(rules::Vector{Rule})
         rules = duplicate_paths[path]
         # Taking the mode because that might make more sense here.
         # Doesn't seem to affect accuracy so much.
+        #
+        # ## This has to be mean for classification.
         then_probs = _median(getproperty.(rules, :then_probs))
         else_probs = _median(getproperty.(rules, :else_probs))
         combined_rule = Rule(path, then_probs, else_probs)
@@ -363,6 +365,8 @@ Return a subset of `rules` of length `max_rules`.
 function _process_rules(rules::Vector{Rule}, max_rules::Int)
     flipped = _flip_left(rules)
     combined = _combine_paths(flipped)
+    # This loop is an optimization which manually takes a p0 and checks whether we end up with
+    # enough rules. If not, we loop again with more rules.
     for i in 1:3
         required_rule_guess = i^2 * 10 * max_rules
         before = first(combined, required_rule_guess)
@@ -374,6 +378,7 @@ function _process_rules(rules::Vector{Rule}, max_rules::Int)
         end
         return first(filtered, max_rules)
     end
+    @error "This should never happen"
 end
 
 struct StableRules{T} <: StableModel
