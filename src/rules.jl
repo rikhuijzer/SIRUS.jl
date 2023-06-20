@@ -453,7 +453,8 @@ function _sum(V::AbstractVector{<:AbstractVector})
 end
 
 function _predict(model::StableRules, row::AbstractVector)
-    isempty(_elements(model)) && _isempty_error(model)
-    probs = _predict.(_elements(model), Ref(row))
+    rules_weights = _elements(model)
+    isempty(rules_weights) && _isempty_error(model)
+    probs = _predict.(rules_weights, Ref(row))
     return _sum(probs)
 end

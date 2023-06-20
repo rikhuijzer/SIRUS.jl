@@ -89,7 +89,7 @@ end
     @test all(>(0.95), dtree_accuracies)
 
     stree_accuracies = [_binary_accuracy(tree, classes, data, y) for tree in sforest.trees]
-    # @test all(>(0.95), stree_accuracies)
+    @test all(>(0.94), stree_accuracies)
 end
 
 fpreds = DecisionTree.apply_forest(dforest, data)

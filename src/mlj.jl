@@ -360,12 +360,23 @@ function fit(model::StableRulesRegressor, verbosity::Int, X, y)
 end
 
 function predict(
-        model::Union{StableRulesClassifier, StableRulesRegressor},
+        model::StableRulesClassifier,
         fitresult::StableRules,
         Xnew
     )
     isempty(fitresult.rules) && error("Zero rules")
     return _predict(fitresult, matrix(Xnew))
+end
+
+function predict(
+        model::StableRulesRegressor,
+        fitresult::StableRules,
+        Xnew
+    )
+    isempty(fitresult.rules) && error("Zero rules")
+    predictions = _predict(fitresult, matrix(Xnew))
+    unpacked = [only(p) for p in predictions]
+    return unpacked
 end
 
 end # module

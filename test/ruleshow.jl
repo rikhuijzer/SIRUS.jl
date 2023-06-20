@@ -20,11 +20,11 @@ end
     model = S.StableRules([r1, r2], algo, classes, weights)
     pretty = split(repr(model), '\n')
     @test pretty[1] == "StableRules model with 2 rules:"
-    then = round(0.6 * 0.1; digits=3)
-    otherwise = round(0.6 * 0.8; digits=3)
+    then = round(weights[1] * 0.1; digits=3)
+    otherwise = round(weights[1] * 0.8; digits=3)
     @test pretty[2] == " if X[i, 1] < 5.0 then $then else $otherwise +"
 
-    then = round(0.7 * 0.4; digits=3)
-    otherwise = round(0.7 * 0.6; digits=3)
+    then = round(weights[2] * 0.4; digits=3)
+    otherwise = round(weights[2] * 0.6; digits=3)
     @test pretty[3] == " if X[i, 2] < 3.0 then $then else $otherwise"
 end
