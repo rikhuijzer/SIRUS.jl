@@ -534,8 +534,8 @@ function _odds_plot(e::PerformanceEvaluation)
 		t_std = round(std(thresholds); digits=1)
 		
 		for (rule, weight) in rw
-			left = last(rule.then_probs)::Float64
-			right = last(rule.else_probs)::Float64
+			left = last(rule.then)::Float64
+			right = last(rule.otherwise)::Float64
 			t::Float64 = _threshold(rule)
 			ratio = log((right) / (left))
 			# area = πr²

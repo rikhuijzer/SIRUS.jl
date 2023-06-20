@@ -111,7 +111,7 @@ _splits(rule::Rule) = rule.path.splits
 Return a vector of feature names; one for each clause in `rule`.
 """
 function feature_names(rule::Rule)::Vector{String}
-    return [String(_feature_name(split))::String for split in _splits(rule)]
+    return String[String(_feature_name(s))::String for s in _splits(rule)]
 end
 
 """
@@ -120,7 +120,7 @@ end
 Return a vector of split directions; one for each clause in `rule`.
 """
 function directions(rule::Rule)::Vector{Symbol}
-    return [_direction(split) for split in _splits(rule)]
+    return Symbol[_direction(s) for s in _splits(rule)]
 end
 
 """
@@ -129,17 +129,17 @@ end
 Return a vector split values; one for each clause in `rule`.
 """
 function Base.values(rule::Rule)::Vector{Float64}
-    return [Float64(_value(split)) for split in _splits(rule)]
+    return Float64[Float64(_value(s)) for s in _splits(rule)]
 end
 
 """
-    _reverse(rule::Rule)
+    _reverse(rule::Rule) -> Rule
 
 Return a reversed version of the `rule`.
 Assumes that the rule has only one split (clause) since two splits
 cannot be reversed.
 """
-function _reverse(rule::Rule)
+function _reverse(rule::Rule)::Rule
     splits = _splits(rule)
     @assert length(splits) == 1
     split = splits[1]
@@ -147,61 +147,65 @@ function _reverse(rule::Rule)
     return Rule(path, rule.otherwise, rule.then)
 end
 
-function _left_rule(rule::Rule)
+function _left_rule(rule::Rule)::Rule
     splits = _splits(rule)
     @assert length(splits) == 1
     split = splits[1]
     return _direction(split) == :L ? rule : _reverse(rule)
 end
 
-function _rules!(leaf::Leaf, splits::Vector{Split}, rules::Vector{Rule})
-    push!(rules, rule)
-    return nothing
+function _rules!(
+        leaf::Leaf,
+        splits::Vector{Split},
+        rules::Vector{Rule}
+    )::Vector{Rule}
+    return push!(rules, rule)
 end
 
 function _then_output!(
         leaf::Leaf,
-        probs::Vector{LeafContent}
+        contents::Vector{LeafContent}
     )::Vector{LeafContent}
-    return push!(probs, _content(leaf))
+    return push!(contents, _content(leaf))
 end
 
 """
 Add the leaf contents for the training points which satisfy the
-rule to the `probs` vector.
+rule to the `contents` vector.
 """
 function _then_output!(
         node::Node,
-        probs::Vector{LeafContent}
+        contents::Vector{LeafContent}
     )::Vector{LeafContent}
-    _then_output!(node.left, probs)
-    _then_output!(node.right, probs)
-    return probs
+    _then_output!(node.left, contents)
+    _then_output!(node.right, contents)
+    return contents
 end
 
 function _else_output!(
         _,
         leaf::Leaf,
-        probs::Vector{LeafContent}
+        contents::Vector{LeafContent}
     )::Vector{LeafContent}
-    return push!(probs, _content(leaf))
+    return push!(contents, _content(leaf))
 end
 
 """
 Add the leaf contents for the training points which do not satisfy
-the rule to the `probs` vector.
+the rule to the `contents` vector.
 """
 function _else_output!(
         not_node::Union{Node,Leaf},
         node::Node,
-        probs::Vector{LeafContent}
+        contents::Vector{LeafContent}
     )::Vector{LeafContent}
     if node == not_node
-        return probs
+        return contents
+    else
+        _else_output!(not_node, node.left, contents)
+        _else_output!(not_node, node.right, contents)
+        return contents
     end
-    _else_output!(not_node, node.left, probs)
-    _else_output!(not_node, node.right, probs)
-    return probs
 end
 
 function _frequency_sort(V::AbstractVector)
@@ -210,7 +214,11 @@ function _frequency_sort(V::AbstractVector)
     return first.(sorted)
 end
 
-function Rule(root::Node, node::Union{Node, Leaf}, splits::Vector{Split})
+function Rule(
+        root::Node,
+        node::Union{Node, Leaf},
+        splits::Vector{Split}
+    )::Rule
     path = TreePath(splits)
     then_output = _then_output!(node, Vector{LeafContent}())
     then = _mean(then_output)
@@ -219,7 +227,12 @@ function Rule(root::Node, node::Union{Node, Leaf}, splits::Vector{Split})
     return Rule(path, then, otherwise)
 end
 
-function _rules!(leaf::Leaf, splits::Vector{Split}; rules::Vector{Rule}, root::Node)
+function _rules!(
+        leaf::Leaf,
+        splits::Vector{Split};
+        rules::Vector{Rule},
+        root::Node
+    )::Vector{Rule}
     rule = Rule(root, leaf, splits)
     push!(rules, rule)
 end
@@ -236,7 +249,7 @@ function _rules!(
         splits::Vector{Split}=Split[];
         rules::Vector{Rule}=Rule[],
         root::Node=node
-    )
+    )::Vector{Rule}
     if !isempty(splits)
         rule = Rule(root, node, splits)
         push!(rules, rule)
@@ -257,7 +270,7 @@ function _rules!(
     return rules
 end
 
-function _rules(forest::StableForest)
+function _rules(forest::StableForest)::Vector{Rule}
     rules = Rule[]
     for tree in forest.trees
         tree_rules = _rules!(tree)
@@ -273,10 +286,12 @@ function Base.hash(path::TreePath)
 end
 
 """
+    _flip_left(rules::Vector{Rule}) -> Vector{Rule}
+
 Return a subset of `rules` where all rules containing a single clause are flipped to the left.
 This is meant to speed up further steps such as finding linearly dependent rules.
 """
-function _flip_left(rules::Vector{Rule})
+function _flip_left(rules::Vector{Rule})::Vector{Rule}
     out = Vector{Rule}(undef, length(rules))
     for i in eachindex(rules)
         rule = rules[i]
@@ -313,7 +328,6 @@ function _combine_paths(
         rules = duplicate_paths[path]
         # Taking the mode because that might make more sense here.
         # Doesn't seem to affect accuracy so much.
-        #
         aggregate = algo isa Classification ? _median : _mean
         then = aggregate(getproperty.(rules, :then))
         otherwise = aggregate(getproperty.(rules, :otherwise))
@@ -416,7 +430,7 @@ function StableRules(
         data,
         outcome,
         model::Probabilistic
-    )
+    )::StableRules
     processed = _process_rules(rules, algo, model.max_rules)
     rules = first.(processed)
     weights = _weights(rules, classes, data, outcome, model)
@@ -429,7 +443,7 @@ function StableRules(
         data,
         outcome,
         model::Probabilistic,
-    )
+    )::StableRules
     rules = _rules(forest)
     return StableRules(rules, forest.algo, forest.classes, data, outcome, model)
 end
@@ -478,11 +492,11 @@ function Base.show(io::IO, model::StableRules)
 end
 
 """
-    satisfies(row::AbstractVector, rule::Rule)
+    satisfies(row::AbstractVector, rule::Rule) -> Bool
 
 Return whether data `row` satisfies `rule`.
 """
-function satisfies(row::AbstractVector, rule::Rule)
+function satisfies(row::AbstractVector, rule::Rule)::Bool
     constraints = map(rule.path.splits) do split
         splitpoint = split.splitpoint
         direction = split.direction
@@ -494,15 +508,15 @@ function satisfies(row::AbstractVector, rule::Rule)
     return all(constraints)
 end
 
-"Return the then or else probabilities for data `row` according to `rule`."
-function _probability(row::AbstractVector, rule::Rule)
+"Return the then or else contents for data `row` according to `rule`."
+function _content(row::AbstractVector, rule::Rule)::LeafContent
     return satisfies(row, rule) ? rule.then : rule.otherwise
 end
 
 function _predict(pair::Tuple{Rule, Float16}, row::AbstractVector)
     rule, weight = pair
-    probs = _probability(row, rule)
-    return weight .* probs
+    content = _content(row, rule)
+    return weight .* content
 end
 
 function _sum(V::AbstractVector{<:AbstractVector})
