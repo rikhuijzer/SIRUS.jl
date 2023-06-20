@@ -40,7 +40,7 @@ end
 Return the weights which are regularized to improve performance.
 
 !!! note
-    Make sure to use enough trees (thousands) for best accuracy.
+    This step requires many trees (thousands) for best accuracy.
 """
 function _weights(
         rules::Vector{Rule},

@@ -192,7 +192,7 @@ let
     @test contains(fitresult, ":x1")
 end
 
-rulesmodel = StableRulesRegressor(; n_trees=50, rng=_rng())
+rulesmodel = StableRulesRegressor(; max_depth=1, n_trees=50, rng=_rng())
 X, y = datasets["boston"]
 rulesmach = machine(rulesmodel, X, y)
 fit!(rulesmach; verbosity=0)
