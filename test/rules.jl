@@ -78,18 +78,6 @@ end
 
 @test first(S._process_rules([r5, r1, r1], algo, 10)) == Pair(r1, 2)
 
-@testset "binary show" begin
-    r = S.Rule(S.TreePath(" X[i, 1] < 5 "), [0.1, 0.9], [0.2, 0.8])
-    classes = [0, 1]
-    weights = Float16[1.0]
-    model = S.StableRules([r], algo, classes, weights)
-    pretty = repr(model)
-    @test contains(pretty, "0.9")
-    @test contains(pretty, "0.8")
-    @test contains(pretty, "showing only")
-    @test !contains(pretty, "unexpected")
-end
-
 function generate_rules()
     algo = S.Classification()
     forest = S._forest(_rng(), algo, X, y)

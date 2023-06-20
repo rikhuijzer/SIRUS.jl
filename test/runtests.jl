@@ -20,6 +20,10 @@ end
     include("rules.jl")
 end
 
+@testset "ruleshow" begin
+    include("ruleshow.jl")
+end
+
 @testset "dependent" begin
     include("dependent.jl")
 end
