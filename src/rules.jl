@@ -299,7 +299,7 @@ function _combine_paths(
         rules = duplicate_paths[path]
         # Taking the mode because that might make more sense here.
         # Doesn't seem to affect accuracy so much.
-        aggregate = algo isa Classification ? _median : _mean
+        aggregate = algo isa Classification ? _mode : _mean
         then = aggregate(getproperty.(rules, :then))
         otherwise = aggregate(getproperty.(rules, :otherwise))
         combined_rule = Rule(path, then, otherwise)

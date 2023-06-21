@@ -12,6 +12,7 @@ using MLJModelInterface: UnivariateFinite, Probabilistic, fit
 using PrecompileSignatures: @precompile_signatures
 using Random: AbstractRNG, default_rng, seed!, shuffle
 using Statistics: mean, median
+using StatsBase: mode
 using Tables: Tables, matrix
 
 export feature_names, directions, satisfies
