@@ -436,14 +436,8 @@ function satisfies(row::AbstractVector, rule::Rule)::Bool
     return all(constraints)
 end
 
-"Return the then or else contents for data `row` according to `rule`."
-function _content(row::AbstractVector, rule::Rule)::LeafContent
-    return satisfies(row, rule) ? rule.then : rule.otherwise
-end
-
-function _predict(pair::Tuple{Rule, Float16}, row::AbstractVector)
-    rule, weight = pair
-    content = _content(row, rule)
+function _predict_rule(rule::Rule, weight::Float16, row::AbstractVector)
+    content = satisfies(row, rule) ? rule.then : rule.otherwise
     return weight .* content
 end
 
@@ -455,6 +449,8 @@ end
 function _predict(model::StableRules, row::AbstractVector)
     rules_weights = _elements(model)
     isempty(rules_weights) && _isempty_error(model)
-    probs = _predict.(rules_weights, Ref(row))
-    return _sum(probs)
+    rule_predictions = map(rules_weights) do (rule, weight)
+        _predict_rule(rule, weight, row)
+    end
+    return _sum(rule_predictions)
 end

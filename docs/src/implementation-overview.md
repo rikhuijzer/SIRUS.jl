@@ -183,9 +183,12 @@ The SIRUS algorithm solves that by simplifying the model itself instead of only 
 ## Rule Selection and Post-Treatment
 
 The aim of rule selection is to remove as many rules as possible without affecting the predictive performance too much.
-This is similar to pruning in artificial neural networks, where the least important neurons are removed.
-This is done via two ways.
+This is similar to the _Tree Pruning_ that happens in Random Forests (James et al., [2021](https://doi.org/10.1007/978-1-0716-1418-1); Section 8.1).
+This is also similar to pruning in artificial neural networks, where the least important neurons are removed.
+In the SIRUS algorithm, this pruning is done via two ways.
 Firstly, by pruning the many identical rules in the different forests, which are identical thanks to tree stabilization done when building the trees.
+The tree stabilization makes the rules identical because the splitpoints are identical in the different trees.
+For example, the stabilization could result in the rules ``\text{if } x_1 < 3 \text{ then, } ... \text{ else } ...`` and ``\text{if } x_1 < 3 \text{ then, } ... \text{ else } ...`` both existing in different trees.
 Secondly, by pruning rules which are a linear combination of other rules.
 
 The first step requires setting a hyperparameter ``p_0`` in the original algorithm.
