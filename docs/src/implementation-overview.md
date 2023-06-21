@@ -215,3 +215,7 @@ Next, generate one column containing `true`s and one column for each rule in `ru
 In each column, answer whether the rule holds for some point that satisifies the conditional.
 Next, calculate the rank and see whether the rank increases when adding additional rules.
 If the rank increases, then the added rule was not linearly dependent and if the rank does not increase, then the added rule is linearly dependent with earlier added rules.
+
+PROBABLY THE OUTCOME HAS TO BE NORMALIZED BEFORE FITTING THE WEIGHTS!!!
+
+Finally, the weights are determined by 
