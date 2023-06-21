@@ -60,7 +60,7 @@ rules = S._rules(forest)
 @test hash(r1.path) == hash(r1b.path)
 
 @test S._combine_paths([r1, r1b], algo) == [r1 => 2]
-@test first(only(S._combine_paths([r1, r1c], algo))).then == [mean([0.61, 0])]
+@test first(only(S._combine_paths([r1, r1c], algo))).then == [mode([0.61, 0])]
 @test S._count_unique([1, 1, 1, 2]) == Dict(1 => 3, 2 => 1)
 
 weights = [0.395, 0.197, 0.187, 0.057, 0.054, 0.043, 0.027, 0.02, 0.01, 0.01]
