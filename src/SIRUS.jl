@@ -27,6 +27,7 @@ include("forest.jl")
 include("classification.jl")
 include("regression.jl")
 include("rules.jl")
+include("ruleshow.jl")
 include("weights.jl")
 export TreePath
 include("dependent.jl")

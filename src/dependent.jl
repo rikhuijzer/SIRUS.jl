@@ -29,16 +29,6 @@ function _satisfies(unique_features::Vector{Int}, point::Vector, rule::Rule)
 end
 
 """
-Return whether each rule in `rules` is linearly dependent on a combination of rules before it.
-This works by iteratively calculating the rank and seeing whether the rank increases.
-
-To generate points for the rank calculation, assume that we are limited to a set of rules where either `A & B`, `A & !B`, `!A & B`, `!A & !B`, `A`, `!A`, `B`, `!B` or `True`.
-This last case is not a valid rule in this algorithm, so that will not happen.
-Now, given `A` and `B`, we can create a binary matrix with a row for `A & B`, `A & !B`, `!A & B`, `!A & !B`.
-Next, generate one column containing `true`s and one column for each rule in `rules`.
-In each column, answer whether the rule holds for some point that satisifies the conditional.
-This trick of taking specifically these rows is briliant.
-Credits go to D.W. on StackExchange (https://cs.stackexchange.com/a/152819/98402).
 """
 function _feature_space(rules::AbstractVector{Rule}, A::Split, B::Split)
     l = length(rules)
@@ -65,22 +55,27 @@ Return a vector of booleans with a true for every rule in `rules` that is linear
 To find rules for this method, collect all rules containing some feature for each pair of features.
 That should be a fairly quick way to find subsets that are easy to process.
 """
-function _linearly_dependent(rules::AbstractVector{Rule}, A::Split, B::Split)
+function _linearly_dependent(
+        rules::AbstractVector{Rule},
+        A::Split,
+        B::Split
+    )::BitArray
     data = _feature_space(rules, A, B)
     l = length(rules)
-    results = BitArray(undef, l)
+    dependent = BitArray(undef, l)
     result = 1
     for i in 1:l
         new_result = rank(view(data, :, 1:i+1))
-        if new_result == result + 1
+        rank_increased = new_result == result + 1
+        if rank_increased
             result = new_result
-            results[i] = 0
+            dependent[i] = false
         else
             result = new_result
-            results[i] = 1
+            dependent[i] = true
         end
     end
-    return results
+    return dependent
 end
 
 """
@@ -163,7 +158,6 @@ end
 """
 Return the subset of `rules` which are not linearly dependent.
 This is based on a complex heuristic involving calculating the rank of the matrix, see above StackExchange link for more information.
-Note that calculating the rank is expensive, so make sure to pre-filter before calling this function.
 Also note that this method assumes that the rules are assumed to be in ordered by frequency of occurence in the trees.
 This assumption is used to filter less common rules when finding linearly dependent rules.
 """

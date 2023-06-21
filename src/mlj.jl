@@ -70,7 +70,10 @@ julia> mach = machine(StableForestClassifier(), X, y);
 - `partial_sampling`:
     Ratio of samples to use in each subset of the data.
     The default of 0.7 should be fine for most cases.
-- `n_trees`: The number of trees to use.
+- `n_trees`:
+    The number of trees to use.
+    It is advisable to use at least thousand trees to for a better rule selection, and
+    in turn better predictive performance.
 - `max_depth`:
     The depth of the tree.
     A lower depth decreases model complexity and can therefore improve accuracy when the sample size is small (reduce overfitting).

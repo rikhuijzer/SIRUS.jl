@@ -1,3 +1,5 @@
+is_ci = haskey(ENV, "CI")
+
 using Documenter:
     DocMeta,
     HTML,
@@ -30,12 +32,12 @@ function build()
 end
 
 pages = [
-    "Implementation Details" => "implementation-details.md",
+    "Implementation Overview" => "implementation-overview.md",
     "API" => "api.md"
 ]
 
-# Whether to build the notebooks; defaults to "true".
-do_build_notebooks = get(ENV, "BUILD_DOCS_NOTEBOOKS", "true") == "true"
+# Whether to build the notebooks; defaults to "false".
+do_build_notebooks = is_ci
 
 if do_build_notebooks
     build()
@@ -45,7 +47,7 @@ if do_build_notebooks
     pushfirst!(pages, "SIRUS" => "index.md")
 end
 
-prettyurls = get(ENV, "CI", nothing) == "true"
+prettyurls = is_ci
 format = HTML(; mathengine=MathJax3(), prettyurls)
 modules = [SIRUS]
 strict = do_build_notebooks

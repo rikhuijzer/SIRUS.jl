@@ -192,6 +192,14 @@ let
     @test contains(fitresult, ":x1")
 end
 
+rulesmodel = StableRulesRegressor(; max_depth=1, n_trees=50, rng=_rng())
+X, y = datasets["boston"]
+rulesmach = machine(rulesmodel, X, y)
+fit!(rulesmach; verbosity=0)
+preds = predict(rulesmach)
+@test preds isa Vector{Float64}
+# @test 0.95 < rsq(preds, y)
+
 let
     # e = _evaluate_baseline!(results, "boston")
 end

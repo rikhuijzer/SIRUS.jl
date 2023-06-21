@@ -40,17 +40,23 @@ end
 Return the weights which are regularized to improve performance.
 
 !!! note
-    Make sure to use enough trees (thousands) for best accuracy.
+    This step requires many trees (thousands) for best accuracy.
 """
 function _weights(
         rules::Vector{Rule},
+        algo::Algorithm,
         classes::AbstractVector,
         data,
         outcome::AbstractVector,
-        model
+        model::Probabilistic
     )
-    binary_feature_data = _binary_features(rules, data)
-    y = convert(Vector{Float16}, outcome)
-    coefficients = _estimate_coefficients(binary_feature_data, y, model)
-    return coefficients::Vector{Float16}
+    if algo isa Classification
+        binary_feature_data = _binary_features(rules, data)
+        y = convert(Vector{Float16}, outcome)
+        coefficients = _estimate_coefficients(binary_feature_data, y, model)
+        return coefficients::Vector{Float16}
+    else
+         fraction = 1 / length(rules)
+         return Float16[fraction for _ in 1:length(rules)]
+     end
 end

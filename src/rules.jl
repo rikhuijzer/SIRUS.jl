@@ -67,39 +67,11 @@ function TreePath(text::String)
     end
 end
 
-"""
-Return a feature name that can be shown as `[:, 1]` or `[:, :some_var]`.
-"""
-function _pretty_feature_name(feature::Int, feature_name::String255)
-    name = String(feature_name)::String
-    s = string(feature)::String
-    if s == name
-        return s
-    else
-        return string(':', name)
-    end
-end
-
-function _pretty_path(path::TreePath)
-    texts = map(path.splits) do split
-        sp = split.splitpoint
-        comparison = split.direction == :L ? '<' : '≥'
-        val = sp.value
-        feature = _pretty_feature_name(sp.feature, sp.feature_name)
-        text = "X[i, $feature] $comparison $val"
-    end
-    return join(texts, " & ")
-end
-
-function Base.show(io::IO, path::TreePath)
-    text = string("TreePath(\" ", _pretty_path(path), " \")")::String
-    print(io, text)
-end
-
 struct Rule
     path::TreePath
-    then_probs::LeafContent
-    else_probs::LeafContent
+    then::LeafContent
+    # Cannot use `else` since it is a reserved keyword
+    otherwise::LeafContent
 end
 
 _splits(rule::Rule) = rule.path.splits
@@ -110,7 +82,7 @@ _splits(rule::Rule) = rule.path.splits
 Return a vector of feature names; one for each clause in `rule`.
 """
 function feature_names(rule::Rule)::Vector{String}
-    return [String(_feature_name(split))::String for split in _splits(rule)]
+    return String[String(_feature_name(s))::String for s in _splits(rule)]
 end
 
 """
@@ -119,7 +91,7 @@ end
 Return a vector of split directions; one for each clause in `rule`.
 """
 function directions(rule::Rule)::Vector{Symbol}
-    return [_direction(split) for split in _splits(rule)]
+    return Symbol[_direction(s) for s in _splits(rule)]
 end
 
 """
@@ -128,70 +100,83 @@ end
 Return a vector split values; one for each clause in `rule`.
 """
 function Base.values(rule::Rule)::Vector{Float64}
-    return [Float64(_value(split)) for split in _splits(rule)]
+    return Float64[Float64(_value(s)) for s in _splits(rule)]
 end
 
-function _reverse(rule::Rule)
+"""
+    _reverse(rule::Rule) -> Rule
+
+Return a reversed version of the `rule`.
+Assumes that the rule has only one split (clause) since two splits
+cannot be reversed.
+"""
+function _reverse(rule::Rule)::Rule
     splits = _splits(rule)
     @assert length(splits) == 1
     split = splits[1]
     path = TreePath([_reverse(split)])
-    return Rule(path, rule.else_probs, rule.then_probs)
+    return Rule(path, rule.otherwise, rule.then)
 end
 
-function _left_rule(rule::Rule)
+function _left_rule(rule::Rule)::Rule
     splits = _splits(rule)
     @assert length(splits) == 1
     split = splits[1]
     return _direction(split) == :L ? rule : _reverse(rule)
 end
 
-function _rules!(leaf::Leaf, splits::Vector{Split}, rules::Vector{Rule})
-    path = TreePath(splits)
-    # This assumes that the opposite of a combined rules is the opposite of the last comparison.
-    then_probs = leaf.probabilities
-    else_probs = 1
-    push!(rules, rule)
-    return nothing
+function _rules!(
+        leaf::Leaf,
+        splits::Vector{Split},
+        rules::Vector{Rule}
+    )::Vector{Rule}
+    return push!(rules, rule)
 end
 
 function _then_output!(
         leaf::Leaf,
-        probs::Vector{LeafContent}
-    )
-    return push!(probs, _content(leaf))
+        contents::Vector{LeafContent}
+    )::Vector{LeafContent}
+    return push!(contents, _content(leaf))
 end
 
-"Return the output average of the training points which satisfy the rule."
+"""
+Add the leaf contents for the training points which satisfy the
+rule to the `contents` vector.
+"""
 function _then_output!(
         node::Node,
-        probs::Vector{LeafContent}
-    )
-    _then_output!(node.left, probs)
-    _then_output!(node.right, probs)
-    return probs
+        contents::Vector{LeafContent}
+    )::Vector{LeafContent}
+    _then_output!(node.left, contents)
+    _then_output!(node.right, contents)
+    return contents
 end
 
 function _else_output!(
         _,
         leaf::Leaf,
-        probs::Vector{LeafContent}
-    )
-    return push!(probs, _content(leaf))
+        contents::Vector{LeafContent}
+    )::Vector{LeafContent}
+    return push!(contents, _content(leaf))
 end
 
-"Return the output average of the training points not covered by the rule."
+"""
+Add the leaf contents for the training points which do not satisfy
+the rule to the `contents` vector.
+"""
 function _else_output!(
         not_node::Union{Node,Leaf},
         node::Node,
-        probs::Vector{LeafContent}
-    )
+        contents::Vector{LeafContent}
+    )::Vector{LeafContent}
     if node == not_node
-        return probs
+        return contents
+    else
+        _else_output!(not_node, node.left, contents)
+        _else_output!(not_node, node.right, contents)
+        return contents
     end
-    _else_output!(not_node, node.left, probs)
-    _else_output!(not_node, node.right, probs)
-    return probs
 end
 
 function _frequency_sort(V::AbstractVector)
@@ -200,16 +185,25 @@ function _frequency_sort(V::AbstractVector)
     return first.(sorted)
 end
 
-function Rule(root::Node, node::Union{Node, Leaf}, splits::Vector{Split})
+function Rule(
+        root::Node,
+        node::Union{Node, Leaf},
+        splits::Vector{Split}
+    )::Rule
     path = TreePath(splits)
     then_output = _then_output!(node, Vector{LeafContent}())
-    then_probs = _mean(then_output)
+    then = _mean(then_output)
     else_output = _else_output!(node, root, Vector{LeafContent}())
-    else_probs = _mean(else_output)
-    return Rule(path, then_probs, else_probs)
+    otherwise = _mean(else_output)
+    return Rule(path, then, otherwise)
 end
 
-function _rules!(leaf::Leaf, splits::Vector{Split}; rules::Vector{Rule}, root::Node)
+function _rules!(
+        leaf::Leaf,
+        splits::Vector{Split};
+        rules::Vector{Rule},
+        root::Node
+    )::Vector{Rule}
     rule = Rule(root, leaf, splits)
     push!(rules, rule)
 end
@@ -226,7 +220,7 @@ function _rules!(
         splits::Vector{Split}=Split[];
         rules::Vector{Rule}=Rule[],
         root::Node=node
-    )
+    )::Vector{Rule}
     if !isempty(splits)
         rule = Rule(root, node, splits)
         push!(rules, rule)
@@ -247,7 +241,7 @@ function _rules!(
     return rules
 end
 
-function _rules(forest::StableForest)
+function _rules(forest::StableForest)::Vector{Rule}
     rules = Rule[]
     for tree in forest.trees
         tree_rules = _rules!(tree)
@@ -263,10 +257,12 @@ function Base.hash(path::TreePath)
 end
 
 """
+    _flip_left(rules::Vector{Rule}) -> Vector{Rule}
+
 Return a subset of `rules` where all rules containing a single clause are flipped to the left.
 This is meant to speed up further steps such as finding linearly dependent rules.
 """
-function _flip_left(rules::Vector{Rule})
+function _flip_left(rules::Vector{Rule})::Vector{Rule}
     out = Vector{Rule}(undef, length(rules))
     for i in eachindex(rules)
         rule = rules[i]
@@ -282,13 +278,16 @@ function _flip_left(rules::Vector{Rule})
 end
 
 """
-Return a subset of `rules` where all the `rule.paths` are unique.
-This is done by averaging the `then_probs` and `else_probs`.
+Return a sorted subset of `rules` where all the `rule.paths` are unique.
+This is done by averaging the `then` and `otherwise` contents.
 
 This is not mentioned in the SIRUS paper, but probably necessary because not sorting the rules by the occurence frequency didn't really affect accuracy.
 So, that could mean that the most important rules aren't correct selected which could be caused by multiple paths having different then else probabilities.
 """
-function _combine_paths(rules::Vector{Rule})
+function _combine_paths(
+        rules::Vector{Rule},
+        algo::Algorithm
+    )::Vector{Pair{Rule, Int}}
     U = unique(getproperty.(rules, :path))
     init = zip(U, repeat([Vector{Rule}[]], length(U)))
     duplicate_paths = Dict{TreePath,Vector{Rule}}(init)
@@ -300,10 +299,11 @@ function _combine_paths(rules::Vector{Rule})
         rules = duplicate_paths[path]
         # Taking the mode because that might make more sense here.
         # Doesn't seem to affect accuracy so much.
-        then_probs = _median(getproperty.(rules, :then_probs))
-        else_probs = _median(getproperty.(rules, :else_probs))
-        combined_rule = Rule(path, then_probs, else_probs)
-        averaged_rules[i] = Pair(combined_rule, length(rules))
+        aggregate = algo isa Classification ? _median : _mean
+        then = aggregate(getproperty.(rules, :then))
+        otherwise = aggregate(getproperty.(rules, :otherwise))
+        combined_rule = Rule(path, then, otherwise)
+        averaged_rules[i] = Pair(combined_rule, length(rules)::Int)
     end
     sorted = sort(averaged_rules; by=last, rev=true)
     return sorted
@@ -322,11 +322,11 @@ function Base.:(==)(a::TreePath, b::TreePath)
 end
 
 function Base.:(==)(a::Rule, b::Rule)
-    return a.path == b.path && a.then_probs == b.then_probs && a.else_probs == b.else_probs
+    return a.path == b.path && a.then == b.then && a.otherwise == b.otherwise
 end
 
 function Base.hash(rule::Rule)
-    hash([rule.path.splits, rule.then_probs, rule.else_probs])
+    hash([rule.path.splits, rule.then, rule.otherwise])
 end
 
 function _count_unique(V::AbstractVector{T}) where T
@@ -347,9 +347,15 @@ Return a subset of `rules` of length `max_rules`.
     The problem, IMO, with p0 is that it is very difficult to decide beforehand what p0 is suitable and so it requires hyperparameter tuning.
     Instead, luckily, the linearly dependent filter is quite fast here, so passing a load of rules into that and then selecting the first `max_rules` is feasible.
 """
-function _process_rules(rules::Vector{Rule}, max_rules::Int)
+function _process_rules(
+        rules::Vector{Rule},
+        algo::Algorithm,
+        max_rules::Int
+    )::Vector{Pair{Rule, Int}}
     flipped = _flip_left(rules)
-    combined = _combine_paths(flipped)
+    combined = _combine_paths(flipped, algo)
+    # This loop is an optimization which manually takes a p0 and checks whether we end up with
+    # enough rules. If not, we loop again with more rules.
     for i in 1:3
         required_rule_guess = i^2 * 10 * max_rules
         before = first(combined, required_rule_guess)
@@ -361,6 +367,7 @@ function _process_rules(rules::Vector{Rule}, max_rules::Int)
         end
         return first(filtered, max_rules)
     end
+    @error "This should never happen"
 end
 
 struct StableRules{T} <: StableModel
@@ -394,10 +401,10 @@ function StableRules(
         data,
         outcome,
         model::Probabilistic
-    )
-    processed = _process_rules(rules, model.max_rules)
+    )::StableRules
+    processed = _process_rules(rules, algo, model.max_rules)
     rules = first.(processed)
-    weights = _weights(rules, classes, data, outcome, model)
+    weights = _weights(rules, algo, classes, data, outcome, model)
     filtered_rules, filtered_weights = _remove_zero_weights(rules, weights)
     return StableRules(filtered_rules, algo, classes, filtered_weights)
 end
@@ -407,60 +414,17 @@ function StableRules(
         data,
         outcome,
         model::Probabilistic,
-    )
+    )::StableRules
     rules = _rules(forest)
     return StableRules(rules, forest.algo, forest.classes, data, outcome, model)
 end
 
-"Return only the last result for the binary case because the other is 1 - p anyway."
-function _simplify_binary_probabilities(weight, probs::AbstractVector)
-    if length(probs) == 2
-        left = first(probs)
-        right = last(probs)
-        if !isapprox(left + right, 1.0; atol=0.01)
-            @warn """
-                The sum of the two probabilities $probs doesn't add to 1.
-                This is unexpected.
-                Please open an issue at SIRUS.jl.
-                """
-        end
-        return round(weight * right; digits=3)
-    else
-        return round.(weight .* probs; digits=3)
-    end
-end
-
-"Return a pretty formatted so that it is easy to understand."
-function _pretty_rule(weight, rule::Rule)
-    then_probs = _simplify_binary_probabilities(weight, rule.then_probs)
-    else_probs = _simplify_binary_probabilities(weight, rule.else_probs)
-    condition = _pretty_path(rule.path)
-    return "if $condition then $then_probs else $else_probs"
-end
-
-function Base.show(io::IO, model::StableRules)
-    l = length(model.rules)
-    rule_text = string("rule", l == 1 ? "" : "s")::String
-    println(io, "StableRules model with $l $rule_text:")
-    for i in 1:l
-        ending = i < l ? " +" : ""
-        rule = _pretty_rule(model.weights[i], model.rules[i])
-        println(io, " $rule", ending)
-    end
-    C = model.classes
-    lc = length(C)
-    note = lc == 2 ?
-    "\nNote: showing only the probability for class $(last(C)) since class $(first(C)) has probability 1 - p." :
-        ""
-    println(io, "and $lc classes: $C. $note")
-end
-
 """
-    satisfies(row::AbstractVector, rule::Rule)
+    satisfies(row::AbstractVector, rule::Rule) -> Bool
 
 Return whether data `row` satisfies `rule`.
 """
-function satisfies(row::AbstractVector, rule::Rule)
+function satisfies(row::AbstractVector, rule::Rule)::Bool
     constraints = map(rule.path.splits) do split
         splitpoint = split.splitpoint
         direction = split.direction
@@ -472,15 +436,9 @@ function satisfies(row::AbstractVector, rule::Rule)
     return all(constraints)
 end
 
-"Return the then or else probabilities for data `row` according to `rule`."
-function _probability(row::AbstractVector, rule::Rule)
-    return satisfies(row, rule) ? rule.then_probs : rule.else_probs
-end
-
-function _predict(pair::Tuple{Rule, Float16}, row::AbstractVector)
-    rule, weight = pair
-    probs = _probability(row, rule)
-    return weight .* probs
+function _predict_rule(rule::Rule, weight::Float16, row::AbstractVector)
+    content = satisfies(row, rule) ? rule.then : rule.otherwise
+    return weight .* content
 end
 
 function _sum(V::AbstractVector{<:AbstractVector})
@@ -489,7 +447,10 @@ function _sum(V::AbstractVector{<:AbstractVector})
 end
 
 function _predict(model::StableRules, row::AbstractVector)
-    isempty(_elements(model)) && _isempty_error(model)
-    probs = _predict.(_elements(model), Ref(row))
-    return _sum(probs)
+    rules_weights = _elements(model)
+    isempty(rules_weights) && _isempty_error(model)
+    rule_predictions = map(rules_weights) do (rule, weight)
+        _predict_rule(rule, weight, row)
+    end
+    return _sum(rule_predictions)
 end
