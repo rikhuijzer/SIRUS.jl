@@ -404,7 +404,7 @@ function StableRules(
     )::StableRules
     processed = _process_rules(rules, algo, model.max_rules)
     rules = first.(processed)
-    weights = _weights(rules, classes, data, outcome, model)
+    weights = _weights(rules, algo, classes, data, outcome, model)
     filtered_rules, filtered_weights = _remove_zero_weights(rules, weights)
     return StableRules(filtered_rules, algo, classes, filtered_weights)
 end
