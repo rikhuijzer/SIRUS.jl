@@ -218,7 +218,13 @@ el = let
 end
 
 er = let
-    hyper = (; rng=_rng(), n_trees=1_500)
+    hyper = (; rng=_rng(), n_trees=1_500, max_rules=500)
+    _evaluate!(results, "boston", StableRulesRegressor, hyper; measure=rsq)
+
+    hyper = (; rng=_rng(), n_trees=1_500, max_rules=30)
+    er = _evaluate!(results, "boston", StableRulesRegressor, hyper; measure=rsq)
+
+    hyper = (; rng=_rng(), n_trees=1_500, max_rules=10)
     er = _evaluate!(results, "boston", StableRulesRegressor, hyper; measure=rsq)
 end
 
