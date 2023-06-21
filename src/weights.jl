@@ -18,7 +18,10 @@ function _binary_features(rules::Vector{Rule}, data)
     return X
 end
 
-"Return using min-max normalization to scale the data to [0, 1]."
+"""
+Return a number within [0.0, 1.0] via min-max normalization.
+The range [0.0, 1.0] is chosen because the features are also in this range.
+"""
 function _normalize!(X::Vector{T}) where {T<:Real}
     lower = minimum(X)
     upper = maximum(X)
