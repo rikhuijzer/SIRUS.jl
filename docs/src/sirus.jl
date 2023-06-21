@@ -11,9 +11,9 @@ begin
 	ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
 
 	PKGDIR = dirname(dirname(@__DIR__))
-	PROJECT_DIR = @__DIR__
+    DOCS_DIR = dirname(@__DIR__)
 	using Pkg: Pkg
-	Pkg.activate(PROJECT_DIR)
+	Pkg.activate(DOCS_DIR)
 	Pkg.develop(; path=PKGDIR)
 end
 
@@ -26,8 +26,9 @@ begin
 	using CSV: CSV
 	using DataDeps: DataDeps, DataDep, @datadep_str
 	using DataFrames
+	using DecisionTree: DecisionTree
 	using LightGBM.MLJInterface: LGBMClassifier
-	using MLJDecisionTreeInterface: DecisionTree, DecisionTreeClassifier
+	using MLJDecisionTreeInterface: DecisionTreeClassifier
 	using MLJ: CV, MLJ, Not, PerformanceEvaluation, auc, fit!, evaluate, machine
 	using PlutoUI: TableOfContents # hide
 	using StableRNGs: StableRNG
@@ -347,7 +348,7 @@ function _plot_cutpoints(data::AbstractVector)
 	textlocs = [(c, 1.1) for c in cps]
 	for cutpoint in cps
 		annotation = string(round(cutpoint; digits=2))::String
-		text!(ax, cutpoint + 0.2, 1.08; text=annotation, textsize=13)
+		text!(ax, cutpoint + 0.2, 1.08; text=annotation, fontsize=13)
 	end
 	ylims!(ax, 0.9, 1.2)
 	hideydecorations!(ax)
@@ -446,7 +447,7 @@ let
 	scatter!(ax, nodes, fill(1, ln))
 	vlines!(ax, [nodes[index]]; color=:red)
 	annotation = string(round(nodes[index]; digits=2))
-	text!(ax, nodes[index] + 0.003, 1.08; text=annotation, textsize=11)
+	text!(ax, nodes[index] + 0.003, 1.08; text=annotation, fontsize=11)
 	hideydecorations!(ax)
 	ylims!(ax, 0.9, 1.2)
 	fig
@@ -472,7 +473,7 @@ let
 	scatter!(ax, subset, fill(1, ls))
 	vlines!(ax, [nodes[index]]; color=:red, linestyle=:dash)
 	annotation = string(round(nodes[index]; digits=2))
-	text!(ax, nodes[index] + 0.003, 1.08; text=annotation, textsize=11)
+	text!(ax, nodes[index] + 0.003, 1.08; text=annotation, fontsize=11)
 	hideydecorations!(ax)
 	ylims!(ax, 0.9, 1.2)
 	fig
@@ -601,7 +602,7 @@ end;
 
 # ╔═╡ 39fd9deb-2a27-4c28-ae06-2a36c4c54427
 let
-	tree = tree_evaluations.fitted_params_per_fold[1].tree
+	tree = tree_evaluations.fitted_params_per_fold[1].raw_tree
 	_io2text() do io
 		DecisionTree.print_tree(io, tree; feature_names=names(data))
 	end
@@ -609,7 +610,7 @@ end
 
 # ╔═╡ 368b6fc1-1cf1-47b5-a746-62c5786dc143
 let
-	tree = tree_evaluations.fitted_params_per_fold[2].tree
+	tree = tree_evaluations.fitted_params_per_fold[2].raw_tree
 	_io2text() do io
 		DecisionTree.print_tree(io, tree; feature_names=names(data))
 	end
