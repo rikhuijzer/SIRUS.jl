@@ -304,8 +304,7 @@ function _process_rules(
     for i in 1:3
         required_rule_guess = i^2 * 10 * max_rules
         before = first(rules, required_rule_guess)
-        before_rules = before # first.(before)::Vector{Rule}
-        filtered = _filter_linearly_dependent(before_rules)
+        filtered = _filter_linearly_dependent(before)
         too_few = length(filtered) < max_rules
         more_possible = required_rule_guess < length(rules)
         if i < 3 && too_few && more_possible
