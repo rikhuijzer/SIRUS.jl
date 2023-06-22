@@ -351,7 +351,7 @@ function _process_rules(
         rules::Vector{Rule},
         algo::Algorithm,
         max_rules::Int
-    )::Vector{Pair{Rule, Int}}
+    )::Vector{Rule}
     flipped = _flip_left(rules)
     combined = _combine_paths(flipped, algo)
     # This loop is an optimization which manually takes a p0 and checks whether we end up with
@@ -359,7 +359,8 @@ function _process_rules(
     for i in 1:3
         required_rule_guess = i^2 * 10 * max_rules
         before = first(combined, required_rule_guess)
-        filtered = _filter_linearly_dependent(before)
+        before_rules = first.(before)::Vector{Rule}
+        filtered = _filter_linearly_dependent(before_rules)
         too_few = length(filtered) < max_rules
         more_possible = required_rule_guess < length(rules)
         if i < 3 && too_few && more_possible
@@ -403,9 +404,8 @@ function StableRules(
         model::Probabilistic
     )::StableRules
     processed = _process_rules(rules, algo, model.max_rules)
-    rules = first.(processed)
-    weights = _weights(rules, algo, classes, data, outcome, model)
-    filtered_rules, filtered_weights = _remove_zero_weights(rules, weights)
+    weights = _weights(processed, algo, classes, data, outcome, model)
+    filtered_rules, filtered_weights = _remove_zero_weights(processed, weights)
     return StableRules(filtered_rules, algo, classes, filtered_weights)
 end
 

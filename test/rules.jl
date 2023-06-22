@@ -76,7 +76,7 @@ let
     @test S._predict(model, [33000, 0, 61]) == [mean([0.408, 0.56])]
 end
 
-@test first(S._process_rules([r5, r1, r1], algo, 10)) == Pair(r1, 2)
+@test first(S._process_rules([r5, r1, r1], algo, 10)) == r1
 
 function generate_rules()
     algo = S.Classification()
