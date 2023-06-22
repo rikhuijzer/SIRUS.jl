@@ -118,15 +118,15 @@ _left_split(s::Split) = _direction(s) == :L ? s : _reverse(s)
 Return whether some rule is either related to `A` or `B` or both.
 Here, it is very important to get rid of rules which are about the same feature but different thresholds.
 Otherwise, rules will be wrongly classified as linearly dependent in the next step.
-
-Assumes that both `_direction(A)` and `_direction(B)` are `:L`.
 """
-function _related_rule(rule::Rule, A::Split, B::Split)
+function _related_rule(rule::Rule, A::Split, B::Split)::Bool
+    @assert _direction(A) == :L
+    @assert _direction(B) == :L
     splits = _splits(rule)
     fa = _feature(A)
     fb = _feature(B)
     if length(splits) == 1
-        split = splits[1]
+        split = only(splits)
         left_split = _left_split(split)
         return left_split == A || left_split == B
     else
@@ -136,7 +136,7 @@ function _related_rule(rule::Rule, A::Split, B::Split)
     end
 end
 
-function _linearly_dependent(rules::Vector{Rule})
+function _linearly_dependent(rules::Vector{Rule})::BitVector
     S = _unique_left_splits(rules)
     P = _left_triangular_product(S)
     # A `BitVector(undef, length(rules))` here will cause randomness.
@@ -161,9 +161,9 @@ This is based on a complex heuristic involving calculating the rank of the matri
 Also note that this method assumes that the rules are assumed to be in ordered by frequency of occurence in the trees.
 This assumption is used to filter less common rules when finding linearly dependent rules.
 """
-function _filter_linearly_dependent(rules::Vector{Pair{Rule,Int}})
-    dependent = _linearly_dependent(first.(rules))
-    out = Pair{Rule,Int}[]
+function _filter_linearly_dependent(rules::Vector{Rule})::Vector{Rule}
+    dependent = _linearly_dependent(rules)
+    out = Rule[]
     for i in 1:length(dependent)
         if !dependent[i]
             push!(out, rules[i])

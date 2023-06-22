@@ -23,7 +23,10 @@ datasets = Dict{String,Tuple}(
             y = df.survival
             (X, y)
         end,
-        "boston" => boston()
+        "boston" => boston(),
+        "make_regression" => let
+             make_regression(200, 3; noise=0.0, sparse=0.0, outliers=0.0)
+         end
     )
 
 function _score(e::PerformanceEvaluation)
@@ -200,8 +203,23 @@ preds = predict(rulesmach)
 @test preds isa Vector{Float64}
 # @test 0.95 < rsq(preds, y)
 
-let
-    # e = _evaluate_baseline!(results, "boston")
+emr = let
+    hyper = (;)
+    measure = rsq
+    _evaluate!(results, "make_regression", LGBMRegressor, hyper; measure)
+    _evaluate!(results, "make_regression", LinearRegressor, hyper; measure)
+
+    hyper = (; rng=_rng(), n_trees=1_500)
+    _evaluate!(results, "make_regression", StableForestRegressor, hyper; measure)
+
+    hyper = (; rng=_rng(), n_trees=1_500, max_rules=100)
+    _evaluate!(results, "make_regression", StableRulesRegressor, hyper; measure)
+
+    hyper = (; rng=_rng(), n_trees=1_500, max_rules=30)
+    _evaluate!(results, "make_regression", StableRulesRegressor, hyper; measure)
+
+    hyper = (; rng=_rng(), n_trees=1_500, max_rules=10)
+    _evaluate!(results, "make_regression", StableRulesRegressor, hyper; measure)
 end
 
 el = let
@@ -209,6 +227,7 @@ el = let
     measure = rsq
     elgbm = _evaluate!(results, "boston", LGBMRegressor, hyper; measure)
     el = _evaluate!(results, "boston", LinearRegressor, hyper; measure)
+    hyper = (; rng=_rng(), n_trees=1_500)
     ef = _evaluate!(results, "boston", StableForestRegressor, hyper; measure)
 
     @test 0.65 < _score(el)
@@ -218,7 +237,13 @@ el = let
 end
 
 er = let
-    hyper = (; rng=_rng(), n_trees=1_500)
+    hyper = (; rng=_rng(), n_trees=1_500, max_rules=100)
+    _evaluate!(results, "boston", StableRulesRegressor, hyper; measure=rsq)
+
+    hyper = (; rng=_rng(), n_trees=1_500, max_rules=30)
+    er = _evaluate!(results, "boston", StableRulesRegressor, hyper; measure=rsq)
+
+    hyper = (; rng=_rng(), n_trees=1_500, max_rules=10)
     er = _evaluate!(results, "boston", StableRulesRegressor, hyper; measure=rsq)
 end
 

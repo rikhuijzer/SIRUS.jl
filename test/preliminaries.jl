@@ -33,6 +33,7 @@ using MLJBase:
 using MLJDecisionTreeInterface: DecisionTree
 using MLJLinearModels: LinearRegressor
 using LightGBM.MLJInterface: LGBMClassifier, LGBMRegressor
+using Random: shuffle
 using StableRNGs: StableRNG
 using SIRUS
 using Statistics: mean, var

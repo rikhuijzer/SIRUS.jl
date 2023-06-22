@@ -5,7 +5,7 @@ In essence, this overview is a combination of three things:
 
 1. Section 8.1.1 Regression Trees and 8.1.2 Classification trees (James et al., [2021](https://doi.org/10.1007/978-1-0716-1418-1)).
 2. The SIRUS algorithm description (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html)).
-3. Some implementation details, as obtained by trial and error and by correspondence with Clement Bénard, which were missing from aforementioned sources.
+3. Some implementation details, as obtained by trial and error and by correspondence with Clément Bénard, which were missing from aforementioned sources.
 
 ## Fit Stabilized Trees
 
@@ -198,7 +198,31 @@ In other words, this step is ignored because it seems like a premature optimizat
 
 The second step is more important and more involved.
 As said before, the second step is to remove the least important linear combinations of other rules.
-An example of this is shown in the original paper (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html), Table 3 (the second) in Section 4 _Post-treatment Illustration_ of the Supplementary PDF).
+An example of this is shown in the original paper (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html), Table 3 (the second) in Section 4 _Post-treatment Illustration_ of the Supplementary PDF), which we repeat here:
+
+Rule Number | If Clause | Then | Else | Remove | Reason
+--- | --- | --- | --- | --- | ---
+1 | ``x_1 < 32000`` | 61 | 408 | |
+2 | ``x_1 \geq 32000 `` | 408 | 61 | yes | rule 1
+3 | ``x_2 < 8000`` | 62 | 386 | |
+4 | ``x_2 \geq 8000`` | 386 | 62 | yes | rule 3
+5 | ``x_3 < 64`` | 56 | 334 | |
+6 | ``x_3 \geq 64`` | 334 | 56 | yes | rule 5
+7 | ``x_1 \geq 32000 \: \& \: x_3 \geq 64`` | 517 | 67 | |
+8 | ``x_4 < 8`` | 50 | 312 | |
+9 | ``x_4 \geq 8`` | 312 | 50 | yes | rule 8
+10 | ``x_5 < 50`` | 335 | 58 | |
+11 | ``x_5 \geq 50`` | 58 | 335 | yes | rule 10
+12 | ``x_1 \geq 32000 \: \& \: x_3 < 64`` | 192 | 102 | yes | rule 1, 5, 7
+13 | ``x_1 < 32000 \: \& \: x_4 \geq 8`` | 157 | 100 |
+14 | ``x_1 \geq 32000 \: \& \: x_4 < 12`` | 554 | 73 |
+15 | ``x_1 \geq 32000 \: \& \: x_4 < 12`` | 252 | 96 | yes | rule 1 and 14
+16 | ``x_2 \geq 8000 \: \& \: x_4 \geq 12`` | 586 | 76 |
+17 | ``x_2 \geq 8000 \: \& \: x_4 < 12`` | 236 | 94 | yes | rule 3 and 16
+
+Compared to the example from the Supplementary PDF, the features are renamed such that 2 = MMAX, 2 = MMIN, 3 = CACH, 4 = CHMIN, and 5 = MYCT and one sign was flipped in rule 14 after email correspondence with Clément.
+From this set of rules, the algorithm should remove rule 2, 4, 6, 9, 11, 12, 15, and 17.
+This is because rule 2, 4, 6, 9, and 11 are the reverse of an earlier rule and because 12, 15, and 17 are linearly dependent.
 
 The implementation for this can be done by converting the training data to a feature space in which each rule becomes a binary feature indicating whether the data point satisfies the constraint or not.
 This is quite computationally intensive since there is a lot of duplication in the data and it doesn't guarantee that all cases of duplication will be found since some may not be in the training set.
@@ -215,3 +239,5 @@ Next, generate one column containing `true`s and one column for each rule in `ru
 In each column, answer whether the rule holds for some point that satisifies the conditional.
 Next, calculate the rank and see whether the rank increases when adding additional rules.
 If the rank increases, then the added rule was not linearly dependent and if the rank does not increase, then the added rule is linearly dependent with earlier added rules.
+
+Finally, the weights are determined by ...

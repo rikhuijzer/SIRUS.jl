@@ -11,4 +11,9 @@ binary_feature_data = Float16[1 0; 0 0; 1 1]
 y = Float16[0.5, 0, 1]
 
 model = StableRulesClassifier()
-@test S._estimate_coefficients(binary_feature_data, y, model) isa Vector
+algo = S.Classification()
+@test S._estimate_coefficients(algo, binary_feature_data, y, model) isa Vector
+
+@test SIRUS._normalize!([1.0, 2.0, 3.0]) == [0.0, 0.5, 1.0]
+
+nothing

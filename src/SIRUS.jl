@@ -7,9 +7,9 @@ using AbstractTrees: AbstractTrees, print_tree
 using CategoricalArrays: CategoricalValue, unwrap
 using InlineStrings: String255
 using LinearAlgebra: rank
+using MLJBase: mode
 using MLJLinearModels: MLJLinearModels, RidgeRegressor, glr
 using MLJModelInterface: UnivariateFinite, Probabilistic, fit
-using PrecompileSignatures: @precompile_signatures
 using Random: AbstractRNG, default_rng, seed!, shuffle
 using Statistics: mean, median
 using Tables: Tables, matrix
@@ -41,7 +41,5 @@ const StableForestRegressor = MLJImplementation.StableForestRegressor
 export StableForestRegressor
 const StableRulesRegressor = MLJImplementation.StableRulesRegressor
 export StableRulesRegressor
-
-@precompile_signatures(SIRUS)
 
 end # module
