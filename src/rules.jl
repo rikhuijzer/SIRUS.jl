@@ -256,59 +256,6 @@ function Base.hash(path::TreePath)
     return hash(path.splits)
 end
 
-"""
-    _flip_left(rules::Vector{Rule}) -> Vector{Rule}
-
-Return a subset of `rules` where all rules containing a single clause are flipped to the left.
-This is meant to speed up further steps such as finding linearly dependent rules.
-"""
-function _flip_left(rules::Vector{Rule})::Vector{Rule}
-    out = Vector{Rule}(undef, length(rules))
-    for i in eachindex(rules)
-        rule = rules[i]
-        splits = _splits(rule)
-        if length(splits) == 1
-            left_rule = _left_rule(rule)
-            out[i] = left_rule
-        else
-            out[i] = rule
-        end
-    end
-    return out
-end
-
-"""
-Return a sorted subset of `rules` where all the `rule.paths` are unique.
-This is done by averaging the `then` and `otherwise` contents.
-
-This is not mentioned in the SIRUS paper, but probably necessary because not sorting the rules by the occurence frequency didn't really affect accuracy.
-So, that could mean that the most important rules aren't correct selected which could be caused by multiple paths having different then else probabilities.
-"""
-function _combine_paths(
-        rules::Vector{Rule},
-        algo::Algorithm
-    )::Vector{Pair{Rule, Int}}
-    U = unique(getproperty.(rules, :path))
-    init = zip(U, repeat([Vector{Rule}[]], length(U)))
-    duplicate_paths = Dict{TreePath,Vector{Rule}}(init)
-    for rule in rules
-        push!(duplicate_paths[rule.path], rule)
-    end
-    averaged_rules = Vector{Pair{Rule,Int}}(undef, length(duplicate_paths))
-    for (i, path) in enumerate(keys(duplicate_paths))
-        rules = duplicate_paths[path]
-        # Taking the mode because that might make more sense here.
-        # Doesn't seem to affect accuracy so much.
-        aggregate = algo isa Classification ? _mode : _mean
-        then = aggregate(getproperty.(rules, :then))
-        otherwise = aggregate(getproperty.(rules, :otherwise))
-        combined_rule = Rule(path, then, otherwise)
-        averaged_rules[i] = Pair(combined_rule, length(rules)::Int)
-    end
-    sorted = sort(averaged_rules; by=last, rev=true)
-    return sorted
-end
-
 function Base.:(==)(a::SplitPoint, b::SplitPoint)
     return a.feature == b.feature && a.value ≈ b.value
 end
@@ -340,7 +287,7 @@ function _count_unique(V::AbstractVector{T}) where T
 end
 
 """
-Return a subset of `rules` of length `max_rules`.
+Return a linearly independent subset of `rules` of length ≤ `max_rules`.
 
 !!! note
     This doesn't use p0 like is done in the paper.
@@ -352,13 +299,11 @@ function _process_rules(
         algo::Algorithm,
         max_rules::Int
     )::Vector{Rule}
-    flipped = _flip_left(rules)
-    combined = flipped # _combine_paths(flipped, algo)
     # This loop is an optimization which manually takes a p0 and checks whether we end up with
     # enough rules. If not, we loop again with more rules.
     for i in 1:3
         required_rule_guess = i^2 * 10 * max_rules
-        before = first(combined, required_rule_guess)
+        before = first(rules, required_rule_guess)
         before_rules = before # first.(before)::Vector{Rule}
         filtered = _filter_linearly_dependent(before_rules)
         too_few = length(filtered) < max_rules
