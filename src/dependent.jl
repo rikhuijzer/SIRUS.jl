@@ -118,15 +118,15 @@ _left_split(s::Split) = _direction(s) == :L ? s : _reverse(s)
 Return whether some rule is either related to `A` or `B` or both.
 Here, it is very important to get rid of rules which are about the same feature but different thresholds.
 Otherwise, rules will be wrongly classified as linearly dependent in the next step.
-
-Assumes that both `_direction(A)` and `_direction(B)` are `:L`.
 """
-function _related_rule(rule::Rule, A::Split, B::Split)
+function _related_rule(rule::Rule, A::Split, B::Split)::Bool
+    @assert _direction(A) == :L
+    @assert _direction(B) == :L
     splits = _splits(rule)
     fa = _feature(A)
     fb = _feature(B)
     if length(splits) == 1
-        split = splits[1]
+        split = only(splits)
         left_split = _left_split(split)
         return left_split == A || left_split == B
     else

@@ -353,13 +353,13 @@ function _process_rules(
         max_rules::Int
     )::Vector{Rule}
     flipped = _flip_left(rules)
-    combined = _combine_paths(flipped, algo)
+    combined = flipped # _combine_paths(flipped, algo)
     # This loop is an optimization which manually takes a p0 and checks whether we end up with
     # enough rules. If not, we loop again with more rules.
     for i in 1:3
         required_rule_guess = i^2 * 10 * max_rules
         before = first(combined, required_rule_guess)
-        before_rules = first.(before)::Vector{Rule}
+        before_rules = before # first.(before)::Vector{Rule}
         filtered = _filter_linearly_dependent(before_rules)
         too_few = length(filtered) < max_rules
         more_possible = required_rule_guess < length(rules)
