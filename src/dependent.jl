@@ -52,6 +52,13 @@ function _feature_space(rules::AbstractVector{Rule}, A::Split, B::Split)
     return data
 end
 
+# Temporary function to work for finding linearly dependent rules
+function _tmpldep(rules::AbstractVector{Rule})
+    data = _feature_space(rules, A, B)
+    l = length(rules)
+    
+end
+
 """
 Return a vector of booleans with a true for every rule in `rules` that is linearly dependent on a combination of the previous rules.
 To find rules for this method, collect all rules containing some feature for each pair of features.
@@ -97,10 +104,12 @@ function _unique_left_splits(rules::Vector{Rule})
     return splits
 end
 
-"Return the product of `V` and `V` for all pairs (v_i, v_j) where i < j."
+"""
+Return all unique pairs of elements in `V`.
+More formally, return all pairs (v_i, v_j) where i < j.
+"""
 function _left_triangular_product(V::Vector{T}) where {T}
     l = length(V)
-    nl = l - 1
     product = Tuple{T,T}[]
     for i in 1:l
         left = V[i]
@@ -138,6 +147,8 @@ function _related_rule(rule::Rule, A::Split, B::Split)::Bool
     end
 end
 
+# function _related_rules(rule::Rule, 
+
 function _linearly_dependent(rules::Vector{Rule})::BitVector
     S = _unique_left_splits(rules)
     P = _left_triangular_product(S)
@@ -146,6 +157,7 @@ function _linearly_dependent(rules::Vector{Rule})::BitVector
     for (A, B) in P
         indexes = filter(i -> _related_rule(rules[i], A, B), 1:length(rules))
         subset = view(rules, indexes)
+        # TODO return the index of the dependent rule with the lowest gap here.
         dependent_subset = _linearly_dependent(subset, A, B)
         # Only allow setting true to avoid setting things to false.
         for i in 1:length(dependent_subset)
