@@ -208,9 +208,11 @@ emr = let
     measure = rsq
     _evaluate!(results, "make_regression", LGBMRegressor, hyper; measure)
     _evaluate!(results, "make_regression", LinearRegressor, hyper; measure)
+
+    hyper = (; rng=_rng(), n_trees=1_500)
     _evaluate!(results, "make_regression", StableForestRegressor, hyper; measure)
 
-    hyper = (; rng=_rng(), n_trees=1_500, max_rules=500)
+    hyper = (; rng=_rng(), n_trees=1_500, max_rules=100)
     _evaluate!(results, "make_regression", StableRulesRegressor, hyper; measure)
 
     hyper = (; rng=_rng(), n_trees=1_500, max_rules=30)
@@ -225,6 +227,7 @@ el = let
     measure = rsq
     elgbm = _evaluate!(results, "boston", LGBMRegressor, hyper; measure)
     el = _evaluate!(results, "boston", LinearRegressor, hyper; measure)
+    hyper = (; rng=_rng(), n_trees=1_500)
     ef = _evaluate!(results, "boston", StableForestRegressor, hyper; measure)
 
     @test 0.65 < _score(el)
@@ -234,7 +237,7 @@ el = let
 end
 
 er = let
-    hyper = (; rng=_rng(), n_trees=1_500, max_rules=500)
+    hyper = (; rng=_rng(), n_trees=1_500, max_rules=100)
     _evaluate!(results, "boston", StableRulesRegressor, hyper; measure=rsq)
 
     hyper = (; rng=_rng(), n_trees=1_500, max_rules=30)
