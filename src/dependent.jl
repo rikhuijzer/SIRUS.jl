@@ -28,8 +28,10 @@ function _satisfies(unique_features::Vector{Int}, point::Vector, rule::Rule)
     return true
 end
 
-"""
-"""
+function _reduced_echelon_form(A::AbstractMatrix)
+    rref(A)
+end
+
 function _feature_space(rules::AbstractVector{Rule}, A::Split, B::Split)
     l = length(rules)
     data = BitArray(undef, 4, l + 1)
