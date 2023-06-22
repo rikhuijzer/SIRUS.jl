@@ -94,10 +94,18 @@ end
 @test S._linearly_dependent([r3, r16, r17]) == Bool[0, 0, 1]
 @test S._linearly_dependent([r3, r16, r13]) == Bool[0, 0, 0]
 
+@testset "r12 is removed because r7 has a wider gap" begin
+    @test S._filter_linearly_dependent([r1, r5, r7, r12]) == [r1, r5, r7]
+    @test S._filter_linearly_dependent([r1, r5, r12, r7]) == [r1, r5, r7]
+end
+
 let
     allrules = [r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17]
     expected = [r1, r3, r5, r7, r8, r10, r13, r14, r16]
     @test S._filter_linearly_dependent(allrules) == expected
+
+    # allrules = shuffle(_rng(), allrules)
+    # @test Set(S._filter_linearly_dependent(allrules)) == Set(expected)
 
     algo = SIRUS.Classification()
     @test length(S._process_rules(allrules, algo, 9)) == 9

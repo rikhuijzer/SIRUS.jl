@@ -5,7 +5,7 @@ In essence, this overview is a combination of three things:
 
 1. Section 8.1.1 Regression Trees and 8.1.2 Classification trees (James et al., [2021](https://doi.org/10.1007/978-1-0716-1418-1)).
 2. The SIRUS algorithm description (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html)).
-3. Some implementation details, as obtained by trial and error and by correspondence with Clement Bénard, which were missing from aforementioned sources.
+3. Some implementation details, as obtained by trial and error and by correspondence with Clément Bénard, which were missing from aforementioned sources.
 
 ## Fit Stabilized Trees
 

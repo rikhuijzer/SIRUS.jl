@@ -61,7 +61,7 @@ function _estimate_coefficients(
     # Code is based on the definition for MMI.fit inside MLJLinearModels.jl.
     # Using Ridge because it allows an analytical solver.
     # Also, ElasticNet shows no clear benefit in accuracy.
-    # According to Clement, avoid Lasso since it would introduce additional
+    # According to Clément, avoid Lasso since it would introduce additional
     # sparsity and then instability in the rule selection.
     model = RidgeRegressor(; fit_intercept=false, model.lambda)
     coefs = MLJLinearModels.fit(glr(model), binary_feature_data, outcome)::Vector
