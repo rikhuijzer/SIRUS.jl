@@ -198,7 +198,7 @@ In other words, this step is ignored because it seems like a premature optimizat
 
 The second step is more important and more involved.
 As said before, the second step is to remove the least important linear combinations of other rules.
-An example of this is shown in the original paper (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html), Table 3 (the second) in Section 4 _Post-treatment Illustration_ of the Supplementary PDF), which we repeat here:
+An example of this is shown in the original paper (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html), Table 3 (the second) in Section 4 _Post-treatment Illustration_ of the Supplementary PDF), which is repeated here:
 
 Rule Number | If Clause | Then | Else | Remove | Reason
 --- | --- | --- | --- | --- | ---
@@ -223,6 +223,8 @@ Rule Number | If Clause | Then | Else | Remove | Reason
 Compared to the example from the Supplementary PDF, the features are renamed such that 2 = MMAX, 2 = MMIN, 3 = CACH, 4 = CHMIN, and 5 = MYCT and one sign was flipped in rule 14 after email correspondence with Clément.
 From this set of rules, the algorithm should remove rule 2, 4, 6, 9, 11, 12, 15, and 17.
 This is because rule 2, 4, 6, 9, and 11 are the reverse of an earlier rule and because 12, 15, and 17 are linearly dependent.
+For the complex linearly dependent duplicates, remove the rule with the widest gap in the outputs.
+In the example above, rule 7 has a wider gap than rule 12.
 
 The implementation for this can be done by converting the training data to a feature space in which each rule becomes a binary feature indicating whether the data point satisfies the constraint or not.
 This is quite computationally intensive since there is a lot of duplication in the data and it doesn't guarantee that all cases of duplication will be found since some may not be in the training set.
