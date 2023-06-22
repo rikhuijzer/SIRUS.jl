@@ -1,7 +1,7 @@
 <h1 align="center">SIRUS.jl</h1>
 
 <h3 align="center">
-  Explainable machine learning via rule extraction
+    Interpretable Machine Learning via Rule Extraction
 </h3>
 
 <p align="center">
