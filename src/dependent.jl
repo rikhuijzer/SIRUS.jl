@@ -60,34 +60,6 @@ function _tmpldep(rules::AbstractVector{Rule})
 end
 
 """
-Return a vector of booleans with a true for every rule in `rules` that is linearly dependent on a combination of the previous rules.
-To find rules for this method, collect all rules containing some feature for each pair of features.
-That should be a fairly quick way to find subsets that are easy to process.
-"""
-function _linearly_dependent(
-        rules::AbstractVector{Rule},
-        A::Split,
-        B::Split
-    )::BitArray
-    data = _feature_space(rules, A, B)
-    l = length(rules)
-    dependent = BitArray(undef, l)
-    result = 1
-    for i in 1:l
-        new_result = rank(view(data, :, 1:i+1))
-        rank_increased = new_result == result + 1
-        if rank_increased
-            result = new_result
-            dependent[i] = false
-        else
-            result = new_result
-            dependent[i] = true
-        end
-    end
-    return dependent
-end
-
-"""
 Return a vector of unique left splits for `rules`.
 These splits are required to form `[A, B]` pairs in the next step.
 """
@@ -149,6 +121,34 @@ end
 
 # function _related_rules(rule::Rule, 
 
+"""
+Return a vector of booleans with a true for every rule in `rules` that is linearly dependent on a combination of the previous rules.
+To find rules for this method, collect all rules containing some feature for each pair of features.
+That should be a fairly quick way to find subsets that are easy to process.
+"""
+function _linearly_dependent(
+        rules::AbstractVector{Rule},
+        A::Split,
+        B::Split
+    )::BitArray
+    data = _feature_space(rules, A, B)
+    l = length(rules)
+    dependent = BitArray(undef, l)
+    result = 1
+    for i in 1:l
+        new_result = rank(view(data, :, 1:i+1))
+        rank_increased = new_result == result + 1
+        if rank_increased
+            result = new_result
+            dependent[i] = false
+        else
+            result = new_result
+            dependent[i] = true
+        end
+    end
+    return dependent
+end
+
 function _linearly_dependent(rules::Vector{Rule})::BitVector
     S = _unique_left_splits(rules)
     P = _left_triangular_product(S)
@@ -159,7 +159,10 @@ function _linearly_dependent(rules::Vector{Rule})::BitVector
         subset = view(rules, indexes)
         # TODO return the index of the dependent rule with the lowest gap here.
         dependent_subset = _linearly_dependent(subset, A, B)
-        # Only allow setting true to avoid setting things to false.
+        # TODO assert that gap is always correct
+        # TODO maybe just create a large feature matrix on the whole ruleset and increase it step by step.
+        # Once the rank doesn't increase, pause and figure out which rules are linearly dependent.
+        # Then note which rule can be removed and filter those in the next step.
         for i in 1:length(dependent_subset)
             if dependent_subset[i]
                 dependent[indexes[i]] = true
@@ -167,6 +170,10 @@ function _linearly_dependent(rules::Vector{Rule})::BitVector
         end
     end
     return dependent
+end
+
+function _filter_linearly_dependent2(rules::Vector{Rule})
+    
 end
 
 """

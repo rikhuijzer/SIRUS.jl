@@ -28,6 +28,10 @@ end
     include("dependent.jl")
 end
 
+@testset "tmp" begin
+    include("tmp.jl")
+end
+
 @testset "weights" begin
     include("weights.jl")
 end

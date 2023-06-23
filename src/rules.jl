@@ -20,12 +20,15 @@ _direction(split::Split) = split.direction
 _reverse(split::Split) = Split(split.splitpoint, split.direction == :L ? :R : :L)
 
 """
-    TreePath
+    TreePath(splits::Vector{Split}) -> TreePath
+    TreePath(text::String) -> TreePath
 
 A path of length `d` is defined as consisting of `d` splits.
 See SIRUS paper page 434.
 Typically, `d ≤ 2`.
 Note that a path can also be a path to a node; not necessarily a leaf.
+Another term for a treepath is a _condition_.
+For example, `X[i, 1] < 3 & X[i, 2] < 1` is a condition.
 """
 struct TreePath
     splits::Vector{Split}

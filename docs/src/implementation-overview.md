@@ -224,14 +224,14 @@ Compared to the example from the Supplementary PDF, the features are renamed suc
 From this set of rules, the algorithm should remove rule 2, 4, 6, 9, 11, 12, 15, and 17.
 This is because rule 2, 4, 6, 9, and 11 are the reverse of an earlier rule and because 12, 15, and 17 are linearly dependent.
 For the complex linearly dependent duplicates, remove the rule with the widest gap in the outputs.
-In the example above, rule 7 has a wider gap than rule 12.
+In the example above, rule 7 has a wider gap than rule 12, which implies that it has a larger CART-splitting criterion and a higher occurrence frequency.
 
 The implementation for this can be done by converting the training data to a feature space in which each rule becomes a binary feature indicating whether the data point satisfies the constraint or not.
 This is quite computationally intensive since there is a lot of duplication in the data and it doesn't guarantee that all cases of duplication will be found since some may not be in the training set.
 Luckily, D.W. on StackExchange (https://cs.stackexchange.com/questions/152803) has provided a solution, which I will repeat here.
 The idea is to remove each rule ``r`` when it is linearly dependent on the preceding rules.
 
-To do this, observe that a rule of the form ``A \: \& \: B`` can only depend on rules that use some combination of ``A``, ``!A``, ``B``, and/or ``!B``.
+To do this, observe that a rule of the form ``A`` can only depend on rules ``A`` or ``!A``, and ``A \: \& \: B`` can only depend on rules that use some combination of ``A``, ``!A``, ``B``, and/or ``!B``.
 This works by iteratively calculating the rank and seeing whether the rank increases.
 
 We can assume that we are limited to a set of rules where either `A & B`, `A & !B`, `!A & B`, `!A & !B`, `A`, `!A`, `B`, `!B` or `True`.
