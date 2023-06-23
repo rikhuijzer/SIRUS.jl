@@ -105,18 +105,21 @@ And also adding a column for each conjunction (&).
 For example, for the rule set
 
 Rule 1: A < 3, then ...
-Rule 2: A ≥ 3, then ...
-Rule 3: A < 3 & B < 2, then ...
+Rule 2: B < 2, then ...
+Rule 3: A ≥ 3 & B ≥ 2, then ...
+Rule 4: A ≥ 3 & B < 2, then ...
 
-returns the following matrix (without the headers):
+returns the following matrix (with the headers as the `conditions` vector):
 
-| ---- | A < 3 | A ≥ 3 | B < 2 | B ≥ 2 | A < 3 & B < 2 |
-| ---- | ----- | ----- | ----- | ----- | ------------- |
-|  R1  |   1   |   0   |   0   |   0   |       1       |
-|  R2  |   0   |   1   |   0   |   0   |       0       |
-|  R3  |   0   |   0   |   0   |   0   |       1       |
+| ---- | A < 3 | A ≥ 3 | B < 2 | B ≥ 2 | A ≥ 3 & B ≥ 2 | A ≥ 3 & B < 2 |
+| ---- | ----- | ----- | ----- | ----- | ------------- | ------------- |
+|  R1  |   1   |   0   |   0   |   0   |       0       |       0       |
+|  R2  |   0   |   0   |   1   |   0   |       0       |       0       |
+|  R3  |   0   |   1   |   0   |   1   |       1       |       0       |
+|  R4  |   0   |   1   |   1   |   0   |       0       |       1       |
 
-Note that the unknown cases (A < 3 => B < 2?) are set to 0.
+In other words, the matrix represents which syntetic datapoints (constraints in columns)
+are implied by each rule (rows).
 Gaussian elimination needs to know only implications (=>).
 """
 function _tmp_rule_space(rules::Vector{Rule})
@@ -126,12 +129,45 @@ function _tmp_rule_space(rules::Vector{Rule})
         rule = rules[i]
         for j in eachindex(conditions)
             condition = conditions[j]
-            space[i, j] = _tmp_implies(condition, rule.path)
+            space[i, j] = _tmp_implies(rule.path, condition)
         end
     end
     return (conditions, space)
 end
 
+"Return the indexes of the linearly dependent rules."
 function _tmp_linearly_dependent(rules::Vector{Rule})
-    
+    @assert _tmp_gap_size(rules[end]) ≤ _tmp_gap_size(rules[1])
+    conditions, space = _tmp_rule_space(rules)
+    n_rules = size(space, 1)
+    n_conditions = size(space, 2)
+    @assert n_conditions == length(conditions)
+    reduced_form = _reduced_echelon_form(space)
+    findall(x -> all(iszero, x), eachrow(reduced_form))
+end
+
+function _tmp_gap_size(rule::Rule)
+    @assert length(rule.then) == length(rule.otherwise)
+    gap_size_per_class = abs.(rule.then .- rule.otherwise)
+    sum(gap_size_per_class)
+end
+
+"""
+Return the vector rule sorted by decreasing gap size.
+This allows the linearly dependent filter to remove the rules further down the list since
+they have a smaller gap.
+"""
+function _tmp_sort_by_gap_size(rules::Vector{Rule})
+    return sort(rules; by=_tmp_gap_size, rev=true)
+end
+
+"""
+Return `rules` but with linearly dependent rules removed.
+Note that this does not remove the rules with one constraint which are identical to a
+previous rule with the constraint sign reversed.
+"""
+function _tmp_filter_linearly_dependent(rules::Vector{Rule})::Vector{Rule}
+    sorted = _tmp_sort_by_gap_size(rules)
+    indexes = _tmp_linearly_dependent(sorted)
+    return sorted[setdiff(1:length(sorted), indexes)]
 end

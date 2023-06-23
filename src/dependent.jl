@@ -157,11 +157,7 @@ function _linearly_dependent(rules::Vector{Rule})::BitVector
     for (A, B) in P
         indexes = filter(i -> _related_rule(rules[i], A, B), 1:length(rules))
         subset = view(rules, indexes)
-        # TODO return the index of the dependent rule with the lowest gap here.
         dependent_subset = _linearly_dependent(subset, A, B)
-        # TODO assert that gap is always correct
-        # TODO maybe just create a large feature matrix on the whole ruleset and increase it step by step.
-        # Once the rank doesn't increase, pause and figure out which rules are linearly dependent.
         # Then note which rule can be removed and filter those in the next step.
         for i in 1:length(dependent_subset)
             if dependent_subset[i]
@@ -172,17 +168,12 @@ function _linearly_dependent(rules::Vector{Rule})::BitVector
     return dependent
 end
 
-function _filter_linearly_dependent2(rules::Vector{Rule})
-    
-end
-
 """
 Return the subset of `rules` which are not linearly dependent.
 This is based on a complex heuristic involving calculating the rank of the matrix, see above StackExchange link for more information.
-Also note that this method assumes that the rules are assumed to be in ordered by frequency of occurence in the trees.
-This assumption is used to filter less common rules when finding linearly dependent rules.
 """
 function _filter_linearly_dependent(rules::Vector{Rule})::Vector{Rule}
+    sorted = _tmp_sort_by_gap_size(rules)
     dependent = _linearly_dependent(rules)
     out = Rule[]
     for i in 1:length(dependent)
