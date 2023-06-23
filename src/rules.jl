@@ -1,8 +1,11 @@
 """
-    Split
+    Split(splitpoint::SplitPoint, direction::Symbol) -> Split
+    Split(feature::Int, name::String, splitval::Float32, direction::Symbol) -> Split
 
 A split in a tree.
 Each rule is based on one or more splits.
+
+Data can be accessed via `_feature`, `_value`, `_feature_name`, `_direction`, and `_reverse`.
 """
 struct Split
     splitpoint::SplitPoint
@@ -29,10 +32,14 @@ Typically, `d ≤ 2`.
 Note that a path can also be a path to a node; not necessarily a leaf.
 Another term for a treepath is a _condition_.
 For example, `X[i, 1] < 3 & X[i, 2] < 1` is a condition.
+
+Data can be accessed via `_splits`.
 """
 struct TreePath
     splits::Vector{Split}
 end
+
+_splits(path::TreePath) = path.splits
 
 function TreePath(text::String)
     try
