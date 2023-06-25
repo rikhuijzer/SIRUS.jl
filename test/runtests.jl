@@ -1,5 +1,11 @@
 include("preliminaries.jl")
 
+@testset "doctests" begin
+    # warn suppresses warnings when keys already exist.
+    DocMeta.setdocmeta!(SIRUS, :DocTestSetup, :(using SIRUS); recursive=true, warn=false)
+    doctest(SIRUS)
+end
+
 @testset "empiricalquantiles" begin
     include("empiricalquantiles.jl")
 end
@@ -26,10 +32,6 @@ end
 
 @testset "dependent" begin
     include("dependent.jl")
-end
-
-@testset "tmp" begin
-    include("tmp.jl")
 end
 
 @testset "weights" begin

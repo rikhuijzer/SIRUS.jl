@@ -72,6 +72,33 @@ and one zeroes column:
 
 In other words, the matrix represents which rules are implied by each syntetic datapoint
 (conditions in the rows).
+Next, this can be used to determine which rules are linearly dependent by checking whether
+the rank increases when adding rules.
+
+# Example
+
+```jldoctest
+julia> A = SIRUS.Split(SIRUS.SplitPoint(1, 32000.0f0, "1"), :L);
+
+julia> B = SIRUS.Split(SIRUS.SplitPoint(3, 64.0f0, "3"), :L);
+
+julia> r1 = SIRUS.Rule(TreePath(" X[i, 1] < 32000.0 "), [0.061], [0.408]);
+
+julia> r5 = SIRUS.Rule(TreePath(" X[i, 3] < 64.0 "), [0.056], [0.334]);
+
+julia> r7 = SIRUS.Rule(TreePath(" X[i, 1] ≥ 32000.0 & X[i, 3] ≥ 64.0 "), [0.517], [0.067]);
+
+julia> r12 = SIRUS.Rule(TreePath(" X[i, 1] ≥ 32000.0 & X[i, 3] < 64.0 "), [0.192], [0.102]);
+
+julia> SIRUS.rank(SIRUS._feature_space([r1, r5], A, B))
+3
+
+julia> SIRUS.rank(SIRUS._feature_space([r1, r5, r7], A, B))
+4
+
+julia> SIRUS.rank(SIRUS._feature_space([r1, r5, r7, r12], A, B))
+4
+```
 """
 function _feature_space(rules::AbstractVector{Rule}, A::Split, B::Split)::BitMatrix
     l = length(rules)
@@ -209,13 +236,28 @@ function _linearly_dependent(rules::Vector{Rule})::BitVector
     return dependent
 end
 
+function _gap_size(rule::Rule)
+    @assert length(rule.then) == length(rule.otherwise)
+    gap_size_per_class = abs.(rule.then .- rule.otherwise)
+    sum(gap_size_per_class)
+end
+
+"""
+Return the vector rule sorted by decreasing gap size.
+This allows the linearly dependent filter to remove the rules further down the list since
+they have a smaller gap.
+"""
+function _sort_by_gap_size(rules::Vector{Rule})
+    return sort(rules; by=_gap_size, rev=true)
+end
+
 """
 Return the subset of `rules` which are not linearly dependent.
 This is based on a complex heuristic involving calculating the rank of the matrix, see above StackExchange link for more information.
 """
 function _filter_linearly_dependent(rules::Vector{Rule})::Vector{Rule}
-    sorted = _tmp_sort_by_gap_size(rules)
-    dependent = _linearly_dependent(rules)
+    sorted = _sort_by_gap_size(rules)
+    dependent = _linearly_dependent(sorted)
     out = Rule[]
     for i in 1:length(dependent)
         if !dependent[i]
