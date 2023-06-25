@@ -32,9 +32,50 @@ function _reduced_echelon_form(A::AbstractMatrix)
     rref(A)
 end
 
-function _feature_space(rules::AbstractVector{Rule}, A::Split, B::Split)
+"""
+Return a binary space which can be used to determine whether rules are linearly dependent.
+
+For example, for the conditions
+
+- u:  ≥ 3 & B ≥ 2 (U & V)
+- v: A ≥ 3 & B < 2 (U & !V)
+- w: A < 3 & B ≥ 2 (!U & V)
+- x: A < 3 & B < 2 (!U & !V)
+
+For example, given the following rules:
+
+Rule 1: x[i, 1] < 32000
+Rule 5: x[i, 3] < 64
+Rule 7: x[i, 1] ≥ 32000 & x[i, 3] < 64
+Rule 12: x[i, 1] < 32000 & x[i, 3] < 64
+
+and the following clauses
+
+A: x[i, 1] < 32000
+B: x[i, 3] < 64
+
+This function generates a matrix containing a row for
+
+- A && B (x[i, 1] < 32000 & x[i, 3] < 64)
+- A && !B (x[i, 1] < 32000 & x[i, 3] ≥ 64)
+- !A && B (x[i, 1] ≥ 32000 & x[i, 3] < 64)
+- !A && !B (x[i, 1] ≥ 32000 & x[i, 3] ≥ 64)
+
+and one zeroes column:
+
+| Condition  | Ones | R1 | R5 | R7 | R12 |
+| ---------- | ---- | -- | -- | -- | --- |
+|   A &&  B  |   1  |  1 |  1 |  0 |  0  |
+|   A && !B  |   1  |  1 |  0 |  0 |  0  |
+|  !A &&  B  |   1  |  0 |  1 |  0 |  1  |
+|  !A && !B  |   1  |  0 |  0 |  1 |  0  |
+
+In other words, the matrix represents which rules are implied by each syntetic datapoint
+(conditions in the rows).
+"""
+function _feature_space(rules::AbstractVector{Rule}, A::Split, B::Split)::BitMatrix
     l = length(rules)
-    data = BitArray(undef, 4, l + 1)
+    data = BitMatrix(undef, 4, l + 1)
     for i in 1:4
         data[i, 1] = 1
     end

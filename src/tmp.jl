@@ -40,8 +40,8 @@ Return the following conditions:
 """
 function _tmp_conditions(rules::Vector{Rule})
     single_conditions = _tmp_single_conditions(rules)
-    double_conditions = _tmp_double_conditions(rules)
-    return union(single_conditions, double_conditions)
+    # double_conditions = _tmp_double_conditions(rules)
+    # return union(single_conditions, double_conditions)
 end
 
 "Return whether `clause1` implies `clause2`."
@@ -96,32 +96,6 @@ function _tmp_implies(condition1::TreePath, condition2::TreePath)::Bool
     return all(covered)
 end
 
-"""
-Return a binary matrix containing the rules (rows) and the clauses from the rules (columns).
-
-This is done by adding a column for each separate clause including `A` if the set contains `A & B`.
-And also adding a column for each conjunction (&).
-
-For example, for the rule set
-
-Rule 1: A < 3, then ...
-Rule 2: B < 2, then ...
-Rule 3: A ≥ 3 & B ≥ 2, then ...
-Rule 4: A ≥ 3 & B < 2, then ...
-
-returns the following matrix (with the headers as the `conditions` vector):
-
-| ---- | A < 3 | A ≥ 3 | B < 2 | B ≥ 2 | A ≥ 3 & B ≥ 2 | A ≥ 3 & B < 2 |
-| ---- | ----- | ----- | ----- | ----- | ------------- | ------------- |
-|  R1  |   1   |   0   |   0   |   0   |       0       |       0       |
-|  R2  |   0   |   0   |   1   |   0   |       0       |       0       |
-|  R3  |   0   |   1   |   0   |   1   |       1       |       0       |
-|  R4  |   0   |   1   |   1   |   0   |       0       |       1       |
-
-In other words, the matrix represents which syntetic datapoints (constraints in columns)
-are implied by each rule (rows).
-Gaussian elimination needs to know only implications (=>).
-"""
 function _tmp_rule_space(rules::Vector{Rule})
     conditions = collect(_tmp_conditions(rules))::Vector{TreePath}
     space = falses(length(rules), length(conditions))
