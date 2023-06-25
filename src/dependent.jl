@@ -261,7 +261,7 @@ function _filter_linearly_dependent(rules::Vector{Rule})::Vector{Rule}
     out = Rule[]
     for i in 1:length(dependent)
         if !dependent[i]
-            push!(out, rules[i])
+            push!(out, sorted[i])
         end
     end
     return out
