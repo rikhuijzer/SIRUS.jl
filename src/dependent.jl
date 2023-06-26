@@ -225,41 +225,41 @@ function _sort_by_gap_size(rules::Vector{Rule})
     return sort(rules; by=_gap_size, rev=true)
 end
 
-function _linearly_dependent(rules::Vector{Rule})::BitVector
-    S = _unique_left_splits(rules)
-    pairs = _left_triangular_product(S)
-    # A `BitVector(undef, length(rules))` here will cause randomness.
-    dependent = falses(length(rules))
-    for (A, B) in pairs
-        indexes = filter(i -> _related_rule(rules[i], A, B), 1:length(rules))
-        subset = view(rules, indexes)
-        dependent_subset = _linearly_dependent(subset, A, B)
-        # Then note which rule can be removed and filter those in the next step.
-        for i in 1:length(dependent_subset)
-            if dependent_subset[i]
-                dependent[indexes[i]] = true
-            else
-                # Also setting to false to avoid removing rules twice because they were
-                # considered in different subsets of the data.
-                dependent[indexes[i]] = false
-            end
-        end
-    end
-    return dependent
+function _sort_indexes_by_gap_size!(indexes::AbstractVector{Int}, rules::Vector{Rule})
+    sort!(indexes; by=i -> _gap_size(rules[i]), rev=true)
 end
 
 """
-Return the subset of `rules` which are not linearly dependent.
-This is based on a complex heuristic involving calculating the rank of the matrix, see above StackExchange link for more information.
+Return a vector of rules that are not linearly dependent on any other rule.
+
+This is done by considering each pair of splits.
+For example, considers the pair `x[i, 1] < 32000` (A) and `x[i, 3] < 64` (B).
+Then, for each rule, it checks whether the rule is linearly dependent on the pair.
+As soon as a dependent rule is found, it is removed from the set to avoid considering it again.
+The problem if we don't do this is that we might remove some rule `r` that causes another
+rule to be linearly dependent in one related set, but then is removed in another related set.
 """
 function _filter_linearly_dependent(rules::Vector{Rule})::Vector{Rule}
-    sorted = _sort_by_gap_size(rules)
-    dependent = _linearly_dependent(sorted)
-    out = Rule[]
-    for i in 1:length(dependent)
-        if !dependent[i]
-            push!(out, sorted[i])
+    S = _unique_left_splits(rules)
+    pairs = _left_triangular_product(S)
+    out = copy(rules)
+    for (A, B) in pairs
+        indexes = filter(i -> _related_rule(out[i], A, B), 1:length(out))
+        _sort_indexes_by_gap_size!(indexes, out)
+        subset = view(out, indexes)
+        dependent_subset = _linearly_dependent(subset, A, B)
+        @assert length(indexes) == length(subset)
+        @assert length(dependent_subset) == length(subset)
+        removals = map(1:length(dependent_subset)) do i
+            linearly_dependent = dependent_subset[i]
+            if linearly_dependent
+                rule_index = indexes[i]
+            else
+                nothing
+            end
         end
+        filter!(!isnothing, removals)
+        deleteat!(out, sort(removals))
     end
     return out
 end

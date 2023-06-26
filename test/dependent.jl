@@ -86,16 +86,15 @@ let
     @test !(S._related_rule(r1, _Split(1, 31000.0f0, :L), B))
 end
 
-@test S._linearly_dependent([r1, r3]) == Bool[0, 0]
-@test S._linearly_dependent([r1, r5, r7, r12]) == Bool[0, 0, 0, 1]
+@test S._filter_linearly_dependent([r1, r3]) == [r1, r3]
 
 @testset "r12 is removed because r7 has a wider gap" begin
     @test Set(S._filter_linearly_dependent([r1, r5, r7, r12])) == Set([r1, r5, r7])
     @test Set(S._filter_linearly_dependent([r1, r5, r12, r7])) == Set([r1, r5, r7])
 end
 
-@test S._linearly_dependent([r3, r16, r17]) == Bool[0, 0, 1]
-@test S._linearly_dependent([r3, r16, r13]) == Bool[0, 0, 0]
+@test Set(S._filter_linearly_dependent([r3, r16, r17])) == Set([r3, r16])
+@test Set(S._filter_linearly_dependent([r3, r16, r13])) == Set([r3, r13, r16])
 
 let
     allrules = [r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17]
