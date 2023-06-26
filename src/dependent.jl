@@ -1,35 +1,34 @@
-_unique_features(split::Split) = split.splitpoint.feature
-_unique_features(rule::Rule) = unique(_unique_features.(rule.path.splits))
-_unique_features(rules::Vector{Rule}) = unique(reduce(vcat, _unique_features.(rules)))
-
-"""
-Return a point which satisifies `A` and `B`.
-This assumes that `A` and `B` contain the features in the same order as `_unique_features`.
-Basically, this point generation is a way to encode the information such that the constraints can be consistently answered.
-"""
-function _point(A::Split, B::Split)
-    va = _value(A)
-    a = _direction(A) == :L ? va - 1 : va
-    vb = _value(B)
-    b = _direction(B) == :L ? vb - 1 : vb
-    return [a, b]
-end
-
-"Return whether `point` satisifies `rule`."
-function _satisfies(unique_features::Vector{Int}, point::Vector, rule::Rule)
-    for split in _splits(rule)
-        index = findfirst(==(_feature(split)), unique_features)
-        value = point[index]
-        threshold = _value(split)
-        if !(_direction(split) == :L ? value < threshold : value ≥ threshold)
-            return false
+"Return whether `clause1` implies `clause2`."
+function _implies(clause1::Split, clause2::Split)::Bool
+    if _feature(clause1) == _feature(clause2)
+        if _direction(clause1) == :L
+            if _direction(clause2) == :L
+                return _value(clause1) ≤ _value(clause2)
+            else
+                return false
+            end
+        else
+            if _direction(clause2) == :R
+                return _value(clause1) ≥ _value(clause2)
+            else
+                return false
+            end
         end
+    else
+        return false
     end
-    return true
 end
 
-function _reduced_echelon_form(A::AbstractMatrix)
-    rref(A)
+"""
+Return whether `condition` implies `rule`, that is, whether `A & B => rule`.
+"""
+function _implies(condition::Tuple{Split, Split}, rule::Rule)
+    A, B = condition
+    splits = _splits(rule)
+    implied = map(splits) do split
+        _implies(A, split) || _implies(B, split)
+    end
+    return all(implied)
 end
 
 """
@@ -107,15 +106,14 @@ function _feature_space(rules::AbstractVector{Rule}, A::Split, B::Split)::BitMat
         data[i, 1] = 1
     end
 
-    F = [_feature(A), _feature(B)]
     nA = _reverse(A)
     nB = _reverse(B)
     for col in 2:l+1
         rule = rules[col-1]
-        data[1, col] = _satisfies(F, _point(A, B), rule)
-        data[2, col] = _satisfies(F, _point(A, nB), rule)
-        data[3, col] = _satisfies(F, _point(nA, B), rule)
-        data[4, col] = _satisfies(F, _point(nA, nB), rule)
+        data[1, col] = _implies((A, B), rule)
+        data[2, col] = _implies((A, nB), rule)
+        data[3, col] = _implies((nA, B), rule)
+        data[4, col] = _implies((nA, nB), rule)
     end
     return data
 end
@@ -149,8 +147,8 @@ function _left_triangular_product(V::Vector{T}) where {T}
     for i in 1:l
         left = V[i]
         for j in 1:l
-            right = V[j]
             if i < j
+                right = V[j]
                 push!(product, (left, right))
             end
         end
@@ -169,16 +167,16 @@ function _related_rule(rule::Rule, A::Split, B::Split)::Bool
     @assert _direction(A) == :L
     @assert _direction(B) == :L
     splits = _splits(rule)
-    fa = _feature(A)
-    fb = _feature(B)
     if length(splits) == 1
         split = only(splits)
         left_split = _left_split(split)
         return left_split == A || left_split == B
-    else
+    elseif length(splits) == 2
         l1 = _left_split(splits[1])
         l2 = _left_split(splits[2])
         return (l1 == A && l2 == B) || (l1 == B && l2 == A)
+    else
+        @error "Rule $rule has more than two splits; this is not supported."
     end
 end
 
@@ -195,15 +193,13 @@ function _linearly_dependent(
     data = _feature_space(rules, A, B)
     l = length(rules)
     dependent = BitArray(undef, l)
-    result = 1
+    current_rank = rank(data[:, 1:1])
     for i in 1:l
-        new_result = rank(view(data, :, 1:i+1))
-        rank_increased = new_result == result + 1
-        if rank_increased
-            result = new_result
+        new_rank = rank(view(data, :, 1:i+1))
+        if current_rank < new_rank
             dependent[i] = false
+            current_rank = new_rank
         else
-            result = new_result
             dependent[i] = true
         end
     end
@@ -236,18 +232,23 @@ This is done by considering each pair of splits.
 For example, considers the pair `x[i, 1] < 32000` (A) and `x[i, 3] < 64` (B).
 Then, for each rule, it checks whether the rule is linearly dependent on the pair.
 As soon as a dependent rule is found, it is removed from the set to avoid considering it again.
-The problem if we don't do this is that we might remove some rule `r` that causes another
-rule to be linearly dependent in one related set, but then is removed in another related set.
+If we don't do this, we might remove some rule `r` that causes another rule to be linearly
+dependent in one related set, but then is removed in another related set.
 """
 function _filter_linearly_dependent(rules::Vector{Rule})::Vector{Rule}
-    S = _unique_left_splits(rules)
+    sorted = _sort_by_gap_size(rules)
+    S = _unique_left_splits(sorted)
     pairs = _left_triangular_product(S)
-    out = copy(rules)
+    out = copy(sorted)
     for (A, B) in pairs
         indexes = filter(i -> _related_rule(out[i], A, B), 1:length(out))
+        length(indexes) < 2 && continue
         _sort_indexes_by_gap_size!(indexes, out)
         subset = view(out, indexes)
         dependent_subset = _linearly_dependent(subset, A, B)
+        # @show A, B
+        # @show subset
+        # @show dependent_subset
         @assert length(indexes) == length(subset)
         @assert length(dependent_subset) == length(subset)
         removals = map(1:length(dependent_subset)) do i

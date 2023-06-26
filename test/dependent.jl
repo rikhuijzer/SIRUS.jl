@@ -26,9 +26,6 @@ r15 = S.Rule(S.TreePath(" X[i, 1] ≥ 32000 & X[i, 4] < 12 "), [0.192], [0.096])
 r16 = S.Rule(S.TreePath(" X[i, 2] ≥ 8000 & X[i, 4] ≥ 12 "), [0.586], [0.076])
 r17 = S.Rule(S.TreePath(" X[i, 2] ≥ 8000 & X[i, 4] < 12 "), [0.236], [0.094])
 
-@test S._unique_features([r1, r7, r12]) == [1, 3]
-@test sort(S._unique_features([r1, r7, r12, r17])) == [1, 2, 3, 4]
-
 @test S._filter_linearly_dependent([r1, r2, r3, r5]) == [r1, r3, r5]
 
 let
@@ -96,10 +93,24 @@ end
 @test Set(S._filter_linearly_dependent([r3, r16, r17])) == Set([r3, r16])
 @test Set(S._filter_linearly_dependent([r3, r16, r13])) == Set([r3, r13, r16])
 
+@testset "single rule is not linearly dependent" begin
+    A = S.Split(S.SplitPoint(4, 12.0f0, "4"), :L)
+    B = S.Split(S.SplitPoint(4, 8.0f0, "4"), :L)
+    rule = SIRUS.Rule(TreePath(" X[i, 4] < 8.0 "), [0.05], [0.312])
+    @test S._feature_space([rule], A, B)[:, 2] == Bool[1, 0, 1, 0]
+    @test S._linearly_dependent([rule], A, B) == Bool[0]
+end
+
 let
     allrules = [r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17]
     expected = [r1, r3, r5, r7, r8, r10, r13, r14, r16]
     actual = S._filter_linearly_dependent(allrules)
+    for r in expected
+        @show r in actual, r
+    end
+    for r in actual
+        @show r in expected, r
+    end
     @test Set(S._filter_linearly_dependent(allrules)) == Set(expected)
 
     allrules = shuffle(_rng(), allrules)
@@ -110,18 +121,6 @@ let
     @test length(S._process_rules(allrules, algo, 10)) == 9
     @test length(S._process_rules([r1], algo, 9)) == 1
     @test length(S._process_rules(repeat(allrules, 200), algo, 9)) == 9
-end
-
-@testset "reduced echelon form calculation" begin
-    # Double checking a calculation from
-    # https://faculty.math.illinois.edu/~nirobles/files225/lecture02.pdf.
-    M = [0 3 -6 6 4 -5;
-         3 -7 8 -5 8 9;
-         3 -9 12 -9 6 15]
-    expected = [1 0 -2 3 0 -24;
-                0 1 -2 2 0 -7;
-                0 0 0 0 1 4]
-    @test S._reduced_echelon_form(M) ≈ expected atol=0.01
 end
 
 nothing
