@@ -36,7 +36,7 @@ Return a binary space which can be used to determine whether rules are linearly 
 
 For example, for the conditions
 
-- u:  ≥ 3 & B ≥ 2 (U & V)
+- u: A ≥ 3 & B ≥ 2 (U & V)
 - v: A ≥ 3 & B < 2 (U & !V)
 - w: A < 3 & B ≥ 2 (!U & V)
 - x: A < 3 & B < 2 (!U & !V)
@@ -118,6 +118,8 @@ function _feature_space(rules::AbstractVector{Rule}, A::Split, B::Split)::BitMat
     return data
 end
 
+_left_split(s::Split) = _direction(s) == :L ? s : _reverse(s)
+
 """
 Return a vector of unique left splits for `rules`.
 These splits will be used to form `(A, B)` pairs and generate the feature space.
@@ -128,7 +130,7 @@ function _unique_left_splits(rules::Vector{Rule})
     splits = Split[]
     for rule in rules
         for split in _splits(rule)
-            left_split = _direction(split) == :L ? split : _reverse(split)
+            left_split = _left_split(split)
             if !(left_split in splits)
                 push!(splits, left_split)
             end
@@ -155,8 +157,6 @@ function _left_triangular_product(V::Vector{T}) where {T}
     end
     return product
 end
-
-_left_split(s::Split) = _direction(s) == :L ? s : _reverse(s)
 
 """
 Return whether some rule is either related to `A` or `B` or both.
@@ -242,7 +242,6 @@ function _filter_linearly_dependent(rules::Vector{Rule})::Vector{Rule}
     out = copy(sorted)
     for (A, B) in pairs
         indexes = filter(i -> _related_rule(out[i], A, B), 1:length(out))
-        length(indexes) < 2 && continue
         _sort_indexes_by_gap_size!(indexes, out)
         subset = view(out, indexes)
         dependent_subset = _linearly_dependent(subset, A, B)
