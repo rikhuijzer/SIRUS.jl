@@ -226,6 +226,24 @@ function _sort_indexes_by_gap_size!(indexes::AbstractVector{Int}, rules::Vector{
 end
 
 """
+Simplify the rules that contain a single split by only retaining rules that point left and
+removing duplicates.
+"""
+function _simplify_single_rules(rules::Vector{Rule})::Vector{Rule}
+    out = Set{Rule}()
+    for rule in rules
+        splits = _splits(rule)
+        if length(splits) == 1
+            left_rule = _left_rule(rule)
+            push!(out, left_rule)
+        else
+            push!(out, rule)
+        end
+    end
+    return collect(out)
+end
+
+"""
 Return a vector of rules that are not linearly dependent on any other rule.
 
 This is done by considering each pair of splits.
@@ -236,7 +254,8 @@ If we don't do this, we might remove some rule `r` that causes another rule to b
 dependent in one related set, but then is removed in another related set.
 """
 function _filter_linearly_dependent(rules::Vector{Rule})::Vector{Rule}
-    sorted = _sort_by_gap_size(rules)
+    filtered = _simplify_single_rules(rules)
+    sorted = _sort_by_gap_size(filtered)
     S = _unique_left_splits(sorted)
     pairs = _left_triangular_product(S)
     out = copy(sorted)
@@ -262,4 +281,21 @@ function _filter_linearly_dependent(rules::Vector{Rule})::Vector{Rule}
         deleteat!(out, sort(removals))
     end
     return out
+end
+
+"""
+Return a linearly independent subset of `rules` of length ≤ `max_rules`.
+
+!!! note
+    This doesn't use p0 like is done in the paper.
+    The problem, IMO, with p0 is that it is very difficult to decide beforehand what p0 is suitable and so it requires hyperparameter tuning.
+    Instead, luckily, the linearly dependent filter is quite fast here, so passing a load of rules into that and then selecting the first `max_rules` is feasible.
+"""
+function _process_rules(
+        rules::Vector{Rule},
+        algo::Algorithm,
+        max_rules::Int
+    )::Vector{Rule}
+    filtered = _filter_linearly_dependent(rules)
+    return first(filtered, max_rules)
 end
