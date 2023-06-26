@@ -100,24 +100,17 @@ end
 let
     allrules = [r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17]
     expected = [r1, r3, r5, r7, r8, r10, r13, r14, r16]
-    # why does the algo remove r8 now?
     actual = S._filter_linearly_dependent(allrules)
-    for ac in actual
-        @show ac in expected, ac
-    end
-    for ex in expected
-        @show ex in actual, ex
-    end
     @test Set(S._filter_linearly_dependent(allrules)) == Set(expected)
 
-    # allrules = shuffle(_rng(), allrules)
+    allrules = shuffle(_rng(), allrules)
     # @test Set(S._filter_linearly_dependent(allrules)) == Set(expected)
 
     algo = SIRUS.Classification()
-    # @test length(S._process_rules(allrules, algo, 9)) == 9
-    # @test length(S._process_rules(allrules, algo, 10)) == 9
+    @test length(S._process_rules(allrules, algo, 9)) == 9
+    @test length(S._process_rules(allrules, algo, 10)) == 9
     @test length(S._process_rules([r1], algo, 9)) == 1
-    # @test length(S._process_rules(repeat(allrules, 200), algo, 9)) == 9
+    @test length(S._process_rules(repeat(allrules, 200), algo, 9)) == 9
 end
 
 @testset "reduced echelon form calculation" begin

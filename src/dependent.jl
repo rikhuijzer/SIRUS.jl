@@ -120,16 +120,11 @@ function _feature_space(rules::AbstractVector{Rule}, A::Split, B::Split)::BitMat
     return data
 end
 
-# Temporary function to work for finding linearly dependent rules
-function _tmpldep(rules::AbstractVector{Rule})
-    data = _feature_space(rules, A, B)
-    l = length(rules)
-    
-end
-
 """
 Return a vector of unique left splits for `rules`.
-These splits are required to form `[A, B]` pairs in the next step.
+These splits will be used to form `(A, B)` pairs and generate the feature space.
+For example, the pair `x[i, 1] < 32000` (A) and `x[i, 3] < 64` (B) will be used to generate
+the feature space `A & B`, `A & !B`, `!A & B`, `!A & !B`.
 """
 function _unique_left_splits(rules::Vector{Rule})
     splits = Split[]
@@ -187,8 +182,6 @@ function _related_rule(rule::Rule, A::Split, B::Split)::Bool
     end
 end
 
-# function _related_rules(rule::Rule, 
-
 """
 Return a vector of booleans with a true for every rule in `rules` that is linearly dependent on a combination of the previous rules.
 To find rules for this method, collect all rules containing some feature for each pair of features.
@@ -217,25 +210,6 @@ function _linearly_dependent(
     return dependent
 end
 
-function _linearly_dependent(rules::Vector{Rule})::BitVector
-    S = _unique_left_splits(rules)
-    P = _left_triangular_product(S)
-    # A `BitVector(undef, length(rules))` here will cause randomness.
-    dependent = falses(length(rules))
-    for (A, B) in P
-        indexes = filter(i -> _related_rule(rules[i], A, B), 1:length(rules))
-        subset = view(rules, indexes)
-        dependent_subset = _linearly_dependent(subset, A, B)
-        # Then note which rule can be removed and filter those in the next step.
-        for i in 1:length(dependent_subset)
-            if dependent_subset[i]
-                dependent[indexes[i]] = true
-            end
-        end
-    end
-    return dependent
-end
-
 function _gap_size(rule::Rule)
     @assert length(rule.then) == length(rule.otherwise)
     gap_size_per_class = abs.(rule.then .- rule.otherwise)
@@ -249,6 +223,29 @@ they have a smaller gap.
 """
 function _sort_by_gap_size(rules::Vector{Rule})
     return sort(rules; by=_gap_size, rev=true)
+end
+
+function _linearly_dependent(rules::Vector{Rule})::BitVector
+    S = _unique_left_splits(rules)
+    pairs = _left_triangular_product(S)
+    # A `BitVector(undef, length(rules))` here will cause randomness.
+    dependent = falses(length(rules))
+    for (A, B) in pairs
+        indexes = filter(i -> _related_rule(rules[i], A, B), 1:length(rules))
+        subset = view(rules, indexes)
+        dependent_subset = _linearly_dependent(subset, A, B)
+        # Then note which rule can be removed and filter those in the next step.
+        for i in 1:length(dependent_subset)
+            if dependent_subset[i]
+                dependent[indexes[i]] = true
+            else
+                # Also setting to false to avoid removing rules twice because they were
+                # considered in different subsets of the data.
+                dependent[indexes[i]] = false
+            end
+        end
+    end
+    return dependent
 end
 
 """
