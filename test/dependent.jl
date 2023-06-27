@@ -129,9 +129,7 @@ actual = S._filter_linearly_dependent(allrules)
 @test Set(actual) == Set(expected)
 
 allrules = shuffle(_rng(), allrules)
-canonical = _canonicalize(allrules)
-actual = S._filter_linearly_dependent(canonical)
-expected = _canonicalize(expected)
+actual = S._process_rules(allrules, 100)
 @test Set(actual) == Set(expected)
 
 @test length(S._filter_linearly_dependent(allrules)) == 9
