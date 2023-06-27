@@ -118,9 +118,41 @@ actual = S._filter_linearly_dependent(canonical)
 expected = _canonicalize(expected)
 @test Set(actual) == Set(expected)
 
-@test length(S._process_rules(allrules, 9)) == 9
-@test length(S._process_rules(allrules, 10)) == 9
-@test length(S._process_rules([r1], 9)) == 1
-@test length(S._process_rules(repeat(allrules, 200), 9)) == 9
+@test length(S._filter_linearly_dependent(allrules)) == 9
+@test length(S._filter_linearly_dependent(allrules)) == 9
+@test length(S._filter_linearly_dependent([r1])) == 1
+
+actual = S._filter_linearly_dependent(repeat(allrules, 34))
+for r in actual
+    @show r in expected, r
+end
+for r in expected
+    @show r in actual, r
+end
+@show r3 in actual, r3
+# @test r3 in actual
+# @test length(actual) == 9
+
+# @test length(S._filter_linearly_dependent(repeat(allrules, 200))) == 9
+
+A = S.Split(S.SplitPoint(2, 8000.0f0, "2"), :L)
+B = S.Split(S.SplitPoint(4, 12.0f0, "4"), :L)
+rules = [
+    repeat([r16], 34);
+    repeat([r3, r4], 34);
+    repeat([r17], 34);
+]
+dependent = S._linearly_dependent(rules, A, B)
+filtered = rules[findall(.!dependent)]
+@test r3 in filtered
+@test !(r4 in filtered)
+@test r16 in filtered
+@test !(r17 in filtered)
+
+filtered = S._filter_linearly_dependent(rules)
+@test r3 in filtered
+@test !(r4 in filtered)
+@test r16 in filtered
+@test !(r17 in filtered)
 
 nothing

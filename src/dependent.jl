@@ -260,24 +260,14 @@ function _filter_linearly_dependent(rules::Vector{Rule})::Vector{Rule}
     out = copy(sorted)
     for (A, B) in pairs
         indexes = filter(i -> _related_rule(out[i], A, B), 1:length(out))
-        _sort_indexes_by_gap_size!(indexes, out)
+        length(indexes) == 0 && continue
+        # _sort_indexes_by_gap_size!(indexes, out)
         subset = view(out, indexes)
         dependent_subset = _linearly_dependent(subset, A, B)
-        # @show A, B
-        # @show subset
-        # @show dependent_subset
         @assert length(indexes) == length(subset)
         @assert length(dependent_subset) == length(subset)
-        removals = map(1:length(dependent_subset)) do i
-            linearly_dependent = dependent_subset[i]
-            if linearly_dependent
-                rule_index = indexes[i]
-            else
-                nothing
-            end
-        end
-        filter!(!isnothing, removals)
-        deleteat!(out, sort(removals))
+        dependent_indexes = indexes[dependent_subset]
+        deleteat!(out, sort(dependent_indexes))
     end
     return out
 end
