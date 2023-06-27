@@ -260,13 +260,39 @@ function _filter_linearly_dependent(rules::Vector{Rule})::Vector{Rule}
     out = copy(sorted)
     for (A, B) in pairs
         indexes = filter(i -> _related_rule(out[i], A, B), 1:length(out))
-        length(indexes) == 0 && continue
         # _sort_indexes_by_gap_size!(indexes, out)
         subset = view(out, indexes)
         dependent_subset = _linearly_dependent(subset, A, B)
         @assert length(indexes) == length(subset)
         @assert length(dependent_subset) == length(subset)
         dependent_indexes = indexes[dependent_subset]
+        r3 = Rule(TreePath(" X[i, 2] < 8000.0 "), [0.062], [0.386])
+        if r3 in subset
+            for i in 1:length(dependent_subset)
+                println(dependent_subset[i], ": ", out[indexes[i]])
+            end
+            # @show dependent_subset
+            # @show A
+            # @show B
+            # @show subset
+            retainables = out[indexes[.!dependent_subset]]
+            # @show r3 in retainables
+            # @show retainables
+            after_remove = deleteat!(copy(out), sort(dependent_indexes))
+            # This is wrong. It should be in there still.
+            # @show r3 in after_remove
+        end
+        r4 = Rule(TreePath(" X[i, 2] ≥ 8000 "), [0.386], [0.062])
+        if r4 in subset
+            retainables = out[indexes[.!dependent_subset]]
+            if !(r4 in retainables)
+                @show A
+                @show B
+                for r in subset
+                    @show r
+                end
+            end
+        end
         deleteat!(out, sort(dependent_indexes))
     end
     return out

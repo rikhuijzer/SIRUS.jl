@@ -136,13 +136,22 @@ end
 # @test length(S._filter_linearly_dependent(repeat(allrules, 200))) == 9
 
 A = S.Split(S.SplitPoint(2, 8000.0f0, "2"), :L)
+B = S.Split(S.SplitPoint(1, 32000.0f0, "1"), :L)
+dependent = S._linearly_dependent([repeat([r2, r1], 34); r4], A, B)
+# THIS IS A CLEAR BUG!
+@test dependent == Bool[0; repeat([true], 67); 0]
+
+A = S.Split(S.SplitPoint(2, 8000.0f0, "2"), :L)
 B = S.Split(S.SplitPoint(4, 12.0f0, "4"), :L)
 rules = [
     repeat([r16], 34);
-    repeat([r3, r4], 34);
+    repeat([r4, r3], 34);
     repeat([r17], 34);
 ]
 dependent = S._linearly_dependent(rules, A, B)
+for i in 1:length(dependent)
+    println(dependent[i], ": ", rules[i])
+end
 filtered = rules[findall(.!dependent)]
 @test r3 in filtered
 @test !(r4 in filtered)
