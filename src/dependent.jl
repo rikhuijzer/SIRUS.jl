@@ -222,10 +222,6 @@ function _sort_by_gap_size(rules::Vector{Rule})
     return sort(rules; by=_gap_size, rev=true)
 end
 
-function _sort_indexes_by_gap_size!(indexes::AbstractVector{Int}, rules::Vector{Rule})
-    sort!(indexes; by=i -> _gap_size(rules[i]), rev=true)
-end
-
 """
 Simplify the rules that contain a single split by only retaining rules that point left and
 removing duplicates.
@@ -261,7 +257,6 @@ function _filter_linearly_dependent(rules::Vector{Rule})::Vector{Rule}
     out = copy(sorted)
     for (A, B) in pairs
         indexes = filter(i -> _related_rule(out[i], A, B), 1:length(out))
-        # _sort_indexes_by_gap_size!(indexes, out)
         subset = view(out, indexes)
         dependent_subset = _linearly_dependent(subset, A, B)
         @assert length(indexes) == length(subset)
