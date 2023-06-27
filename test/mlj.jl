@@ -236,7 +236,7 @@ emr = let
     _evaluate!(results, data, StableRulesRegressor, hyper; measure)
 
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
-    _evaluate!(results, data, StableRulesRegressor, hyper; measure)
+    er = _evaluate!(results, data, StableRulesRegressor, hyper; measure)
     @test 0.50 < _score(er)
 end
 
