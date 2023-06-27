@@ -151,7 +151,7 @@ Base.@kwdef mutable struct StableRulesClassifier <: Probabilistic
     q::Int=10
     min_data_in_leaf::Int=5
     max_rules::Int=10
-    lambda::Float64=5
+    lambda::Float64=1.0
 end
 
 """

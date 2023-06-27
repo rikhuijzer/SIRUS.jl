@@ -55,7 +55,7 @@ rules = S._rules(forest)
 
 @test S._count_unique([1, 1, 1, 2]) == Dict(1 => 3, 2 => 1)
 
-weights = [0.395, 0.197, 0.187, 0.057, 0.054, 0.043, 0.027, 0.02, 0.01, 0.01]
+@test S._sort_by_frequency([r1, r5, r1]) == [r1, r5]
 
 algo = SIRUS.Classification()
 empty_model = S.StableRules(S.Rule[], algo, [1], Float16[0.1])

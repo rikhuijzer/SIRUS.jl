@@ -49,7 +49,7 @@ Note that the exact weights do not matter for the classification case, since
 the highest class will be selected anyway. For regression however, the weights
 should sum to roughly one.
 """
-function _estimate_coefficients(
+function _estimate_coefficients!(
         algo::Algorithm,
         binary_feature_data::Matrix{Float16},
         outcome::Vector{Float16},
@@ -63,15 +63,17 @@ function _estimate_coefficients(
     # Also, ElasticNet shows no clear benefit in accuracy.
     # According to Clément, avoid Lasso since it would introduce additional
     # sparsity and then instability in the rule selection.
-    model = RidgeRegressor(; fit_intercept=false, model.lambda)
+    lambda = model.lambda
+    model = RidgeRegressor(; fit_intercept=false, lambda)
     coefs = MLJLinearModels.fit(glr(model), binary_feature_data, outcome)::Vector
+    # Avoid negative coefficients.
+    coefs = max.(coefs, 0)
     if algo isa Regression
         # Ensure that coefs sum roughly to one.
         total = sum(coefs)
         coefs = coefs ./ total
     end
-    # Avoid negative coefficients.
-    return max.(coefs, 0)
+    return coefs
 end
 
 """
@@ -90,6 +92,6 @@ function _weights(
     )
     binary_feature_data = _binary_features(rules, data)
     y = convert(Vector{Float16}, outcome)
-    coefficients = _estimate_coefficients(algo, binary_feature_data, y, model)
+    coefficients = _estimate_coefficients!(algo, binary_feature_data, y, model)
     return coefficients::Vector{Float16}
 end
