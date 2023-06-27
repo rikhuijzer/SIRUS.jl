@@ -189,8 +189,6 @@ function _else_output!(
     end
 end
 
-# TODO: Maybe the rules need to be sorted first because the weights are not decreasing
-
 function Rule(
         root::Node,
         node::Union{Node, Leaf},
