@@ -328,7 +328,7 @@ function StableRules(
         outcome,
         model::Probabilistic
     )::StableRules
-    processed = _process_rules(rules, algo, model.max_rules)
+    processed = _process_rules(rules, model.max_rules)
     weights = _weights(processed, algo, classes, data, outcome, model)
     filtered_rules, filtered_weights = _remove_zero_weights(processed, weights)
     return StableRules(filtered_rules, algo, classes, filtered_weights)

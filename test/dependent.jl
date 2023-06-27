@@ -101,7 +101,7 @@ end
     @test S._linearly_dependent([rule], A, B) == Bool[0]
 end
 
-@test S._filter_linearly_dependent(repeat([r1], 10)) == [r1]
+@test S._process_rules(repeat([r1], 10), 10) == [r1]
 
 function _canonicalize(rules::Vector{SIRUS.Rule})
     [length(r.path.splits) == 1 ? SIRUS._left_rule(r) : r for r in rules]
@@ -118,10 +118,9 @@ actual = S._filter_linearly_dependent(canonical)
 expected = _canonicalize(expected)
 @test Set(actual) == Set(expected)
 
-algo = SIRUS.Classification()
-@test length(S._process_rules(allrules, algo, 9)) == 9
-@test length(S._process_rules(allrules, algo, 10)) == 9
-@test length(S._process_rules([r1], algo, 9)) == 1
-@test length(S._process_rules(repeat(allrules, 200), algo, 9)) == 9
+@test length(S._process_rules(allrules, 9)) == 9
+@test length(S._process_rules(allrules, 10)) == 9
+@test length(S._process_rules([r1], 9)) == 1
+@test length(S._process_rules(repeat(allrules, 200), 9)) == 9
 
 nothing

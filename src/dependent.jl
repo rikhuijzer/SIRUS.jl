@@ -254,8 +254,7 @@ If we don't do this, we might remove some rule `r` that causes another rule to b
 dependent in one related set, but then is removed in another related set.
 """
 function _filter_linearly_dependent(rules::Vector{Rule})::Vector{Rule}
-    filtered = _simplify_single_rules(rules)
-    sorted = _sort_by_gap_size(filtered)
+    sorted = _sort_by_gap_size(rules)
     S = _unique_left_splits(sorted)
     pairs = _left_triangular_product(S)
     out = copy(sorted)
@@ -293,9 +292,9 @@ Return a linearly independent subset of `rules` of length ≤ `max_rules`.
 """
 function _process_rules(
         rules::Vector{Rule},
-        algo::Algorithm,
         max_rules::Int
     )::Vector{Rule}
-    filtered = _filter_linearly_dependent(rules)
+    simplified = _simplify_single_rules(rules)
+    filtered = _filter_linearly_dependent(simplified)
     return first(filtered, max_rules)
 end

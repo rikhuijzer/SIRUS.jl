@@ -93,11 +93,11 @@ end
 end
 
 fpreds = DecisionTree.apply_forest(dforest, data)
-@show accuracy(fpreds, y)
+# @show accuracy(fpreds, y)
 @test 0.95 < accuracy(fpreds, y)
 
 sfpreds = SIRUS._predict(sforest, data)
-@show accuracy(mode.(sfpreds), y)
+# @show accuracy(mode.(sfpreds), y)
 @test 0.95 < accuracy(mode.(sfpreds), y)
 
 empty_forest = SIRUS.StableForest(Union{SIRUS.Leaf, SIRUS.Node}[], algo, [1])
