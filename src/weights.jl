@@ -66,13 +66,14 @@ function _estimate_coefficients!(
     lambda = model.lambda
     model = RidgeRegressor(; fit_intercept=false, lambda)
     coefs = MLJLinearModels.fit(glr(model), binary_feature_data, outcome)::Vector
+    # Avoid negative coefficients.
+    coefs = max.(coefs, 0)
     if algo isa Regression
         # Ensure that coefs sum roughly to one.
         total = sum(coefs)
         coefs = coefs ./ total
     end
-    # Avoid negative coefficients.
-    return max.(coefs, 0)
+    return coefs
 end
 
 """
