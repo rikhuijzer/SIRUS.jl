@@ -266,20 +266,3 @@ function _filter_linearly_dependent(rules::Vector{Rule})::Vector{Rule}
     end
     return out
 end
-
-"""
-Return a linearly independent subset of `rules` of length ≤ `max_rules`.
-
-!!! note
-    This doesn't use p0 like is done in the paper.
-    The problem, IMO, with p0 is that it is very difficult to decide beforehand what p0 is suitable and so it requires hyperparameter tuning.
-    Instead, luckily, the linearly dependent filter is quite fast here, so passing a load of rules into that and then selecting the first `max_rules` is feasible.
-"""
-function _process_rules(
-        rules::Vector{Rule},
-        max_rules::Int
-    )::Vector{Rule}
-    simplified = _simplify_single_rules(rules)
-    filtered = _filter_linearly_dependent(simplified)
-    return first(filtered, max_rules)
-end

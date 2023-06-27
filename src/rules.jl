@@ -189,11 +189,7 @@ function _else_output!(
     end
 end
 
-function _frequency_sort(V::AbstractVector)
-    counts = _count_unique(V)
-    sorted = sort(collect(counts); by=last, rev=true)
-    return first.(sorted)
-end
+# TODO: Maybe the rules need to be sorted first because the weights are not decreasing
 
 function Rule(
         root::Node,
@@ -286,16 +282,6 @@ function Base.hash(rule::Rule)
     hash([rule.path.splits, rule.then, rule.otherwise])
 end
 
-function _count_unique(V::AbstractVector{T}) where T
-    U = unique(V)
-    l = length(U)
-    counts = Dict{T,Int}(zip(U, zeros(l)))
-    for v in V
-        counts[v] += 1
-    end
-    return counts
-end
-
 struct StableRules{T} <: StableModel
     rules::Vector{Rule}
     algo::Algorithm
@@ -318,6 +304,43 @@ function _remove_zero_weights(rules::Vector{Rule}, weights::Vector{Float16})
         end
     end
     return filtered_rules, filtered_weights
+end
+
+function _count_unique(V::AbstractVector{T}) where T
+    U = unique(V)
+    l = length(U)
+    counts = Dict{T,Int}(zip(U, zeros(l)))
+    for v in V
+        counts[v] += 1
+    end
+    return counts
+end
+
+"Return a vector of unique values in `V` sorted by frequency."
+function _sort_by_frequency(V::AbstractVector{T}) where T
+    counts = _count_unique(V)::Dict{T, Int}
+    sorted = sort(collect(counts), by=last, rev=true)
+    return first.(sorted)
+end
+
+"""
+Apply _rule selection_ and _rule set post-treatment_
+(Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a)).
+
+Rule selection, here, denotes sorting the set by frequency.
+Next, linearly dependent rules are removed from the set.
+To ensure the size of the final set is equal to `max_rules` in most cases, we ignore the
+p0 parameter and instead pass all rules directly to the linearly dependent filter.
+This is possible because the filter for linear dependencies is quite fast.
+"""
+function _process_rules(
+        rules::Vector{Rule},
+        max_rules::Int
+    )::Vector{Rule}
+    simplified = _simplify_single_rules(rules)
+    sorted = _sort_by_frequency(simplified)
+    filtered = _filter_linearly_dependent(sorted)
+    return first(filtered, max_rules)
 end
 
 function StableRules(
