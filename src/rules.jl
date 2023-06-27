@@ -1,8 +1,11 @@
 """
-    Split
+    Split(splitpoint::SplitPoint, direction::Symbol) -> Split
+    Split(feature::Int, name::String, splitval::Float32, direction::Symbol) -> Split
 
 A split in a tree.
 Each rule is based on one or more splits.
+
+Data can be accessed via `_feature`, `_value`, `_feature_name`, `_direction`, and `_reverse`.
 """
 struct Split
     splitpoint::SplitPoint
@@ -20,16 +23,23 @@ _direction(split::Split) = split.direction
 _reverse(split::Split) = Split(split.splitpoint, split.direction == :L ? :R : :L)
 
 """
-    TreePath
+    TreePath(splits::Vector{Split}) -> TreePath
+    TreePath(text::String) -> TreePath
 
 A path of length `d` is defined as consisting of `d` splits.
 See SIRUS paper page 434.
 Typically, `d ≤ 2`.
 Note that a path can also be a path to a node; not necessarily a leaf.
+Another term for a treepath is a _condition_.
+For example, `X[i, 1] < 3 & X[i, 2] < 1` is a condition.
+
+Data can be accessed via `_splits`.
 """
 struct TreePath
     splits::Vector{Split}
 end
+
+_splits(path::TreePath) = path.splits
 
 function TreePath(text::String)
     try
@@ -286,35 +296,6 @@ function _count_unique(V::AbstractVector{T}) where T
     return counts
 end
 
-"""
-Return a linearly independent subset of `rules` of length ≤ `max_rules`.
-
-!!! note
-    This doesn't use p0 like is done in the paper.
-    The problem, IMO, with p0 is that it is very difficult to decide beforehand what p0 is suitable and so it requires hyperparameter tuning.
-    Instead, luckily, the linearly dependent filter is quite fast here, so passing a load of rules into that and then selecting the first `max_rules` is feasible.
-"""
-function _process_rules(
-        rules::Vector{Rule},
-        algo::Algorithm,
-        max_rules::Int
-    )::Vector{Rule}
-    # This loop is an optimization which manually takes a p0 and checks whether we end up with
-    # enough rules. If not, we loop again with more rules.
-    for i in 1:3
-        required_rule_guess = i^2 * 10 * max_rules
-        before = first(rules, required_rule_guess)
-        filtered = _filter_linearly_dependent(before)
-        too_few = length(filtered) < max_rules
-        more_possible = required_rule_guess < length(rules)
-        if i < 3 && too_few && more_possible
-            continue
-        end
-        return first(filtered, max_rules)
-    end
-    @error "This should never happen"
-end
-
 struct StableRules{T} <: StableModel
     rules::Vector{Rule}
     algo::Algorithm
@@ -347,7 +328,7 @@ function StableRules(
         outcome,
         model::Probabilistic
     )::StableRules
-    processed = _process_rules(rules, algo, model.max_rules)
+    processed = _process_rules(rules, model.max_rules)
     weights = _weights(processed, algo, classes, data, outcome, model)
     filtered_rules, filtered_weights = _remove_zero_weights(processed, weights)
     return StableRules(filtered_rules, algo, classes, filtered_weights)
