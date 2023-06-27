@@ -103,6 +103,22 @@ end
 
 @test S._process_rules(repeat([r1], 10), 10) == [r1]
 
+@testset "rank calculation is precise enough" begin
+    A = S.Split(S.SplitPoint(2, 8000.0f0, "2"), :L)
+    B = S.Split(S.SplitPoint(1, 32000.0f0, "1"), :L)
+    n = 34
+    dependent = S._linearly_dependent([repeat([r2, r1], 34); r4], A, B)
+    expected = Bool[0; repeat([true], 2n-1); 0]
+    @test length(dependent) == length(expected)
+    @test dependent == expected
+
+    n = 1_000
+    dependent = S._linearly_dependent([repeat([r2, r1], n); r4], A, B)
+    expected = Bool[0; repeat([true], 2n-1); 0]
+    @test length(dependent) == length(expected)
+    @test dependent == expected
+end
+
 function _canonicalize(rules::Vector{SIRUS.Rule})
     [length(r.path.splits) == 1 ? SIRUS._left_rule(r) : r for r in rules]
 end
@@ -121,47 +137,6 @@ expected = _canonicalize(expected)
 @test length(S._filter_linearly_dependent(allrules)) == 9
 @test length(S._filter_linearly_dependent(allrules)) == 9
 @test length(S._filter_linearly_dependent([r1])) == 1
-
-actual = S._filter_linearly_dependent(repeat(allrules, 34))
-for r in actual
-    @show r in expected, r
-end
-for r in expected
-    @show r in actual, r
-end
-@show r3 in actual, r3
-# @test r3 in actual
-# @test length(actual) == 9
-
-# @test length(S._filter_linearly_dependent(repeat(allrules, 200))) == 9
-
-A = S.Split(S.SplitPoint(2, 8000.0f0, "2"), :L)
-B = S.Split(S.SplitPoint(1, 32000.0f0, "1"), :L)
-dependent = S._linearly_dependent([repeat([r2, r1], 34); r4], A, B)
-# THIS IS A CLEAR BUG!
-@test dependent == Bool[0; repeat([true], 67); 0]
-
-A = S.Split(S.SplitPoint(2, 8000.0f0, "2"), :L)
-B = S.Split(S.SplitPoint(4, 12.0f0, "4"), :L)
-rules = [
-    repeat([r16], 34);
-    repeat([r4, r3], 34);
-    repeat([r17], 34);
-]
-dependent = S._linearly_dependent(rules, A, B)
-for i in 1:length(dependent)
-    println(dependent[i], ": ", rules[i])
-end
-filtered = rules[findall(.!dependent)]
-@test r3 in filtered
-@test !(r4 in filtered)
-@test r16 in filtered
-@test !(r17 in filtered)
-
-filtered = S._filter_linearly_dependent(rules)
-@test r3 in filtered
-@test !(r4 in filtered)
-@test r16 in filtered
-@test !(r17 in filtered)
+@test length(S._filter_linearly_dependent(repeat(allrules, 200))) == 9
 
 nothing
