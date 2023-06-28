@@ -6,7 +6,10 @@ using CategoricalArrays: CategoricalValue, categorical, unwrap
 using CSV: CSV
 using DataDeps: DataDeps, DataDep, @datadep_str
 using Documenter: DocMeta, doctest
-using MLDatasets: BostonHousing, Titanic
+using MLDatasets:
+    BostonHousing,
+    Iris,
+    Titanic
 using DataFrames:
     DataFrames,
     DataFrame,

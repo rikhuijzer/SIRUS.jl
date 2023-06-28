@@ -247,6 +247,7 @@ _change_rng_state!(rng::AbstractRNG, i::Int) = seed!(rng, i)
 """
 Return an unique and sorted vector of classes based on `y`.
 The vector is sorted to ensure that class ordering is the same between cross-validations.
+This holds as long as each class is in each fold.
 """
 _classes(y::AbstractVector) = sort(unique(y))
 
