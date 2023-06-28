@@ -242,4 +242,8 @@ In each column, answer whether the rule holds for some point that satisifies the
 Next, calculate the rank and see whether the rank increases when adding additional rules.
 If the rank increases, then the added rule was not linearly dependent and if the rank does not increase, then the added rule is linearly dependent with earlier added rules.
 
-Finally, the weights are determined by ...
+Finally, the weights are determined by converting the training data to a rule space.
+According to Clément Bénard, the best way is to fit a regression model on a dataset where each rule is a binary feature.
+Furthermore, the weights can be stabilized by using an L2-penalty (ridge); this helps because the rules are quite strongly correlated.
+He also advised against the L1-penalty (lasso) as it would introduce additional sparsity and then instability of the rule selection since lasso is unstable with correlated features.
+Finally, the weights are constrained to all be positive since this eases interpretability.
