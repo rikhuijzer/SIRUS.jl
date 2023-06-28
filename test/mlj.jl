@@ -225,18 +225,19 @@ let
     hyper = (;)
     _evaluate!(results, data, LGBMClassifier, hyper; measure)
 
+    hyper = (; max_depth=2)
+    _evaluate!(results, data, LGBMClassifier, hyper; measure)
+
     hyper = (; rng=_rng(), max_depth=2)
     e = _evaluate!(results, data, StableForestClassifier, hyper; measure)
     @test 0.90 < _score(e)
-
-    hyper = (; rng=_rng(), max_depth=2, max_rules=100)
-    _evaluate!(results, data, StableRulesClassifier, hyper; measure)
 
     hyper = (; rng=_rng(), max_depth=2, max_rules=30)
     _evaluate!(results, data, StableRulesClassifier, hyper; measure)
 
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     _evaluate!(results, data, StableRulesClassifier, hyper; measure)
+    @test 0.65 < _score(e)
 end
 
 rulesmodel = StableRulesRegressor(; max_depth=2, max_rules=30, rng=_rng())
