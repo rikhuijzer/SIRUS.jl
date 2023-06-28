@@ -31,7 +31,7 @@ function build()
     return nothing
 end
 
-pages = [
+pages = Pair{String, Any}[
     "SIRUS" => "index.md",
     "Implementation Overview" => "implementation-overview.md",
     "API" => "api.md"

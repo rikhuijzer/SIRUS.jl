@@ -42,7 +42,7 @@ TableOfContents()
 
 # ╔═╡ b1c17349-fd80-43f1-bbc2-53fdb539d1c0
 md"""
-This page will provide an overview of the algorithm and describe not only how it can be used but also how it works.
+This page will provide an overview of the algorithm and describe how it works and how it can be used.
 To do this, let's start by briefly describing random forests.
 """
 
@@ -52,7 +52,7 @@ md"""
 
 Random forests are known to produce accurate predictions especially in settings where the number of features `p` is close to or higher than the number of observations `n` (Biau & Scornet, [2016](https://doi.org/10.1007/s11749-016-0481-7)).
 Let's start by explaining the building blocks of random forests: decision trees.
-As an example, we take Haberman's Survival Data Set (see the Appendix below for more details):
+As an example, we take Haberman's Survival Data Set (see the _Appendix_ below for more code details):
 """
 
 # ╔═╡ 4c8dd68d-b193-4846-8d93-ab33512c3fa2
@@ -314,16 +314,6 @@ function _sum_weights(fitresults::Vector, name::AbstractString)
 	indexes = _rule_index.(fitresults, Ref(name))
 	return sum([isnothing(index) ? 0 : fitresults[i].weights[index] for (i, index) in enumerate(indexes)])
 end;
-
-# ╔═╡ 0e0252e7-87a8-49e4-9a48-5612e0ded41b
-md"""
-## Acknowledgements
-
-Thanks to Clément Bénard, Gérard Biau, Sébastian da Veiga and Erwan Scornet for creating the SIRUS algorithm and documenting it extensively.
-Special thanks to Clément Bénard for answering my questions regarding the implementation.
-Thanks to Hylke Donker for figuring out a way to visualize these rules.
-Also thanks to my PhD supervisors Ruud den Hartigh, Peter de Jonge and Frank Blaauw, and Age de Wit and colleagues at the Dutch Ministry of Defence for providing the data clarifying the constraints of the problem and for providing many methodological suggestions.
-"""
 
 # ╔═╡ e1890517-7a44-4814-999d-6af27e2a136a
 md"""
@@ -748,7 +738,6 @@ end
 # ╠═cfd908a0-1ee9-461d-9309-d4ffe738ba8e
 # ╠═e7f396dc-38a7-40f7-9e5b-6fbea9d61789
 # ╠═7c688412-d1b4-492d-bda2-0b9181057d4d
-# ╠═0e0252e7-87a8-49e4-9a48-5612e0ded41b
 # ╠═e1890517-7a44-4814-999d-6af27e2a136a
 # ╠═f833dab6-31d4-4353-a68b-ef0501d606d4
 # ╠═ede038b3-d92e-4208-b8ab-984f3ca1810e
