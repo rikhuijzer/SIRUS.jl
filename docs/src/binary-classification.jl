@@ -264,7 +264,7 @@ This is as expected because the model essentially implies that people where less
 The `year` in which the operation was conducted shouldn't have serious effect on the survivability and the model shoes this by a high variability on that feature.
 """
 
-# ╔═╡ 7470ca21-19ee-4ff1-8c69-e2ab2dec435c
+# ╔═╡ f2fee9a8-7f6f-4213-9046-2f1a8f14a7e6
 md"""
 ## Practical applications
 
@@ -408,7 +408,7 @@ y = data.survival;
 # ╔═╡ c2650040-f398-4a2e-bfe0-ce139c6ca879
 # ╠═╡ show_logs = false
 let
-	model = StableRulesClassifier(; max_depth=1, rng=_rng())
+	model = StableRulesClassifier(; max_depth=1, max_rules=8, rng=_rng())
 	mach = machine(model, X, y)
 	fit!(mach)
 	mach.fitresult
@@ -624,9 +624,9 @@ end;
 # ╠═╡ show_logs = false
 e2 = let
 	model = StableRulesClassifier
-	hyperparameters = (; max_depth=2, max_rules=10, rng=_rng())
+	hyperparameters = (; max_depth=2, max_rules=8, rng=_rng())
 	_evaluate(model, hyperparameters, X, y)
-end;
+end
 
 # ╔═╡ 88a708a7-87e8-4f97-b199-70d25ba91894
 # ╠═╡ show_logs = false
@@ -738,7 +738,7 @@ end
 # ╠═a64dae3c-3b97-4076-98f4-3c9a0e5c0621
 # ╠═923affb5-b4ca-4b50-baa5-af29204d2081
 # ╠═ab5423cd-c8a9-488e-9bb0-bb41e583c2fa
-# ╠═7470ca21-19ee-4ff1-8c69-e2ab2dec435c
+# ╠═f2fee9a8-7f6f-4213-9046-2f1a8f14a7e6
 # ╠═e6b880e9-e263-4818-81e9-bb4105e5c2c1
 # ╠═7fad8dd5-c0a9-4c45-9663-d40a464bca77
 # ╠═cfd908a0-1ee9-461d-9309-d4ffe738ba8e
