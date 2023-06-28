@@ -4,7 +4,9 @@
 
 ```@docs
 StableRulesClassifier
+StableRulesRegressor
 StableForestClassifier
+StableForestRegressor
 ```
 
 ## Methods
