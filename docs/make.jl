@@ -31,20 +31,20 @@ function build()
     return nothing
 end
 
-pages = [
+pages = Pair{String, Any}[
+    "SIRUS" => "index.md",
     "Implementation Overview" => "implementation-overview.md",
     "API" => "api.md"
 ]
 
-# Whether to build the notebooks; defaults to "false".
 do_build_notebooks = is_ci
 
 if do_build_notebooks
     build()
-    cd(tutorials_dir) do
-        mv("sirus.md", "index.md"; force=true)
-    end
-    pushfirst!(pages, "SIRUS" => "index.md")
+    getting_started::Pair = "Getting Started" => [
+        "Simple Binary Classification" => "binary-classification.md"
+    ]
+    insert!(pages, 2, getting_started)
 end
 
 prettyurls = is_ci

@@ -1,33 +1,39 @@
 datasets = Dict{String,Tuple}(
-        "blobs" => let
-            n = 200
-            p = 40
-            make_blobs(n, p; centers=2, rng=_rng(), shuffle=true)
-        end,
-        "titanic" => let
-            titanic = Titanic()
-            df = titanic.features
-            F = [:Pclass, :Sex, :Age, :SibSp, :Parch, :Fare, :Embarked]
-            sub = select(df, F...)
-            sub[!, :y] = categorical(titanic.targets[:, 1])
-            sub[!, :Sex] = ifelse.(sub.Sex .== "male", 1, 0)
-            dropmissing!(sub)
-            embarked2int(x) = x == "S" ? 1 : x == "C" ? 2 : 3
-            sub[!, :Embarked] = embarked2int.(sub.Embarked)
-            X = MLJBase.table(MLJBase.matrix(sub[:, Not(:y)]))
-            (X, sub.y)
-        end,
-        "haberman" => let
-            df = haberman()
-            X = MLJBase.table(MLJBase.matrix(df[:, Not(:survival)]))
-            y = df.survival
-            (X, y)
-        end,
-        "boston" => boston(),
-        "make_regression" => let
-            make_regression(600, 3; noise=0.0, sparse=0.0, outliers=0.0, rng=_rng())
-         end
-    )
+    "blobs" => let
+        n = 200
+        p = 40
+        make_blobs(n, p; centers=2, rng=_rng(), shuffle=true)
+    end,
+    "titanic" => let
+        titanic = Titanic()
+        df = titanic.features
+        F = [:Pclass, :Sex, :Age, :SibSp, :Parch, :Fare, :Embarked]
+        sub = select(df, F...)
+        sub[!, :y] = categorical(titanic.targets[:, 1])
+        sub[!, :Sex] = ifelse.(sub.Sex .== "male", 1, 0)
+        dropmissing!(sub)
+        embarked2int(x) = x == "S" ? 1 : x == "C" ? 2 : 3
+        sub[!, :Embarked] = embarked2int.(sub.Embarked)
+        X = MLJBase.table(MLJBase.matrix(sub[:, Not(:y)]))
+        (X, sub.y)
+    end,
+    "haberman" => let
+        df = haberman()
+        X = MLJBase.table(MLJBase.matrix(df[:, Not(:survival)]))
+        y = df.survival
+        (X, y)
+    end,
+    "iris" => let
+        iris = Iris()
+        X = MLJBase.table(MLJBase.matrix(iris.features))
+        y = [x == "Iris-setosa" ? 1 : x == "Iris-versicolor" ? 2 : 3 for x in iris.targets.class]
+        (X, categorical(y))
+     end,
+    "boston" => boston(),
+    "make_regression" => let
+        make_regression(600, 3; noise=0.0, sparse=0.0, outliers=0.0, rng=_rng())
+     end
+)
 
 function _score(e::PerformanceEvaluation)
     return round(only(e.measurement); sigdigits=2)
@@ -53,8 +59,8 @@ results = DataFrame(;
         Model=String[],
         Hyperparameters=String[],
         nfolds=Int[],
-        AUC=String[],
-        RMS=String[],
+        measure=String[],
+        score=String[],
         se=String[]
     )
 
@@ -74,19 +80,21 @@ function _evaluate!(
     model = modeltype(; hyperparameters...)
     e = _evaluate(model, X, y, nfolds, measure)
     score = _with_trailing_zero(_score(e))
-    classification_score = measure == auc ? score : ""
-    regression_score = measure == auc ? "" : score
     se = let
         val = round(only(MLJBase._standard_errors(e)); digits=2)
         _with_trailing_zero(val)
     end
+    measure::String = measure == auc ? "auc" :
+        measure == accuracy ? "accuracy" :
+        measure == rsq ? "R²" :
+        error("Cannot prettify measure $measure")
     row = (;
         Dataset=dataset,
         Model=_pretty_name(modeltype),
         Hyperparameters=_hyper2str(_filter_rng(hyperparameters)),
         nfolds,
-        AUC=classification_score,
-        RMS=regression_score,
+        measure,
+        score,
         se
     )
     push!(results, row)
@@ -209,6 +217,27 @@ let
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     e = _evaluate!(results, "haberman", StableRulesClassifier, hyper)
     @test 0.60 < _score(e)
+end
+
+let
+    data = "iris"
+    measure = accuracy
+    hyper = (;)
+    _evaluate!(results, data, LGBMClassifier, hyper; measure)
+
+    hyper = (; max_depth=2)
+    _evaluate!(results, data, LGBMClassifier, hyper; measure)
+
+    hyper = (; rng=_rng(), max_depth=2)
+    e = _evaluate!(results, data, StableForestClassifier, hyper; measure)
+    @test 0.90 < _score(e)
+
+    hyper = (; rng=_rng(), max_depth=2, max_rules=30)
+    _evaluate!(results, data, StableRulesClassifier, hyper; measure)
+
+    hyper = (; rng=_rng(), max_depth=2, max_rules=10)
+    _evaluate!(results, data, StableRulesClassifier, hyper; measure)
+    @test 0.65 < _score(e)
 end
 
 rulesmodel = StableRulesRegressor(; max_depth=2, max_rules=30, rng=_rng())
