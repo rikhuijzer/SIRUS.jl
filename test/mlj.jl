@@ -35,6 +35,25 @@ datasets = Dict{String,Tuple}(
      end
 )
 
+@testset "generic interface tests" begin
+    data = MLJTestInterface.make_binary()
+    kwargs = (
+        mod = @__MODULE__,
+        verbosity = 0,
+        throw = false
+    )
+    failures, summary = MLJTestInterface.test([StableRulesClassifier], data...; kwargs...)
+    @test isempty(failures)
+
+    data = MLJTestInterface.make_multiclass()
+    failures, summary = MLJTestInterface.test([StableRulesClassifier], data...; kwargs...)
+    @test isempty(failures)
+
+    data = MLJTestInterface.make_regression()
+    failures, summary = MLJTestInterface.test([StableRulesRegressor], data...; kwargs...)
+    @test isempty(failures)
+end
+
 function _score(e::PerformanceEvaluation)
     return round(only(e.measurement); sigdigits=2)
 end
