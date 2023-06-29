@@ -408,7 +408,7 @@ y = data.survival;
 # ╔═╡ c2650040-f398-4a2e-bfe0-ce139c6ca879
 # ╠═╡ show_logs = false
 let
-	model = StableRulesClassifier(; max_depth=1, max_rules=8, rng=_rng())
+	model = StableRulesClassifier(; max_depth=2, max_rules=8, rng=_rng())
 	mach = machine(model, X, y)
 	fit!(mach)
 	mach.fitresult

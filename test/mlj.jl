@@ -153,6 +153,12 @@ preds = predict(rulesmach)
 @test 0.95 < auc(preds, y)
 
 let
+    hyper = (; )
+    e = _evaluate!(results, "blobs", XGBoostClassifier, hyper)
+
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, "blobs", XGBoostClassifier, hyper)
+
     hyper = (; rng=_rng(), max_depth=2)
     e = _evaluate!(results, "blobs", StableForestClassifier, hyper)
 
@@ -184,16 +190,23 @@ let
 end
 
 let
+    data = "titanic"
+    hyper = (; )
+    e = _evaluate!(results, data, XGBoostClassifier, hyper)
+
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, data, XGBoostClassifier, hyper)
+
     hyper = (; rng=_rng(), max_depth=2)
-    e = _evaluate!(results, "titanic", StableForestClassifier, hyper)
+    e = _evaluate!(results, data, StableForestClassifier, hyper)
     @test 0.80 < _score(e)
 
     hyper = (; rng=_rng(), max_depth=2, max_rules=30)
-    e = _evaluate!(results, "titanic", StableRulesClassifier, hyper)
+    e = _evaluate!(results, data, StableRulesClassifier, hyper)
     @test 0.79 < _score(e)
 
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
-    e = _evaluate!(results, "titanic", StableRulesClassifier, hyper)
+    e = _evaluate!(results, data, StableRulesClassifier, hyper)
     @test 0.79 < _score(e)
 end
 
@@ -223,29 +236,43 @@ let
 end
 
 let
+    data = "haberman"
+    hyper = (; )
+    e = _evaluate!(results, data, XGBoostClassifier, hyper)
+
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, data, XGBoostClassifier, hyper)
+
     hyper = (; rng=_rng(), max_depth=2)
-    e = _evaluate!(results, "haberman", StableForestClassifier, hyper)
+    e = _evaluate!(results, data, StableForestClassifier, hyper)
     @test 0.60 < _score(e)
 
     hyper = (; rng=_rng(), max_depth=2, max_rules=30)
-    e = _evaluate!(results, "haberman", StableRulesClassifier, hyper)
+    e = _evaluate!(results, data, StableRulesClassifier, hyper)
     @test 0.60 < _score(e)
     fitresult = string(first(e.fitted_params_per_fold).fitresult)
     @test contains(fitresult, ":x1")
 
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
-    e = _evaluate!(results, "haberman", StableRulesClassifier, hyper)
+    e = _evaluate!(results, data, StableRulesClassifier, hyper)
     @test 0.60 < _score(e)
 end
 
 let
     data = "iris"
     measure = accuracy
+
     hyper = (;)
     _evaluate!(results, data, LGBMClassifier, hyper; measure)
 
     hyper = (; max_depth=2)
     _evaluate!(results, data, LGBMClassifier, hyper; measure)
+
+    hyper = (; )
+    e = _evaluate!(results, data, XGBoostClassifier, hyper; measure)
+
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, data, XGBoostClassifier, hyper; measure)
 
     hyper = (; rng=_rng(), max_depth=2)
     e = _evaluate!(results, data, StableForestClassifier, hyper; measure)
@@ -277,6 +304,12 @@ emr = let
     hyper = (; max_depth=2)
     _evaluate!(results, data, LGBMRegressor, hyper; measure)
 
+    hyper = (; )
+    e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
+
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
+
     hyper = (; max_depth=2, rng=_rng())
     _evaluate!(results, data, StableForestRegressor, hyper; measure)
 
@@ -288,24 +321,28 @@ emr = let
     @test 0.50 < _score(er)
 end
 
-el = let
+let
     hyper = (;)
+    data = "boston"
     measure = rsq
-    elgbm = _evaluate!(results, "boston", LGBMRegressor, hyper; measure)
+    elgbm = _evaluate!(results, data, LGBMRegressor, hyper; measure)
 
     hyper = (; max_depth=2)
-    el = _evaluate!(results, "boston", LGBMRegressor, hyper; measure)
+    el = _evaluate!(results, data, LGBMRegressor, hyper; measure)
+
+    hyper = (; )
+    e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
+
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
 
     hyper = (; max_depth=2, rng=_rng())
-    ef = _evaluate!(results, "boston", StableForestRegressor, hyper; measure)
+    ef = _evaluate!(results, data, StableForestRegressor, hyper; measure)
 
     @test 0.62 < _score(el)
     @test _score(el) ≈ _score(ef) atol=0.05
     @test 0.65 < _score(elgbm)
-    el
-end
 
-er = let
     hyper = (; rng=_rng(), max_depth=2, max_rules=30)
     er = _evaluate!(results, "boston", StableRulesRegressor, hyper; measure=rsq)
 
