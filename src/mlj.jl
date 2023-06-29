@@ -22,9 +22,12 @@ using MLJModelInterface:
     Table
 using Random: AbstractRNG, default_rng
 using SIRUS:
+    Algorithm,
+    Classification,
+    Regression,
     StableForest,
     StableRules,
-    _colnames,
+    colnames,
     _forest,
     _mean,
     _predict,
@@ -67,7 +70,10 @@ julia> mach = machine(StableForestClassifier(), X, y);
 - `partial_sampling`:
     Ratio of samples to use in each subset of the data.
     The default of 0.7 should be fine for most cases.
-- `n_trees`: The number of trees to use.
+- `n_trees`:
+    The number of trees to use.
+    It is advisable to use at least thousand trees to for a better rule selection, and
+    in turn better predictive performance.
 - `max_depth`:
     The depth of the tree.
     A lower depth decreases model complexity and can therefore improve accuracy when the sample size is small (reduce overfitting).
@@ -145,6 +151,65 @@ Base.@kwdef mutable struct StableRulesClassifier <: Probabilistic
     q::Int=10
     min_data_in_leaf::Int=5
     max_rules::Int=10
+    lambda::Float64=1.0
+end
+
+"""
+    StableForestRegressor(;
+        rng::AbstractRNG=default_rng(),
+        partial_sampling::Real=0.7,
+        n_trees::Int=1_000,
+        max_depth::Int=2,
+        q::Int=10,
+        min_data_in_leaf::Int=5
+    ) <: MLJModelInterface.Probabilistic
+
+Random forest regressor with a stabilized forest structure (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html)).
+See the documentation for the `StableForestClassifier` for more information about the hyperparameters.
+
+# Example
+
+The classifier satisfies the MLJ interface, so it can be used like any other MLJ model.
+For example, it can be used to create a machine:
+
+```julia
+julia> using SIRUS, MLJ
+
+julia> mach = machine(StableForestRegressor(), X, y);
+```
+"""
+Base.@kwdef mutable struct StableForestRegressor <: Probabilistic
+    rng::AbstractRNG=default_rng()
+    partial_sampling::Real=0.7
+    n_trees::Int=1_000
+    max_depth::Int=2
+    q::Int=10
+    min_data_in_leaf::Int=5
+end
+
+"""
+    StableRulesRegressor(;
+        rng::AbstractRNG=default_rng(),
+        partial_sampling::Real=0.7,
+        n_trees::Int=1_000,
+        max_depth::Int=2,
+        q::Int=10,
+        min_data_in_leaf::Int=5,
+        max_rules::Int=10
+    ) -> MLJModelInterface.Probabilistic
+
+Explainable rule-based regression model based on a random forest.
+See the documentation for the `StableRulesClassifier` for more information about
+the model and the hyperparameters.
+"""
+Base.@kwdef mutable struct StableRulesRegressor <: Probabilistic
+    rng::AbstractRNG=default_rng()
+    partial_sampling::Real=0.7
+    n_trees::Int=1_000
+    max_depth::Int=2
+    q::Int=10
+    min_data_in_leaf::Int=5
+    max_rules::Int=10
     lambda::Float64=5
 end
 
@@ -162,12 +227,35 @@ metadata_model(
     input_scitype=Table(Continuous, Count),
     target_scitype=AbstractVector{<:Finite},
     supports_weights=false,
-    docstring="Stable rule-based classifier",
+    docstring="Stable and Interpretable RUle Sets (SIRUS) classifier",
     path="SIRUS.StableForestClassifier"
 )
 
+metadata_model(
+    StableForestRegressor;
+    input_scitype=Table(Continuous, Count),
+    target_scitype=AbstractVector{<:Continuous},
+    supports_weights=false,
+    docstring="Random forest regressor with a stabilized forest structure",
+    path="SIRUS.StableForestRegressor"
+)
+
+metadata_model(
+    StableRulesRegressor;
+    input_scitype=Table(Continuous, Count),
+    target_scitype=AbstractVector{<:Continuous},
+    supports_weights=false,
+    docstring="Stable and Interpretable RUle Sets (SIRUS) regressor",
+    path="SIRUS.StableForestRegressor"
+)
+
 metadata_pkg.(
-    [StableForestClassifier, StableRulesClassifier];
+    [
+        StableForestClassifier,
+        StableRulesClassifier,
+        StableForestRegressor,
+        StableRulesRegressor
+    ];
     name="SIRUS",
     uuid="9113e207-2504-4b06-8eee-d78e288bee65",
     url="https://github.com/rikhuijzer/SIRUS.jl",
@@ -186,18 +274,28 @@ function _float(A::CategoricalArray{T}) where T
         throw(ArgumentError(msg))
     end
     if T isa Type{String}
-        msg = "Cannot automatically convert $(typeof(A)) to an array containing `Float`s."
-        throw(ArgumentError(msg))
+        uniques = sort(unique(A))
+        A = collect(0.0:float(length(uniques) - 1))
+        # Workaround for https://github.com/rikhuijzer/SIRUS.jl/issues/24.
+        @info "Converting outcome classes $(uniques) to $(A)."
     end
     return float(A)
 end
+_float(A::AbstractVector) = float.(A)
 
-function fit(model::StableForestClassifier, verbosity::Int, X, y)
+function fit(
+        model::Union{StableForestClassifier, StableForestRegressor},
+        algo::Algorithm,
+        verbosity::Int,
+        X,
+        y
+    )
     forest = _forest(
         model.rng,
+        algo,
         matrix(X),
         _float(y),
-        _colnames(X);
+        colnames(X);
         model.partial_sampling,
         model.n_trees,
         model.max_depth,
@@ -210,19 +308,40 @@ function fit(model::StableForestClassifier, verbosity::Int, X, y)
     return fitresult, cache, report
 end
 
-function predict(model::StableForestClassifier, fitresult::StableForest, Xnew)
+function fit(model::StableForestClassifier, verbosity::Int, X, y)
+    algo = Classification()
+    return fit(model, algo, verbosity, X, y)
+end
+
+function fit(model::StableForestRegressor, verbosity::Int, X, y)
+    algo = Regression()
+    return fit(model, algo, verbosity, X, y)
+end
+
+function predict(
+        model::Union{StableForestClassifier, StableForestRegressor},
+        fitresult::StableForest,
+        Xnew
+    )
     forest = fitresult
     return _predict(forest, matrix(Xnew))
 end
 
-function fit(model::StableRulesClassifier, verbosity::Int, X, y)
+function fit(
+        model::Union{StableRulesClassifier, StableRulesRegressor},
+        algo::Algorithm,
+        verbosity::Int,
+        X,
+        y
+    )
     data = matrix(X)
     outcome = _float(y)
     forest = _forest(
         model.rng,
+        algo,
         data,
         outcome,
-        _colnames(X);
+        colnames(X);
         model.partial_sampling,
         model.n_trees,
         model.max_depth,
@@ -235,7 +354,21 @@ function fit(model::StableRulesClassifier, verbosity::Int, X, y)
     return fitresult, cache, report
 end
 
-function predict(model::StableRulesClassifier, fitresult::StableRules, Xnew)
+function fit(model::StableRulesClassifier, verbosity::Int, X, y)
+    algo = Classification()
+    fit(model, algo, verbosity, X, y)
+end
+
+function fit(model::StableRulesRegressor, verbosity::Int, X, y)
+    algo = Regression()
+    fit(model, algo, verbosity, X, y)
+end
+
+function predict(
+        model::Union{StableRulesClassifier, StableRulesRegressor},
+        fitresult::StableRules,
+        Xnew
+    )
     isempty(fitresult.rules) && error("Zero rules")
     return _predict(fitresult, matrix(Xnew))
 end

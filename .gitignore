@@ -23,8 +23,6 @@ docs/site/
 # environment.
 **/Manifest.toml
 
-docs/src/**/index.md
-
 profile.pb.gz
 tmp**
 

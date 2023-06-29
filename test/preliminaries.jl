@@ -5,7 +5,11 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
 using CategoricalArrays: CategoricalValue, categorical, unwrap
 using CSV: CSV
 using DataDeps: DataDeps, DataDep, @datadep_str
-using MLDatasets: BostonHousing, Titanic
+using Documenter: DocMeta, doctest
+using MLDatasets:
+    BostonHousing,
+    Iris,
+    Titanic
 using DataFrames:
     DataFrames,
     DataFrame,
@@ -27,17 +31,21 @@ using MLJBase:
     machine,
     make_blobs,
     make_moons,
+    make_regression,
+    rsq,
     predict
 using MLJDecisionTreeInterface: DecisionTree
-using LightGBM.MLJInterface: LGBMClassifier
+using MLJLinearModels: LinearRegressor
+using MLJTestInterface: MLJTestInterface
+using LightGBM.MLJInterface: LGBMClassifier, LGBMRegressor
+using Random: shuffle
 using StableRNGs: StableRNG
 using SIRUS
 using Statistics: mean, var
 using Tables: Tables
 using Test
 
-ST = SIRUS
-Float = ST.Float
+const S = SIRUS
 _rng(seed::Int=1) = StableRNG(seed)
 
 if !haskey(ENV, "REGISTERED_HABERMAN")
@@ -80,13 +88,14 @@ function boston()
     # Median value of owner-occupied homes in 1000's of dollars.
     target = :MEDV
     m = mean(df[:, target]) # 22.5 thousand dollars.
-    y = categorical([value < m ? 0 : 1 for value in df[:, target]])
+    # y = categorical([value < m ? 0 : 1 for value in df[:, target]])
+    y = df[:, target]
     X = MLJBase.table(MLJBase.matrix(df[:, Not(target)]))
     return (X, y)
 end
 
-function _Split(feature::Int, splitval::Float, direction::Symbol)
-    return ST.Split(feature, string(feature), splitval, direction)
+function _Split(feature::Int, splitval::Float32, direction::Symbol)
+    return S.Split(feature, string(feature), splitval, direction)
 end
 
 nothing

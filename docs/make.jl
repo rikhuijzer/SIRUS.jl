@@ -1,3 +1,5 @@
+is_ci = haskey(ENV, "CI")
+
 using Documenter:
     DocMeta,
     HTML,
@@ -29,28 +31,31 @@ function build()
     return nothing
 end
 
-# Build the notebooks; defaults to "true".
-if get(ENV, "BUILD_DOCS_NOTEBOOKS", "true") == "true"
-    build()
-    cd(tutorials_dir) do
-        mv("sirus.md", "index.md"; force=true)
-    end
-end
-
-pages = [
+pages = Pair{String, Any}[
     "SIRUS" => "index.md",
+    "Implementation Overview" => "implementation-overview.md",
     "API" => "api.md"
 ]
 
-prettyurls = get(ENV, "CI", nothing) == "true"
+do_build_notebooks = is_ci
+
+if do_build_notebooks
+    build()
+    getting_started::Pair = "Getting Started" => [
+        "Simple Binary Classification" => "binary-classification.md"
+    ]
+    insert!(pages, 2, getting_started)
+end
+
+prettyurls = is_ci
 format = HTML(; mathengine=MathJax3(), prettyurls)
 modules = [SIRUS]
-strict = true
+strict = do_build_notebooks
 checkdocs = :none
 makedocs(; sitename, pages, format, modules, strict, checkdocs)
 
 deploydocs(;
-    branch="docs",
+    branch="docs-output",
     devbranch="main",
     repo="github.com/rikhuijzer/SIRUS.jl.git",
     push_preview=false

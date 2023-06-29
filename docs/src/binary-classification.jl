@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.15
+# v0.19.26
 
 using Markdown
 using InteractiveUtils
@@ -11,9 +11,9 @@ begin
 	ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
 
 	PKGDIR = dirname(dirname(@__DIR__))
-	PROJECT_DIR = @__DIR__
+    DOCS_DIR = dirname(@__DIR__)
 	using Pkg: Pkg
-	Pkg.activate(PROJECT_DIR)
+	Pkg.activate(DOCS_DIR)
 	Pkg.develop(; path=PKGDIR)
 end
 
@@ -26,8 +26,9 @@ begin
 	using CSV: CSV
 	using DataDeps: DataDeps, DataDep, @datadep_str
 	using DataFrames
+	using DecisionTree: DecisionTree
 	using LightGBM.MLJInterface: LGBMClassifier
-	using MLJDecisionTreeInterface: DecisionTree, DecisionTreeClassifier
+	using MLJDecisionTreeInterface: DecisionTreeClassifier
 	using MLJ: CV, MLJ, Not, PerformanceEvaluation, auc, fit!, evaluate, machine
 	using PlutoUI: TableOfContents # hide
 	using StableRNGs: StableRNG
@@ -41,15 +42,7 @@ TableOfContents()
 
 # ╔═╡ b1c17349-fd80-43f1-bbc2-53fdb539d1c0
 md"""
-This package is a pure Julia implementation of the **S**table and **I**nterpretable **RU**le **S**ets (SIRUS) algorithm.
-The algorithm was originally created by Clément Bénard, Gérard Biau, Sébastien Da Veiga, and Erwan Scornet.
-This package has only implemented binary classification for now.
-Regression and multiclass-classification will be implemented later.
-For R users, the original version of the SIRUS algorithm is available via [CRAN](https://cran.r-project.org/web/packages/sirus/index.html).
-
-The algorithm is based on random forests.
-However, compared to random forests, the model is much more interpretable since the forests are converted to a set of decison rules.
-This page will provide an overview of the algorithm and describe not only how it can be used but also how it works.
+This page will provide an overview of the algorithm and describe how it works and how it can be used.
 To do this, let's start by briefly describing random forests.
 """
 
@@ -59,7 +52,7 @@ md"""
 
 Random forests are known to produce accurate predictions especially in settings where the number of features `p` is close to or higher than the number of observations `n` (Biau & Scornet, [2016](https://doi.org/10.1007/s11749-016-0481-7)).
 Let's start by explaining the building blocks of random forests: decision trees.
-As an example, we take Haberman's Survival Data Set (see the Appendix below for more details):
+As an example, we take Haberman's Survival Data Set (see the _Appendix_ below for more code details):
 """
 
 # ╔═╡ 4c8dd68d-b193-4846-8d93-ab33512c3fa2
@@ -209,14 +202,9 @@ The latter is a state-of-the-art gradient boosting model created by Microsoft.
 See the Appendix for more details about these results.
 """
 
-# ╔═╡ 39e073b9-a7ae-47d0-8867-a0d099625625
-md"""
-We can summarize these results as follows:
-"""
-
 # ╔═╡ 4a4ab7ef-659e-4048-ab16-94ad4cb4328a
 md"""
-As can be seen, the score of the stabilized random forest (`StableForestClassifier`) is almost as good as Microsoft's classifier (`LGBMClassifier`), but both are not interpretable since that requires interpreting thousands of trees.
+As can be seen, the score of the stabilized random forest (`StableForestClassifier`) is almost as good as Microsoft's state-of-the-art classifier (`LGBMClassifier`), but both are not interpretable since that requires interpreting thousands of trees.
 With the rule-based classifier (`StableRulesClassifier`), a small amount of predictive performance can be traded for high interpretability.
 Note that the rule-based classifier may actually be more accurate in practice because verifying and debugging the model is much easier.
 
@@ -270,10 +258,29 @@ Finally, the variables are ordered by the sum of the weights.
 md"""
 What this plot shows is that the `nodes` feature is on average chosen as the feature with the most predictive power.
 This can be concluded because the `nodes` feature is shown as the first feature and the tickness of the dots is the biggest.
-Furthermore, there is unfortunately some unstability in the position of the splitpoint for the `nodes` feature.
-Some models split the data at around 3 and others at around 5.
-Depending on the context in which this model is used, it might thus be beneficial to decrease the number of empirical quantiles `q` that the model can use to split on.
-By default `q=10`, but maybe something like `q=3` would make more sense here.
+Furthermore, there is agreement on the effect of the `nodes` and `age` features.
+In both cases, a lower number is associated with survival.
+This is as expected because the model essentially implies that people where less cancerous auxillary nodes are detected and who are younger are more likely to survive.
+The `year` in which the operation was conducted shouldn't have serious effect on the survivability and the model shoes this by a high variability on that feature.
+"""
+
+# ╔═╡ f2fee9a8-7f6f-4213-9046-2f1a8f14a7e6
+md"""
+## Practical applications
+
+As shown in the previous sections, the model satisfies two things:
+
+1. It shows a good predictive performance in the model evaluations. The performance is slightly lower than more complex models, but this tradeoff can be worth it because the rule-based model is interpretable.
+2. The fitted model makes theoretical sense. As shown in the visualization, the `nodes` and `age` features are the most important for prediction and both features are used in the expected way.
+
+Since the model shows good performance and makes theoretical sense, we can be reasonably sure that the model will generalize to new data in a similar context.
+Next, the model can be applied by fitting it on the full dataset and brining it to a real-world setting.
+
+Note that unlike the state-of-the-art random forest from Microsoft, each decision that the model makes can be fully explained.
+All rules can be read stand-alone and interpreted.
+For example, when trying to interpret a random forest, it will only report feature importances.
+For the Haberman dataset, we would know more than `nodes` is negatively associated and `age` too.
+With the rule-based model, we can say exactly at which number of `nodes` and at which `age` the model decides to split the data between likely to survive or not survive.
 """
 
 # ╔═╡ e6b880e9-e263-4818-81e9-bb4105e5c2c1
@@ -282,7 +289,7 @@ md"""
 
 Compared to decision trees, the rule-based classifier is more stable, more accurate and similarly easy to interpet.
 Compared to the random forest, the rule-based classifier is only slightly less accurate, but much easier to interpet.
-Due to the interpretability, it is likely that the rule-based classifier will be more accurate in real-world settings.
+Due to the interpretability, it is likely easier to verify the model and therefore the rule-based classifier will be more accurate in real-world settings.
 This makes rule-based highly suitable for many machine learning tasks.
 """
 
@@ -322,20 +329,27 @@ function _sum_weights(fitresults::Vector, name::AbstractString)
 	return sum([isnothing(index) ? 0 : fitresults[i].weights[index] for (i, index) in enumerate(indexes)])
 end;
 
-# ╔═╡ 0e0252e7-87a8-49e4-9a48-5612e0ded41b
-md"""
-## Acknowledgements
-
-Thanks to Clément Bénard, Gérard Biau, Sébastian da Veiga and Erwan Scornet for creating the SIRUS algorithm and documenting it extensively.
-Special thanks to Clément Bénard for answering my questions regarding the implementation.
-Thanks to Hylke Donker for figuring out a way to visualize these rules.
-Also thanks to my PhD supervisors Ruud den Hartigh, Peter de Jonge and Frank Blaauw, and Age de Wit and colleagues at the Dutch Ministry of Defence for providing the data clarifying the constraints of the problem and for providing many methodological suggestions.
-"""
-
 # ╔═╡ e1890517-7a44-4814-999d-6af27e2a136a
 md"""
 ## Appendix
 """
+
+# ╔═╡ ede038b3-d92e-4208-b8ab-984f3ca1810e
+function _plot_cutpoints(data::AbstractVector)
+	fig = Figure(; resolution=(800, 100))
+	ax = Axis(fig[1, 1])
+	cps = Float64.(unique(cutpoints(data, 10)))
+	scatter!(ax, data, fill(1, length(data)))
+	vlines!(ax, cps; color=:black, linestyle=:dash)
+	textlocs = [(c, 1.1) for c in cps]
+	for cutpoint in cps
+		annotation = string(round(cutpoint; digits=2))::String
+		text!(ax, cutpoint + 0.2, 1.08; text=annotation, fontsize=13)
+	end
+	ylims!(ax, 0.9, 1.2)
+	hideydecorations!(ax)
+	return fig
+end;
 
 # ╔═╡ 93a7dd3b-7810-4021-bf6e-ae9c04acea46
 _rng(seed::Int=1) = StableRNG(seed);
@@ -357,24 +371,7 @@ end;
 
 # ╔═╡ 0ca8bb9a-aac1-41a7-b43d-314a4029c205
 # hideall
-ST = SIRUS;
-
-# ╔═╡ ede038b3-d92e-4208-b8ab-984f3ca1810e
-function _plot_cutpoints(data::AbstractVector)
-	fig = Figure(; resolution=(800, 100))
-	ax = Axis(fig[1, 1])
-	cutpoints = Float64.(unique(ST._cutpoints(data, 10)))
-	scatter!(ax, data, fill(1, length(data)))
-	vlines!(ax, cutpoints; color=:black, linestyle=:dash)
-	textlocs = [(c, 1.1) for c in cutpoints]
-	for cutpoint in cutpoints
-		annotation = string(round(cutpoint; digits=2))::String
-		text!(ax, cutpoint + 0.2, 1.08; text=annotation, textsize=13)
-	end
-	ylims!(ax, 0.9, 1.2)
-	hideydecorations!(ax)
-	return fig
-end;
+S = SIRUS;
 
 # ╔═╡ 9db18ac7-4508-4861-8854-3e19d5218309
 function register_haberman()
@@ -411,7 +408,7 @@ y = data.survival;
 # ╔═╡ c2650040-f398-4a2e-bfe0-ce139c6ca879
 # ╠═╡ show_logs = false
 let
-	model = StableRulesClassifier(; max_depth=1, rng=_rng())
+	model = StableRulesClassifier(; max_depth=1, max_rules=8, rng=_rng())
 	mach = machine(model, X, y)
 	fit!(mach)
 	mach.fitresult
@@ -446,7 +443,7 @@ let
 	scatter!(ax, nodes, fill(1, ln))
 	vlines!(ax, [nodes[index]]; color=:red)
 	annotation = string(round(nodes[index]; digits=2))
-	text!(ax, nodes[index] + 0.003, 1.08; text=annotation, textsize=11)
+	text!(ax, nodes[index] + 0.003, 1.08; text=annotation, fontsize=11)
 	hideydecorations!(ax)
 	ylims!(ax, 0.9, 1.2)
 	fig
@@ -454,7 +451,7 @@ end
 
 # ╔═╡ bfcb5e17-8937-4448-b090-2782818c6b6c
 # hideall
-subset = collect(ST._rand_subset(_rng(3), nodes, round(Int, 0.7 * ln)));
+subset = collect(S._rand_subset(_rng(3), nodes, round(Int, 0.7 * ln)));
 
 # ╔═╡ dff9eb71-a853-4186-8245-a64206379b6f
 # hideall
@@ -472,7 +469,7 @@ let
 	scatter!(ax, subset, fill(1, ls))
 	vlines!(ax, [nodes[index]]; color=:red, linestyle=:dash)
 	annotation = string(round(nodes[index]; digits=2))
-	text!(ax, nodes[index] + 0.003, 1.08; text=annotation, textsize=11)
+	text!(ax, nodes[index] + 0.003, 1.08; text=annotation, fontsize=11)
 	hideydecorations!(ax)
 	ylims!(ax, 0.9, 1.2)
 	fig
@@ -534,8 +531,8 @@ function _odds_plot(e::PerformanceEvaluation)
 		t_std = round(std(thresholds); digits=1)
 		
 		for (rule, weight) in rw
-			left = last(rule.then_probs)::Float64
-			right = last(rule.else_probs)::Float64
+			left = last(rule.then)::Float64
+			right = last(rule.otherwise)::Float64
 			t::Float64 = _threshold(rule)
 			ratio = log((right) / (left))
 			# area = πr²
@@ -601,7 +598,7 @@ end;
 
 # ╔═╡ 39fd9deb-2a27-4c28-ae06-2a36c4c54427
 let
-	tree = tree_evaluations.fitted_params_per_fold[1].tree
+	tree = tree_evaluations.fitted_params_per_fold[1].raw_tree
 	_io2text() do io
 		DecisionTree.print_tree(io, tree; feature_names=names(data))
 	end
@@ -609,7 +606,7 @@ end
 
 # ╔═╡ 368b6fc1-1cf1-47b5-a746-62c5786dc143
 let
-	tree = tree_evaluations.fitted_params_per_fold[2].tree
+	tree = tree_evaluations.fitted_params_per_fold[2].raw_tree
 	_io2text() do io
 		DecisionTree.print_tree(io, tree; feature_names=names(data))
 	end
@@ -627,22 +624,22 @@ end;
 # ╠═╡ show_logs = false
 e2 = let
 	model = StableRulesClassifier
-	hyperparameters = (; max_rules=5, rng=_rng())
+	hyperparameters = (; max_depth=2, max_rules=8, rng=_rng())
 	_evaluate(model, hyperparameters, X, y)
-end;
+end
 
 # ╔═╡ 88a708a7-87e8-4f97-b199-70d25ba91894
 # ╠═╡ show_logs = false
 e3 = let
 	model = StableRulesClassifier
-	hyperparameters = (;  max_rules=25, rng=_rng())
+	hyperparameters = (; max_depth=2, max_rules=25, rng=_rng())
 	_evaluate(model, hyperparameters, X, y)
 end;
 
 # ╔═╡ 86ed4d56-23e6-4b4d-9b55-7067124da27f
 e4 = let
 	model = StableRulesClassifier
-	hyperparameters = (; max_depth=1, rng=_rng())
+	hyperparameters = (; max_depth=1, max_rules=25, rng=_rng())
 	_evaluate(model, hyperparameters, X, y)
 end;
 
@@ -666,42 +663,28 @@ end;
 # ╠═╡ show_logs = false
 e6 = let
 	model = LGBMClassifier
-	hyperparameters = (; )
+	hyperparameters = (;)
+	_evaluate(model, hyperparameters, X, y)
+end;
+
+# ╔═╡ 78ba7c69-10df-49d8-8fda-674a1ab05593
+e7 = let
+	model = LGBMClassifier
+	hyperparameters = (; max_depth=2)
 	_evaluate(model, hyperparameters, X, y)
 end;
 
 # ╔═╡ 622beb62-51ac-4b44-9409-550e5f422fe4
+#hideall
 results = let
-	df = DataFrame(getproperty.([e1, e2, e3, e4, e5, e6], :row))
-	rename!(df, :se => "1.96*SE")
-end
-
-# ╔═╡ a42b5523-b3d6-4170-b1e3-0315ec2b67f8
-# hideall
-let
-	fig = Figure(; resolution=(900, 450))
-	grid = fig[1, 1:2] = GridLayout()
-	
-	yticks = string.(results.Model, results.Hyperparameters)
-	lr = nrow(results)
-	ax1 = Axis(grid[1, 1:6]; yticks=(1:lr, yticks), subtitle="Area under the ROC curve and standard error")
-	ax2 = Axis(grid[1, 7]; subtitle="Interpretability")
-	interpretabilities = reverse(["low", "low", "high", "high", "high", "high"])
-	for i in 1:lr
-		row = results[i, :]
-		lower = row.AUC - row["1.96*SE"]
-		upper = row.AUC + row["1.96*SE"]
-		lines!(ax1, [lower, upper], [i, i]; color=:black)
-		scatter!(ax1, [row.AUC], [i]; color=:black)
-		align = (:left, :center)
-		text!(ax2, interpretabilities[i]; position=(0, i), offset=(-15, 1), align)
+	df = DataFrame(getproperty.([e6, e7, e1, e5, e3, e2, e4], :row))
+	df[!, :Interpretability] = ["Medium", "Medium", "High", "Low", "High", "High", "High"]
+	df[!, :Stability] = ["High", "High", "Low", "High", "High", "High", "High"]
+	df[!, :AUC] = map(df.AUC) do score
+		text = string(score)
+		length(text) < 4 ? text * '0' : text
 	end
-	colgap!(grid, 20)
-	hideydecorations!(ax1; ticklabels=false)
-	hidexdecorations!(ax2)
-	hideydecorations!(ax2)
-	hidespines!(ax2)
-	fig
+	rename!(df, :se => "1.96*SE")
 end
 
 # ╔═╡ Cell order:
@@ -738,9 +721,14 @@ end
 # ╠═8fdc24d9-1f6b-4094-9722-6b5b6c713f12
 # ╠═01b08d44-4b9b-42e2-bb20-f34cb9b407f3
 # ╠═7e1d46b4-5f93-478d-9105-a5b0db1eaf08
+# ╠═ab103b4e-24eb-4575-8c04-ae3fd9ec1673
+# ╠═6ea43d21-1cc0-4bca-8683-dce67f592949
+# ╠═88a708a7-87e8-4f97-b199-70d25ba91894
+# ╠═86ed4d56-23e6-4b4d-9b55-7067124da27f
+# ╠═5d875f9d-a0aa-47b0-8a75-75bb280fa1ba
+# ╠═263ea81f-5fd6-4414-a571-defb1cabab4b
+# ╠═78ba7c69-10df-49d8-8fda-674a1ab05593
 # ╠═622beb62-51ac-4b44-9409-550e5f422fe4
-# ╠═39e073b9-a7ae-47d0-8867-a0d099625625
-# ╠═a42b5523-b3d6-4170-b1e3-0315ec2b67f8
 # ╠═4a4ab7ef-659e-4048-ab16-94ad4cb4328a
 # ╠═16de5518-2a16-40ef-87a5-d2acd514d294
 # ╠═c2650040-f398-4a2e-bfe0-ce139c6ca879
@@ -750,12 +738,12 @@ end
 # ╠═a64dae3c-3b97-4076-98f4-3c9a0e5c0621
 # ╠═923affb5-b4ca-4b50-baa5-af29204d2081
 # ╠═ab5423cd-c8a9-488e-9bb0-bb41e583c2fa
+# ╠═f2fee9a8-7f6f-4213-9046-2f1a8f14a7e6
 # ╠═e6b880e9-e263-4818-81e9-bb4105e5c2c1
 # ╠═7fad8dd5-c0a9-4c45-9663-d40a464bca77
 # ╠═cfd908a0-1ee9-461d-9309-d4ffe738ba8e
 # ╠═e7f396dc-38a7-40f7-9e5b-6fbea9d61789
 # ╠═7c688412-d1b4-492d-bda2-0b9181057d4d
-# ╠═0e0252e7-87a8-49e4-9a48-5612e0ded41b
 # ╠═e1890517-7a44-4814-999d-6af27e2a136a
 # ╠═f833dab6-31d4-4353-a68b-ef0501d606d4
 # ╠═ede038b3-d92e-4208-b8ab-984f3ca1810e
@@ -770,9 +758,3 @@ end
 # ╠═cece10be-736e-4ee1-8c57-89beb0608a92
 # ╠═6a539bb4-f51f-4efa-af48-c43318ed2502
 # ╠═1d08ca81-a18a-4a74-992c-14243d2ea7dc
-# ╠═ab103b4e-24eb-4575-8c04-ae3fd9ec1673
-# ╠═6ea43d21-1cc0-4bca-8683-dce67f592949
-# ╠═88a708a7-87e8-4f97-b199-70d25ba91894
-# ╠═86ed4d56-23e6-4b4d-9b55-7067124da27f
-# ╠═5d875f9d-a0aa-47b0-8a75-75bb280fa1ba
-# ╠═263ea81f-5fd6-4414-a571-defb1cabab4b
