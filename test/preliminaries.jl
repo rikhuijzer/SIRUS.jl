@@ -37,6 +37,7 @@ using MLJBase:
 using MLJDecisionTreeInterface: DecisionTree
 using MLJLinearModels: LinearRegressor
 using MLJTestInterface: MLJTestInterface
+using MLJXGBoostInterface: XGBoostClassifier, XGBoostRegressor
 using LightGBM.MLJInterface: LGBMClassifier, LGBMRegressor
 using Random: shuffle
 using StableRNGs: StableRNG
