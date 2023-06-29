@@ -36,6 +36,7 @@ using MLJBase:
     predict
 using MLJDecisionTreeInterface: DecisionTree
 using MLJLinearModels: LinearRegressor
+using MLJTestInterface: MLJTestInterface
 using LightGBM.MLJInterface: LGBMClassifier, LGBMRegressor
 using Random: shuffle
 using StableRNGs: StableRNG

@@ -274,8 +274,10 @@ function _float(A::CategoricalArray{T}) where T
         throw(ArgumentError(msg))
     end
     if T isa Type{String}
-        msg = "Cannot automatically convert $(typeof(A)) to an array containing `Float`s."
-        throw(ArgumentError(msg))
+        uniques = sort(unique(A))
+        A = collect(0.0:float(length(uniques) - 1))
+        # Workaround for https://github.com/rikhuijzer/SIRUS.jl/issues/24.
+        @info "Converting outcome classes $(uniques) to $(A)."
     end
     return float(A)
 end
