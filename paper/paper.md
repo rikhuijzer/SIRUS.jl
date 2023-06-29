@@ -53,24 +53,25 @@ The dataset contains survival data on patients who had undergone surgery for bre
 
 ```
 StableRules model with 8 rules:
- if X[i, :nodes] < 14.0 then 0.152 else 0.094 +
- if X[i, :nodes] < 8.0 then 0.085 else 0.039 +
- if X[i, :nodes] < 4.0 then 0.077 else 0.044 +
- if X[i, :nodes] < 2.0 then 0.071 else 0.047 +
- if X[i, :nodes] < 1.0 then 0.072 else 0.057 +
- if X[i, :year] < 1960.0 then 0.018 else 0.023 +
- if X[i, :age] < 38.0 then 0.029 else 0.023 +
- if X[i, :age] < 42.0 then 0.052 else 0.043
+ if X[i, :nodes] < 8.0 then 0.156 else 0.031 +
+ if X[i, :nodes] < 14.0 then 0.164 else 0.026 +
+ if X[i, :nodes] < 4.0 then 0.128 else 0.037 +
+ if X[i, :nodes] ≥ 8.0 & X[i, :age] < 38.0 then 0.0 else 0.008 +
+ if X[i, :year] ≥ 1966.0 & X[i, :age] < 42.0 then 0.0 else 0.005 +
+ if X[i, :nodes] < 2.0 then 0.107 else 0.034 +
+ if X[i, :year] ≥ 1966.0 & X[i, :age] < 38.0 then 0.0 else 0.001 +
+ if X[i, :year] < 1959.0 & X[i, :nodes] ≥ 2.0 then 0.0 else 0.003
 and 2 classes: [0.0, 1.0].
-Note: showing only the probability for class 1.0 since class 0.0 has 
+Note: showing only the probability for class 1.0 since class 0.0 has
       probability 1 - p.
 ```
 
-This shows that the model contains 8 rules. The first rule, for example, can be explained as: _If the number of detected auxillary nodes is lower than 14, then take 0.152, otherwise take 0.094._
+This shows that the model contains 8 rules. The first rule, for example, can be interpreted as:
+_If the number of detected auxillary nodes is lower than 8, then take 0.156, otherwise take 0.031._
 
 This is done for all 8 rules and the total score is summed to get a prediction.
-In essence, the first rule says that if there are less than 14 auxillary nodes detected, then the patient will most likely survive (`class == 1.0`).
-In essence, the model states that if there are many auxillary nodes detected, then it's (unfortunately) less likely that the patient will survive.
+In essence, the first rule says that if there are less than 8 auxillary nodes detected, then the patient will most likely survive (`class == 1.0`).
+In essence, the model states that if there are many auxillary nodes detected, then it is (unfortunately) less likely that the patient will survive.
 
 This model is fully interpretable because there are few rules which can all be interpreted in isolation reasonably well.
 Random forests, in contrasts, consist of hundreds to thousands of trees, which are not interpretable due to the large amount of trees.
@@ -97,27 +98,58 @@ The SIRUS algorithm has solved the instability of random forests by "stabilizing
 
 # Predictive Performance
 
-# Example
+The model is based on random forests and therefore has excellent performance in settings where the number of variables is comparatively large to the number of datapoints (Biau and Scornet).
+The algorithm converts a large number of trees to a small number of rules to improve interpretability.
+This tradeoff comes at a small performance cost.
+For example, the cross-validated scores on the Haberman dataset are listed in Table \ref{tab:perf}.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|p{9cm}|c|c|c|}
+\hline
+& \textbf{AUC \pm} & \textbf{Interpret-} \\
+\textbf{Model} & \textbf{1.96\*SE} & \textbf{ability} \\
+\hline
+\texttt{LGBMClassifier()} & $0.71 \pm 0.06$ & Medium \\
+\texttt{LGBMClassifier(; max\_depth=2)} & $0.67 \pm 0.06$ & Medium \\
+\texttt{DecisionTreeClassifier(; max\_depth=2)} & $0.63 \pm 0.06$ & High \\
+\texttt{StableRulesClassifier(; max\_depth=2)} & $\mathbf{0.71 \pm 0.05}$ & \textbf{High} \\
+\texttt{StableRulesClassifier(; max\_depth=2, max\_rules=25)} & $\mathbf{0.70 \pm 0.09}$ & \textbf{High} \\
+\texttt{StableRulesClassifier(; max\_depth=2, max\_rules=10)} & $\mathbf{0.67 \pm 0.07}$ & \textbf{High} \\
+\texttt{StableRulesClassifier(; max\_depth=1, max\_rules=25)} & $\mathbf{0.67 \pm 0.07}$ & \textbf{High} \\
+\hline
+\end{tabular}
+\caption{Predictive performance in terms of Area Under the Curve (AUC) score for the LightGBM, decision tree, and SIRUS models.}
+\label{tab:perf}
+\end{table}
+
+This shows that the SIRUS algorithm performs very comparable to the state-of-the-art LGBM classifier by Microsoft.
+The tree depths are set to at most 2 because rules which belong to a depth of 3 will (almost) never show up in the final model.
+
+# Code Example
 
 The model can be used via the `MLJ.jl` [@blaom2020mlj] machine learning interface.
-For example, this is the code used to fit the model on the full Haberman dataset:
-
+For example, this is the code used to fit the model on the full Haberman dataset: <br>
+\vspace{2mm}
 ```julia
-model = StableRulesClassifier(; max_depth=1, max_rules=8)
+model = StableRulesClassifier(; max_depth=2, max_rules=8)
 mach = machine(model, X, y)
 fit!(mach)
 ```
-
-and model performance was estimated via cross-validation (CV):
-
+\vspace{2mm}
+and model performance was estimated via cross-validation (`CV`):
+\vspace{2mm}
 ```julia
 resampling = CV(; nfolds=10, shuffle=true)
 evaluate(model, X, y; resampling, measure=auc)
 ```
 
-# Acknowledgements
+# Funding
 
 This research was supported by the Ministry of Defence, the Netherlands.
+
+# Acknowledgements
+
 We thank Clément Bénard for his help in re-implementing the SIRUS algorithm.
 Furthermore, we thank Anthony Bloam and Dávid Hanák (Cursor Insight) for respectively doing code reviews and fixing a critical bug.
 
