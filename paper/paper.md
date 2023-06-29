@@ -39,11 +39,12 @@ The algorithm does this by fitting a large number of trees.
 However, it can be difficult to fully interpret the model predictions since that would require inspecting all trees.
 Visualization techniques, such as SHAP [@lundberg2017unified], alleviate this problem but do not fully solve it.
 SHAP does allow for inspecting feature importances, but does not allow each prediction to be reproduced from the interpretable information alone.
-This may lead to unsafe or unreliable predictions [@doshi2017towards, @barredo2020explainable].
+This may lead to unsafe or unreliable predictions [@doshi2017towards; @barredo2020explainable].
 The SIRUS algorithm was created to solve this problem and does so by first restricting the split points in the random forest algorithm to a stable subset of points, and by then extracting a small and interpretable rule set [@benard2021interpretable].
-This original algorithm was implemented in C++ and R, which makes it hard to read.
-A pure Julia implementation allows the results to be reproduced and makes the code easier to read.
-In turn, this could allow others to research further algorithmic improvements or to port the algorithm to production environments.
+However, the original algorithm was implemented in C++ and R, which makes it hard to inspect and extend.
+A pure Julia implementation allows researchers to investigate further algorithmic improvements.
+Furthermore, the original implementation was covered by a copyleft license meaning that copies are required to be made freely available.
+Instead, the Julia implementation is covered by the permissive MIT license, so that it can easily be ported to production environments.
 
 # Mathematics
 
