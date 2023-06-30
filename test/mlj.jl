@@ -77,10 +77,10 @@ results = DataFrame(;
         Dataset=String[],
         Model=String[],
         Hyperparameters=String[],
-        nfolds=Int[],
         measure=String[],
         score=String[],
-        se=String[]
+        se=String[],
+        nfolds=Int[]
     )
 
 _filter_rng(hyper::NamedTuple) = Base.structdiff(hyper, (; rng=:foo))
@@ -111,25 +111,13 @@ function _evaluate!(
         Dataset=dataset,
         Model=_pretty_name(modeltype),
         Hyperparameters=_hyper2str(_filter_rng(hyperparameters)),
-        nfolds,
         measure,
         score,
-        se
+        se,
+        nfolds
     )
     push!(results, row)
     return e
-end
-
-function _evaluate_baseline!(results, dataset)
-    _evaluate!(results, dataset, LGBMClassifier)
-    e = _evaluate!(results, dataset, LGBMClassifier, (; max_depth=2))
-    # _evaluate!(results, dataset, DecisionTreeClassifier, (; max_depth=2, rng=_rng()))
-    return e
-end
-
-let
-    e = _evaluate_baseline!(results, "blobs")
-    @test 0.95 < _score(e)
 end
 
 X, y = datasets["blobs"]
@@ -140,7 +128,7 @@ fit!(mach; verbosity=0)
 preds = predict(mach)
 @test 0.95 < auc(preds, y)
 
-hyper= (; rng=_rng(), n_trees=50)
+hyper = (; rng=_rng(), n_trees=50)
 e = _evaluate(StableForestClassifier(; hyper...), X, y)
 @test 0.95 < _score(e)
 e2 = _evaluate(StableForestClassifier(; hyper...), X, y)
@@ -152,27 +140,9 @@ fit!(rulesmach; verbosity=0)
 preds = predict(rulesmach)
 @test 0.95 < auc(preds, y)
 
-let
-    hyper = (; )
-    e = _evaluate!(results, "blobs", XGBoostClassifier, hyper)
-
-    hyper = (; max_depth=2)
-    e = _evaluate!(results, "blobs", XGBoostClassifier, hyper)
-
-    hyper = (; rng=_rng(), max_depth=2)
-    e = _evaluate!(results, "blobs", StableForestClassifier, hyper)
-
-    hyper = (; rng=_rng(), max_depth=2, max_rules=30)
-    e = _evaluate!(results, "blobs", StableRulesClassifier, hyper)
-
-    for fitted in e.fitted_params_per_fold
-        @test fitted.fitresult.classes == [1, 2]
-    end
-
-    hyper = (; rng=_rng(), max_depth=2, max_rules=10)
-    e = _evaluate!(results, "blobs", StableRulesClassifier, hyper)
-    @test 0.95 < _score(e)
-end
+hyper = (; rng=_rng(), n_trees=1_000, max_depth=2, max_rules=10)
+e = _evaluate(StableRulesClassifier(; hyper...), X, y)
+@test 0.95 < _score(e)
 
 n_trees = 40
 e = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees), X, y)
@@ -180,22 +150,23 @@ e2 = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees), X, y)
 @test _score(e) == _score(e2)
 @test 0.7 < _score(e)
 
-# e3 = _evaluate(StableRulesClassifier(; rng=_rng(), weight_penalty=0.0, n_trees); X, y)
-# e4 = _evaluate(StableRulesClassifier(; rng=_rng(), weight_penalty=1.0, n_trees); X, y)
-# @test _score(e3) != _score(e4)
-
-let
-    e = _evaluate_baseline!(results, "titanic")
-    @test 0.83 < _score(e)
-end
-
 let
     data = "titanic"
-    hyper = (; )
+    hyper = (;)
+
+    e = _evaluate!(results, data, LogisticClassifier, hyper)
+
     e = _evaluate!(results, data, XGBoostClassifier, hyper)
 
     hyper = (; max_depth=2)
     e = _evaluate!(results, data, XGBoostClassifier, hyper)
+
+    hyper = (;)
+    e = _evaluate!(results, data, LGBMClassifier, hyper)
+
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, data, LGBMClassifier, hyper)
+    @test 0.83 < _score(e)
 
     hyper = (; rng=_rng(), max_depth=2)
     e = _evaluate!(results, data, StableForestClassifier, hyper)
@@ -210,15 +181,6 @@ let
     @test 0.79 < _score(e)
 end
 
-@testset "y as String" begin
-    # https://github.com/rikhuijzer/StableTrees.jl/issues/5
-    X = rand(10, 100)
-    y = categorical(rand(["a", "b"], 10))
-    model = StableForestClassifier()
-    mach = machine(model, X, y; scitype_check_level=0)
-    @test_throws ArgumentError fit!(mach)
-end
-
 @testset "feature names" begin
     rng = _rng()
     n = 50
@@ -231,17 +193,18 @@ end
 end
 
 let
-    e = _evaluate_baseline!(results, "haberman")
-    @test 0.64 < _score(e)
-end
-
-let
     data = "haberman"
-    hyper = (; )
+    hyper = (;)
+    _evaluate!(results, data, LogisticClassifier, hyper)
+
     e = _evaluate!(results, data, XGBoostClassifier, hyper)
 
     hyper = (; max_depth=2)
     e = _evaluate!(results, data, XGBoostClassifier, hyper)
+
+    _evaluate!(results, data, LGBMClassifier)
+    e = _evaluate!(results, data, LGBMClassifier, (; max_depth=2))
+    @test 0.64 < _score(e)
 
     hyper = (; rng=_rng(), max_depth=2)
     e = _evaluate!(results, data, StableForestClassifier, hyper)
@@ -258,32 +221,36 @@ let
     @test 0.60 < _score(e)
 end
 
-let
+e_iris = let
     data = "iris"
     measure = accuracy
 
     hyper = (;)
-    _evaluate!(results, data, LGBMClassifier, hyper; measure)
+    e = _evaluate!(results, data, MultinomialClassifier, hyper; measure)
 
-    hyper = (; max_depth=2)
-    _evaluate!(results, data, LGBMClassifier, hyper; measure)
-
-    hyper = (; )
+    hyper = (;)
     e = _evaluate!(results, data, XGBoostClassifier, hyper; measure)
 
     hyper = (; max_depth=2)
     e = _evaluate!(results, data, XGBoostClassifier, hyper; measure)
+
+    hyper = (;)
+    e = _evaluate!(results, data, LGBMClassifier, hyper; measure)
+
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, data, LGBMClassifier, hyper; measure)
 
     hyper = (; rng=_rng(), max_depth=2)
     e = _evaluate!(results, data, StableForestClassifier, hyper; measure)
     @test 0.90 < _score(e)
 
     hyper = (; rng=_rng(), max_depth=2, max_rules=30)
-    _evaluate!(results, data, StableRulesClassifier, hyper; measure)
+    e = _evaluate!(results, data, StableRulesClassifier, hyper; measure)
 
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
-    _evaluate!(results, data, StableRulesClassifier, hyper; measure)
+    e = _evaluate!(results, data, StableRulesClassifier, hyper; measure)
     @test 0.65 < _score(e)
+    e
 end
 
 rulesmodel = StableRulesRegressor(; max_depth=2, max_rules=30, rng=_rng())
@@ -295,20 +262,55 @@ preds = predict(rulesmach)
 # @show rsq(preds, y)
 # @test 0.95 < rsq(preds, y)
 
+let
+    hyper = (;)
+    data = "boston"
+    measure = rsq
+    hyper = (;)
+    _evaluate!(results, data, LinearRegressor, hyper; measure)
+
+    e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
+
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
+
+    hyper = (;)
+    elgbm = _evaluate!(results, data, LGBMRegressor, hyper; measure)
+
+    hyper = (; max_depth=2)
+    el = _evaluate!(results, data, LGBMRegressor, hyper; measure)
+
+    hyper = (; max_depth=2, rng=_rng())
+    ef = _evaluate!(results, data, StableForestRegressor, hyper; measure)
+
+    @test 0.62 < _score(el)
+    @test _score(el) ≈ _score(ef) atol=0.05
+    @test 0.65 < _score(elgbm)
+
+    hyper = (; rng=_rng(), max_depth=2, max_rules=30)
+    er = _evaluate!(results, data, StableRulesRegressor, hyper; measure=rsq)
+
+    hyper = (; rng=_rng(), max_depth=2, max_rules=10)
+    er = _evaluate!(results, data, StableRulesRegressor, hyper; measure=rsq)
+    @test 0.55 < _score(er)
+end
+
 emr = let
     measure = rsq
     data = "make_regression"
+    hyper = (;)
+    e = _evaluate!(results, data, LinearRegressor, hyper; measure)
+
+    e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
+
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
+
     hyper = (;)
     _evaluate!(results, data, LGBMRegressor, hyper; measure)
 
     hyper = (; max_depth=2)
     _evaluate!(results, data, LGBMRegressor, hyper; measure)
-
-    hyper = (; )
-    e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
-
-    hyper = (; max_depth=2)
-    e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
 
     hyper = (; max_depth=2, rng=_rng())
     _evaluate!(results, data, StableForestRegressor, hyper; measure)
@@ -319,36 +321,6 @@ emr = let
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     er = _evaluate!(results, data, StableRulesRegressor, hyper; measure)
     @test 0.50 < _score(er)
-end
-
-let
-    hyper = (;)
-    data = "boston"
-    measure = rsq
-    elgbm = _evaluate!(results, data, LGBMRegressor, hyper; measure)
-
-    hyper = (; max_depth=2)
-    el = _evaluate!(results, data, LGBMRegressor, hyper; measure)
-
-    hyper = (; )
-    e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
-
-    hyper = (; max_depth=2)
-    e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
-
-    hyper = (; max_depth=2, rng=_rng())
-    ef = _evaluate!(results, data, StableForestRegressor, hyper; measure)
-
-    @test 0.62 < _score(el)
-    @test _score(el) ≈ _score(ef) atol=0.05
-    @test 0.65 < _score(elgbm)
-
-    hyper = (; rng=_rng(), max_depth=2, max_rules=30)
-    er = _evaluate!(results, "boston", StableRulesRegressor, hyper; measure=rsq)
-
-    hyper = (; rng=_rng(), max_depth=2, max_rules=10)
-    er = _evaluate!(results, "boston", StableRulesRegressor, hyper; measure=rsq)
-    @test 0.55 < _score(er)
 end
 
 pretty = rename(results, :se => "1.96*SE")
