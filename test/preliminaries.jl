@@ -35,7 +35,7 @@ using MLJBase:
     rsq,
     predict
 using MLJDecisionTreeInterface: DecisionTree
-using MLJLinearModels: LinearRegressor
+using MLJLinearModels: LogisticClassifier, LinearRegressor, MultinomialClassifier
 using MLJTestInterface: MLJTestInterface
 using MLJXGBoostInterface: XGBoostClassifier, XGBoostRegressor
 using LightGBM.MLJInterface: LGBMClassifier, LGBMRegressor
