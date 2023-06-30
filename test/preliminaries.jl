@@ -19,6 +19,7 @@ using DataFrames:
     rename,
     select
 using DecisionTree: DecisionTreeClassifier
+using LightGBM.MLJInterface: LGBMClassifier, LGBMRegressor
 using MLJBase:
     CV,
     MLJBase,
@@ -38,7 +39,6 @@ using MLJDecisionTreeInterface: DecisionTree
 using MLJLinearModels: LogisticClassifier, LinearRegressor, MultinomialClassifier
 using MLJTestInterface: MLJTestInterface
 using MLJXGBoostInterface: XGBoostClassifier, XGBoostRegressor
-using LightGBM.MLJInterface: LGBMClassifier, LGBMRegressor
 using Random: shuffle
 using StableRNGs: StableRNG
 using SIRUS
