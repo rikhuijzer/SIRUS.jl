@@ -25,7 +25,7 @@ bibliography: paper.bib
 
 # Summary
 
-`SIRUS.jl` is a pure Julia implementation of the original Stable and Interpretable RUle Sets (SIRUS) algorithm.
+[`SIRUS.jl`](https://github.com/rikhuijzer/SIRUS.jl) is a pure Julia implementation of the original Stable and Interpretable RUle Sets (SIRUS) algorithm.
 The SIRUS algorithm is a fully interpretable version of random forests, that is, it reduces thousands of trees in the forest to a tens of interpretable rules.
 With our Julia implementation, we aimed to reproduce the original C++ and R implementation in a high-level language to verify the algorithm as well as making the code easier to read.
 Furthermore, we made the code available under the permissive MIT license.
@@ -99,26 +99,30 @@ The model is based on random forests and therefore has good performance in setti
 The algorithm converts a large number of trees to a small number of rules to improve interpretability.
 This tradeoff between model complexity and interpretability comes at a small performance cost.
 
-To show the performance of SIRUS, we have compared it to a linear model and two state-of-the-art boosting algorithms, namely XGBoost [@chen2016xgboost] and LightGBM [@ke2017lightgbm}.
-We have used 10-fold cross-validation for all evaluations.
-For example, the cross-validated scores on the Haberman dataset are listed in Table \ref{tab:perf}.
+To evaluate the performance of SIRUS, we have compared it to a linear model, a decision tree [@sadeghi2022decisiontree], and the XGBoost [@chen2016xgboost] gradient boosting algorithm.
+We have used SIRUS.jl version 1.2.1, 10-fold cross-validation and present variability as $1.96 * \text{standard error}$ for all evaluations with respectively the following datasets and measures:
+Titanic [@eaton1995titanic] with Area Under the Curve (AUC),
+Breast Cancer Wisconsin [@wolberg1995breast] with accuracy,
+Haberman's Survival Dataset [@haberman1999survival] with AUC,
+Iris [@fisher1936use] with accuracy,
+and Boston Housing [@harrison1978hedonic] with $\text{R}^2$; see Table \ref{tab:perf}.
 
 \begin{table}[h!]
+\small
 \centering
-\begin{tabular}{|l|l|c|c|c|}
+\begin{tabular}{|l|l|c|c|c|c|c|c|}
 \hline
-& \textbf{Max} & & \\
-\textbf{Model} & \textbf{depth} & \textbf{Titanic} & \textbf{Haberman} \\
+& \textbf{Max} & & \textbf{Breast} & & & \textbf{Boston} \\
+\textbf{Model} & \textbf{depth} & \textbf{Titanic} & \textbf{Cancer} & \textbf{Haberman} & \textbf{Iris} & \textbf{Housing} \\
 \hline
-Linear & & $0.84 \pm 0.02$ & $0.69 \pm 0.06$ \\
-XGBoost & & $0.86 \pm 0.03$ & $0.65 \pm 0.04$ \\
-XGBoost & 2 & $0.87 \pm 0.02$ & $0.63 \pm 0.04$ \\
-LightGBM & & $0.87 \pm 0.03$ & $0.71 \pm 0.06$ \\
-LightGBM & 2 & $0.85 \pm 0.02$ & $0.67 \pm 0.05$ \\
-\textbf{SIRUS} & 2 & $\mathbf{0.82 \pm 0.02}$ & $\mathbf{0.67 \pm 0.07}$ \\
+Linear & & $0.84 \pm 0.02$ & $0.93 \pm 0.03$ & $0.69 \pm 0.06$ & $0.97 \pm 0.03$ & $0.70 \pm 0.05$ \\
+Decision Tree & & $0.75 \pm 0.05$ & $0.92 \pm 0.02$ & $0.54 \pm 0.06$ & $0.95 \pm 0.03$ & $0.71 \pm 0.11$ \\
+XGBoost & & $0.86 \pm 0.03$ & $0.96 \pm 0.02$ & $0.65 \pm 0.04$ & $0.95 \pm 0.04$ & $0.88 \pm 0.06$ \\
+XGBoost & 2 & $0.87 \pm 0.02$ & $0.96 \pm 0.02$ & $0.63 \pm 0.04$ & $0.94 \pm 0.04$ & $0.87 \pm 0.04$ \\
+SIRUS & 2 & $0.82 \pm 0.02$ & $0.93 \pm 0.02$ & $0.67 \pm 0.07$ & $0.71 \pm 0.08$ & $0.63 \pm 0.10$ \\
 \hline
 \end{tabular}
-\caption{Predictive performance in terms of Area Under the Curve (AUC) score for the LightGBM, decision tree, and SIRUS models.}
+\caption{Predictive performance estimates over 10-fold cross-validation for a linear model, decision tree, XGBoost, and SIRUS on various public datasets.}
 \label{tab:perf}
 \end{table}
 
@@ -150,6 +154,6 @@ This research was supported by the Ministry of Defence, the Netherlands.
 # Acknowledgements
 
 We thank Clément Bénard for his help in re-implementing the SIRUS algorithm.
-Furthermore, we thank Anthony Bloam and Dávid Hanák (Cursor Insight) for respectively doing code reviews and fixing a critical bug.
+Furthermore, we thank Anthony Bloam and Dávid Hanák (Cursor Insight) for respectively doing code reviews and finding a critical bug.
 
 # References
