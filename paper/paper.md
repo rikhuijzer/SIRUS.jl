@@ -41,6 +41,7 @@ Linear models tend to perform poorly when the data does not satisfy suitable dis
 Instead, random forests [@breiman2001random] often outperform linear models and decision trees, but are not fully interpretable.
 At the same time, visualization techniques, such as SHAP [@lundberg2017unified], allow inspection of feature importances, but do not provide enough information to reproduce the predictions made by the model.
 The SIRUS algorithm solves these issues by first restricting the split points in the random forest algorithm to a stable subset of points, and by then extracting a small and interpretable rule set [@benard2021interpretable].
+Furthermore, these rules are distribution-free and can describe complex relations in data.
 However, the original SIRUS algorithm was implemented in C++ and R, which makes it hard to inspect and extend due to the combination of two languages.
 An implementation in one high-level language allows verification of the algorithm and allows researchers to investigate further algorithmic improvements.
 Furthermore, the original algorithm was covered by a copyleft license meaning that copies are required to be made freely available.
@@ -99,7 +100,7 @@ The model is based on random forests and therefore has good performance in setti
 The algorithm converts a large number of trees to a small number of rules to improve interpretability.
 This tradeoff between model complexity and interpretability comes at a small performance cost.
 
-To evaluate the performance of SIRUS, we have compared it to a linear model, a decision tree [@sadeghi2022decisiontree], and the XGBoost [@chen2016xgboost] gradient boosting algorithm.
+At the time of writing, we have compared SIRUS to a linear model, a decision tree [@sadeghi2022decisiontree], and the XGBoost [@chen2016xgboost] gradient boosting algorithm.
 We have used SIRUS.jl version 1.2.1, 10-fold cross-validation and present variability as $1.96 * \text{standard error}$ for all evaluations with respectively the following datasets and measures:
 Titanic [@eaton1995titanic] with Area Under the Curve (AUC),
 Breast Cancer Wisconsin [@wolberg1995breast] with accuracy,
@@ -126,8 +127,11 @@ SIRUS & 2 & $0.82 \pm 0.02$ & $0.93 \pm 0.02$ & $0.67 \pm 0.07$ & $0.71 \pm 0.08
 \label{tab:perf}
 \end{table}
 
-This shows that the SIRUS algorithm performs very comparable to the state-of-the-art LGBM classifier by Microsoft.
-The tree depths are set to at most 2 because rules which belong to a depth of 3 will (almost) never show up in the final model.
+Here, the tree depths are set to at most 2 because rules which belong to a depth of 3 will (almost) never show up in the final model, this is identical to the maximum depth in the original implementation [@benard2021interpretable].
+Table \ref{tab:perf} shows that the SIRUS algorithm outperforms the decision tree on the Titanic and Haberman datasets.
+Furthermore, the performance is similar to the linear model and XGBoost on the Titanic, Breast Cancer, Haberman datasets.
+For the Iris and Boston Housing datasets, the performance was worse than the other models.
+Further work is needed to find the root cause for these low scores.
 
 # Code Example
 
