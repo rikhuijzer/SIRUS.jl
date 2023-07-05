@@ -48,6 +48,30 @@ using Test
 const S = SIRUS
 _rng(seed::Int=1) = StableRNG(seed)
 
+if !haskey(ENV, "REGISTERED_CANCER")
+    name = "Cancer"
+    message = "Wisconsin Diagnostic Breast Cancer (WDBC) dataset"
+    remote_path = "https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data"
+    checksum = "d606af411f3e5be8a317a5a8b652b425aaf0ff38ca683d5327ffff94c3695f4a"
+    DataDeps.register(DataDep(name, message, remote_path, checksum))
+    ENV["REGISTERED_CANCER"] = "true"
+end
+
+function cancer()
+    dir = datadep"Cancer"
+    path = joinpath(dir, "wdbc.data")
+    df = CSV.read(path, DataFrame; header=false)
+    DataFrames.select!(df, Not(1))
+    for col in names(df)
+        if eltype(df[!, col]) isa AbstractString
+            df[!, col] = tryparse.(Float64, df[:, col])
+        end
+    end
+    DataFrames.rename!(df, :Column2 => :Diagnosis)
+    df[!, :Diagnosis] = categorical([x == "B" ? 1.0 : 0.0 for x in df.Diagnosis])
+    return df
+end
+
 if !haskey(ENV, "REGISTERED_HABERMAN")
     name = "Haberman"
     message = "Slightly modified copy of Haberman's Survival Data Set"

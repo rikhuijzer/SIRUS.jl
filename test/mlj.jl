@@ -17,6 +17,11 @@ datasets = Dict{String,Tuple}(
         X = MLJBase.table(MLJBase.matrix(sub[:, Not(:y)]))
         (X, sub.y)
     end,
+    "cancer" => let
+        df = cancer()
+        X = MLJBase.table(MLJBase.matrix(df[:, Not(:Diagnosis)]))
+        (X, df.Diagnosis)
+    end,
     "haberman" => let
         df = haberman()
         X = MLJBase.table(MLJBase.matrix(df[:, Not(:survival)]))
@@ -186,6 +191,32 @@ end
     mach = machine(model, X, y)
     fit!(mach)
     @test contains(repr(mach.fitresult), "AAB")
+end
+
+let
+    data = "cancer"
+    measure = accuracy
+
+    hyper = (;)
+    e = _evaluate!(results, data, MultinomialClassifier, hyper; measure)
+
+    hyper = (;)
+    e = _evaluate!(results, data, XGBoostClassifier, hyper; measure)
+
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, data, XGBoostClassifier, hyper; measure)
+
+    hyper = (;)
+    e = _evaluate!(results, data, DecisionTreeClassifier, hyper; measure)
+
+    hyper = (; rng=_rng(), max_depth=2)
+    e = _evaluate!(results, data, StableForestClassifier, hyper; measure)
+
+    hyper = (; rng=_rng(), max_depth=2, max_rules=30)
+    e = _evaluate!(results, data, StableRulesClassifier, hyper; measure)
+
+    hyper = (; rng=_rng(), max_depth=2, max_rules=10)
+    e = _evaluate!(results, data, StableRulesClassifier, hyper; measure)
 end
 
 let
