@@ -18,8 +18,7 @@ using DataFrames:
     rename!,
     rename,
     select
-using DecisionTree: DecisionTreeClassifier
-using LightGBM.MLJInterface: LGBMClassifier, LGBMRegressor
+using DecisionTree: DecisionTree
 using MLJBase:
     CV,
     MLJBase,
@@ -35,7 +34,7 @@ using MLJBase:
     make_regression,
     rsq,
     predict
-using MLJDecisionTreeInterface: DecisionTree
+using MLJDecisionTreeInterface: DecisionTreeClassifier, DecisionTreeRegressor
 using MLJLinearModels: LogisticClassifier, LinearRegressor, MultinomialClassifier
 using MLJTestInterface: MLJTestInterface
 using MLJXGBoostInterface: XGBoostClassifier, XGBoostRegressor

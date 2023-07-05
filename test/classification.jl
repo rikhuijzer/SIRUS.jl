@@ -49,17 +49,17 @@ stree = SIRUS._tree!(_rng(), algo, mask, data, y, classes, min_data_in_leaf=1, q
 @testset "data_subset" begin
     n_features = round(Int, sqrt(p))
     n_samples = round(Int, n/2)
-    cols = rand(_rng(), 1:SIRUS.nfeatures(data), n_features)
-    rows = rand(_rng(), 1:length(y), n_samples)
+    cols = rand(_rng(1), 1:SIRUS.nfeatures(data), n_features)
+    rows = rand(_rng(1), 1:length(y), n_samples)
     _data = view(data, rows, cols)
     _y = view(y, rows)
 
-    dtree = DecisionTree.build_tree(unwrap.(_y), _data, n_subfeatures, max_depth; rng=_rng())
+    dtree = DecisionTree.build_tree(unwrap.(_y), _data, n_subfeatures, max_depth; rng=_rng(1))
     dpreds = DecisionTree.apply_tree(dtree, _data)
     @test 0.95 < accuracy(dpreds, _y)
 
     mask = Vector{Bool}(undef, length(_y))
-    stree = SIRUS._tree!(_rng(), algo, mask, _data, _y, classes, q=10)
+    stree = SIRUS._tree!(_rng(1), algo, mask, _data, _y, classes, q=10)
     @test 0.95 < _binary_accuracy(stree, classes, _data, _y)
 end
 

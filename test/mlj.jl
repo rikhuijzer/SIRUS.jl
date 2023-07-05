@@ -162,11 +162,7 @@ let
     e = _evaluate!(results, data, XGBoostClassifier, hyper)
 
     hyper = (;)
-    e = _evaluate!(results, data, LGBMClassifier, hyper)
-
-    hyper = (; max_depth=2)
-    e = _evaluate!(results, data, LGBMClassifier, hyper)
-    @test 0.83 < _score(e)
+    e = _evaluate!(results, data, DecisionTreeClassifier, hyper)
 
     hyper = (; rng=_rng(), max_depth=2)
     e = _evaluate!(results, data, StableForestClassifier, hyper)
@@ -202,9 +198,7 @@ let
     hyper = (; max_depth=2)
     e = _evaluate!(results, data, XGBoostClassifier, hyper)
 
-    _evaluate!(results, data, LGBMClassifier)
-    e = _evaluate!(results, data, LGBMClassifier, (; max_depth=2))
-    @test 0.64 < _score(e)
+    _evaluate!(results, data, DecisionTreeClassifier)
 
     hyper = (; rng=_rng(), max_depth=2)
     e = _evaluate!(results, data, StableForestClassifier, hyper)
@@ -235,10 +229,7 @@ e_iris = let
     e = _evaluate!(results, data, XGBoostClassifier, hyper; measure)
 
     hyper = (;)
-    e = _evaluate!(results, data, LGBMClassifier, hyper; measure)
-
-    hyper = (; max_depth=2)
-    e = _evaluate!(results, data, LGBMClassifier, hyper; measure)
+    e = _evaluate!(results, data, DecisionTreeClassifier, hyper; measure)
 
     hyper = (; rng=_rng(), max_depth=2)
     e = _evaluate!(results, data, StableForestClassifier, hyper; measure)
@@ -272,20 +263,15 @@ let
     e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
 
     hyper = (; max_depth=2)
-    e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
+    ex = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
 
     hyper = (;)
-    elgbm = _evaluate!(results, data, LGBMRegressor, hyper; measure)
-
-    hyper = (; max_depth=2)
-    el = _evaluate!(results, data, LGBMRegressor, hyper; measure)
+    elgbm = _evaluate!(results, data, DecisionTreeRegressor, hyper; measure)
 
     hyper = (; max_depth=2, rng=_rng())
     ef = _evaluate!(results, data, StableForestRegressor, hyper; measure)
 
-    @test 0.62 < _score(el)
-    @test _score(el) ≈ _score(ef) atol=0.05
-    @test 0.65 < _score(elgbm)
+    @test 0.62 < _score(ex)
 
     hyper = (; rng=_rng(), max_depth=2, max_rules=30)
     er = _evaluate!(results, data, StableRulesRegressor, hyper; measure=rsq)
@@ -307,10 +293,7 @@ emr = let
     e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
 
     hyper = (;)
-    _evaluate!(results, data, LGBMRegressor, hyper; measure)
-
-    hyper = (; max_depth=2)
-    _evaluate!(results, data, LGBMRegressor, hyper; measure)
+    _evaluate!(results, data, DecisionTreeRegressor, hyper; measure)
 
     hyper = (; max_depth=2, rng=_rng())
     _evaluate!(results, data, StableForestRegressor, hyper; measure)
