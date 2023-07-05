@@ -8,12 +8,12 @@ authors:
   - name: 'Frank Blaauw'
     affiliation: '2'
     orcid: '0000-0002-6588-5079'
-  - name: 'Ruud J.R. den Hartigh'
-    affiliation: '1'
-    orcid: '0000-0002-0094-8307'
   - name: 'Peter de Jonge'
     affiliation: '1'
     orcid: '0000-0002-0866-6929'
+  - name: 'Ruud J.R. den Hartigh'
+    affiliation: '1'
+    orcid: '0000-0002-0094-8307'
 affiliations:
  - name: University of Groningen, Groningen, the Netherlands
    index: 1
@@ -26,25 +26,25 @@ bibliography: paper.bib
 # Summary
 
 `SIRUS.jl` is a pure Julia implementation of the original Stable and Interpretable RUle Sets (SIRUS) algorithm.
-The SIRUS algorithm is a fully interpretable version of random forests, that is, it reduces the large amount of trees in the forest to a small amount of interpretable rules.
+The SIRUS algorithm is a fully interpretable version of random forests, that is, it reduces thousands of trees in the forest to a tens of interpretable rules.
 With our Julia implementation, we aimed to reproduce the original C++ and R implementation in a high-level language to verify the algorithm as well as making the code easier to read.
 Furthermore, we made the code available under the permissive MIT license.
-In turn, this allows others to research the algorithm further or easily port it to production environments.
+In turn, this allows others to research the algorithm further or easily port it to production systems.
 
 # Statement of need
 
-Due to the succesful applications of neural networks in various domains, there has been an paradigm shift within the field of machine learning towards the use of non-interpretable models, also known as "black box" models.
-This is appropriate for low stakes domains such as spam detection and product recommendations, but can be problematic in high stakes domains where model decisions have a real-world impact on individuals.
+Many of the modern day machine learning models are non-interpretable models, also known as _black box_ models.
+These models can be problematic in high stakes domains where model decisions have real-world impact on individuals.
 In such situations, black box models may lead to unsafe or unreliable predictions [@doshi2017towards; @barredo2020explainable].
 However, the set of fully interpretable models is often limited to linear models and decision trees.
-Linear models tend to perform poorly when the data does not satisfy suitable distributions and decision trees perform poorly compared to random forests.
-Random forests [@breiman2001random], often outperform linear models and random forests, but are not fully interpretable.
-Visualization techniques, such as SHAP [@lundberg2017unified], allow inspection of feature importances, but do not provide enough information to reproduce the predictions made by the model.
+Linear models tend to perform poorly when the data does not satisfy suitable distributions and decision trees perform poorly compared to random forests [@james2013introduction].
+Instead, random forests [@breiman2001random] often outperform linear models and decision trees, but are not fully interpretable.
+At the same time, visualization techniques, such as SHAP [@lundberg2017unified], allow inspection of feature importances, but do not provide enough information to reproduce the predictions made by the model.
 The SIRUS algorithm solves these issues by first restricting the split points in the random forest algorithm to a stable subset of points, and by then extracting a small and interpretable rule set [@benard2021interpretable].
-However, the original SIRUS algorithm was implemented in C++ and R, which makes it hard to inspect and extend.
+However, the original SIRUS algorithm was implemented in C++ and R, which makes it hard to inspect and extend due to the combination of two languages.
 An implementation in one high-level language allows verification of the algorithm and allows researchers to investigate further algorithmic improvements.
 Furthermore, the original algorithm was covered by a copyleft license meaning that copies are required to be made freely available.
-A more permissive license makes it easier to port the algorithm to other languages or move it to production environments.
+A more permissive license makes it easier to port the code to other languages or production systems.
 
 # Interpretability
 
@@ -71,52 +71,51 @@ _If the number of detected auxillary nodes is lower than 8, then take 0.156, oth
 
 This is done for all 8 rules and the total score is summed to get a prediction.
 In essence, the first rule says that if there are less than 8 auxillary nodes detected, then the patient will most likely survive (`class == 1.0`).
-In essence, the model states that if there are many auxillary nodes detected, then it is (unfortunately) less likely that the patient will survive.
+Put differently, the model states that if there are many auxillary nodes detected, then it is (unfortunately) less likely that the patient will survive.
 
 This model is fully interpretable because there are few rules which can all be interpreted in isolation reasonably well.
-Random forests, in contrasts, consist of hundreds to thousands of trees, which are not interpretable due to the large amount of trees.
+Random forests, in contrasts, consist of hundreds to thousands of trees, which are not interpretable due to this large number.
 A common workaround for this is to use SHAP or Shapley values to visualize the fitted model.
 The problem with those methods is that they do not allow full reproducibility of the predictions.
 For example, if we would inspect the fitted model on the aforementioned Haberman dataset via SHAP, then we could learn feature importances.
 In practice that would mean that we could tell which features were important.
 In many real-world situations this is not enough.
-Imagine having to tell a patient that was misdiagnosed by the model:
-"Sorry about our prediction, we were wrong and we didn't really know why.
-Only that nodes is an important feature in the model, but we don't know whether this played a large role in your situation."
+For example, when using only feature importances, it would be unclear for a doctor how the prediction for a specific patient was made.
+The doctor would only only know that some features are in general more important than other features.
 
 # Stability
 
 Another problem that the SIRUS algorithm solves is that of model stability.
-A stable model is defined as a model which leads to similar conclusions for small changes to data (Yu, 2020).
-Unstable models can be difficult to apply in practice since they might require processes to constantly change.
-Also, they are considered less trustworthy.
-
-Having said that, most statistical models are quite stable since a higher stability is often correlated to a higher predictive performance.
-Put differently, an unstable model by definition leads to different conclusions for small changes to the data and, hence, small changes to the data can cause a sudden drop in predictive performance.
-One model which suffers from a low stability is a decision tree. This is because a decision tree will first create the root node of the tree, so a small change in the data can cause the root, and therefore the rest, of the tree to be completely different.
-The SIRUS algorithm has solved the instability of random forests by "stabilizing the trees" [@benard2021interpretable] and the authors have proven mathematically that the stabilization works.
+A stable model is defined as a model which leads to similar conclusions for small changes to data [@yu2020veridical].
+Unstable models can be difficult to apply in practice as they might require processes to constantly change.
+This also makes such models appear less trustworthy.
+Put differently, an unstable model by definition leads to different conclusions for small changes to the data and, hence, small changes to the data could cause a sudden drop in predictive performance.
+One model which suffers from a low stability is a decision tree because it will first create the root node of the tree, so a small change in the data can cause the root, and therefore the rest, of the tree to be completely different [@molnar2022interpretable].
+The SIRUS algorithm has solved the instability of random forests by "stabilizing the trees" and the authors have proven the correctness of this stabilization mathematically [@benard2021interpretable].
 
 # Predictive Performance
 
-The model is based on random forests and therefore has excellent performance in settings where the number of variables is comparatively large to the number of datapoints (Biau and Scornet).
+The model is based on random forests and therefore has good performance in settings where the number of variables is comparatively large to the number of datapoints [@biau2016random].
 The algorithm converts a large number of trees to a small number of rules to improve interpretability.
-This tradeoff comes at a small performance cost.
+This tradeoff between model complexity and interpretability comes at a small performance cost.
+
+To show the performance of SIRUS, we have compared it to a linear model and two state-of-the-art boosting algorithms, namely XGBoost [@chen2016xgboost] and LightGBM [@ke2017lightgbm}.
+We have used 10-fold cross-validation for all evaluations.
 For example, the cross-validated scores on the Haberman dataset are listed in Table \ref{tab:perf}.
 
 \begin{table}[h!]
 \centering
-\begin{tabular}{|p{9cm}|c|c|c|}
+\begin{tabular}{|l|l|c|c|c|}
 \hline
-& \textbf{AUC \pm} & \textbf{Interpret-} \\
-\textbf{Model} & \textbf{1.96\*SE} & \textbf{ability} \\
+& \textbf{Max} & & \\
+\textbf{Model} & \textbf{depth} & \textbf{Titanic} & \textbf{Haberman} \\
 \hline
-\texttt{LGBMClassifier()} & $0.71 \pm 0.06$ & Medium \\
-\texttt{LGBMClassifier(; max\_depth=2)} & $0.67 \pm 0.06$ & Medium \\
-\texttt{DecisionTreeClassifier(; max\_depth=2)} & $0.63 \pm 0.06$ & High \\
-\texttt{StableRulesClassifier(; max\_depth=2)} & $\mathbf{0.71 \pm 0.05}$ & \textbf{High} \\
-\texttt{StableRulesClassifier(; max\_depth=2, max\_rules=25)} & $\mathbf{0.70 \pm 0.09}$ & \textbf{High} \\
-\texttt{StableRulesClassifier(; max\_depth=2, max\_rules=10)} & $\mathbf{0.67 \pm 0.07}$ & \textbf{High} \\
-\texttt{StableRulesClassifier(; max\_depth=1, max\_rules=25)} & $\mathbf{0.67 \pm 0.07}$ & \textbf{High} \\
+Linear & & $0.84 \pm 0.02$ & $0.69 \pm 0.06$ \\
+XGBoost & & $0.86 \pm 0.03$ & $0.65 \pm 0.04$ \\
+XGBoost & 2 & $0.87 \pm 0.02$ & $0.63 \pm 0.04$ \\
+LightGBM & & $0.87 \pm 0.03$ & $0.71 \pm 0.06$ \\
+LightGBM & 2 & $0.85 \pm 0.02$ & $0.67 \pm 0.05$ \\
+\textbf{SIRUS} & 2 & $\mathbf{0.82 \pm 0.02}$ & $\mathbf{0.67 \pm 0.07}$ \\
 \hline
 \end{tabular}
 \caption{Predictive performance in terms of Area Under the Curve (AUC) score for the LightGBM, decision tree, and SIRUS models.}
