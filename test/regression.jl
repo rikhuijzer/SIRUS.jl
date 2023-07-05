@@ -11,14 +11,14 @@ data = Tables.matrix(X)
 d_preds = let
     n_subfeatures = 0
     max_depth = 2
-    dtree = DecisionTree.build_tree(y, data, n_subfeatures, max_depth; rng=_rng())
+    dtree = DecisionTree.build_tree(y, data, n_subfeatures, max_depth; rng=_rng(1))
     DecisionTree.apply_tree(dtree, data)
 end
 
 s_preds = let
     classes = []
     mask = Vector{Bool}(undef, length(y))
-    stree = SIRUS._tree!(_rng(), algo, mask, data, y, classes, min_data_in_leaf=1, q=100)
+    stree = SIRUS._tree!(_rng(1), algo, mask, data, y, classes, min_data_in_leaf=1, q=100)
     SIRUS._predict(stree, data)
 end
 
