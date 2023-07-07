@@ -200,7 +200,7 @@ end
 
 let
     data = "cancer"
-    measure = accuracy
+    measure = auc
 
     hyper = (;)
     e = _evaluate!(results, data, MultinomialClassifier, hyper; measure)
