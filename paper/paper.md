@@ -23,7 +23,7 @@ bibliography: paper.bib
 # Summary
 
 [`SIRUS.jl`](https://github.com/rikhuijzer/SIRUS.jl) is a pure Julia implementation of the original Stable and Interpretable RUle Sets (SIRUS) algorithm.
-The SIRUS algorithm is a fully interpretable version of random forests, that is, it reduces thousands of trees in the forest to a tens of interpretable rules.
+The SIRUS algorithm is a fully interpretable version of random forests, that is, it reduces thousands of trees in the forest to tens of interpretable rules.
 With our Julia implementation, we aimed to reproduce the original C++ and R implementation in a high-level language to verify the algorithm as well as making the code easier to read.
 Furthermore, we made the code available under the permissive MIT license.
 In turn, this allows others to research the algorithm further or easily port it to production systems.
@@ -41,19 +41,19 @@ The SIRUS algorithm solves these issues by first restricting the split points in
 Furthermore, these rules are distribution-free and can describe complex relations in data.
 However, the original SIRUS algorithm was implemented in C++ and R, which makes it hard to inspect and extend due to the combination of two languages.
 An implementation in one high-level language allows verification of the algorithm and allows researchers to investigate further algorithmic improvements.
-Furthermore, the original algorithm was covered by a copyleft license meaning that copies are required to be made freely available.
+Furthermore, the original algorithm was covered by the GPL-3 copyleft license meaning that copies are required to be made freely available.
 A more permissive license makes it easier to port the code to other languages or production systems.
 
 # Interpretability
 
 To show that the algorithm is fully interpretable, we fit an example on the Haberman's Survival Dataset [@haberman1999survival].
 The dataset contains survival data on patients who had undergone surgery for breast cancer and contains three features, namely the number of axillary _nodes_ that were detected, the _age_ of the patient at the time of the operation, and the patient's _year_ of operation.
-For this example, we have set the hyperparameters for the maximum number of rules to 8 since this was a reasonable trade-off between predictive performance and interpretability.
+For this example, we have set the hyperparameters for the maximum number of rules to 8 since this is a reasonable trade-off between predictive performance and interpretability.
 Generally, a higher maximum number of rules will yield a higher predictive performance.
 We have also set the maximum depth hyperparameter to 2.
 This hyperparameter means that the random forests inside the algorithm are not allowed to have a depth higher than 2.
-A rule can either contain 1 clause (`if A`) or 2 clauses (`if A & B`).
-When the maximum depth is set to 2, then the rules contain at most 2 clauses.
+In turn, this means that rules contain at most 2 clauses (`if A & B`).
+When the maximum depth is set to 1, then the rules contain at most 1 clause (`if A`).
 Most rule-based models, including SIRUS, are restricted to depth of 1 or 2 [@benard2021interpretable].
 
 The fitted model is:
@@ -86,22 +86,22 @@ This model is fully interpretable because there are few rules which can all be i
 Random forests, in contrasts, consist of hundreds to thousands of trees, which are not interpretable due to this large number.
 A common workaround for this is to use SHAP or Shapley values to visualize the fitted model.
 The problem with those methods is that they do not allow full reproducibility of the predictions.
-For example, if we would inspect the fitted model on the aforementioned Haberman dataset via SHAP, then we could learn feature importances.
+For example, if we would inspect the fitted model on the aforementioned Haberman dataset via SHAP, then we could only learn feature importances.
 In practice that would mean that we could tell which features were important.
 In many real-world situations this is not enough.
 For example, when using only feature importances, it would be unclear for a doctor how the prediction for a specific patient was made.
-The doctor would only only know that some features are in general more important than other features.
+The doctor would only only know that some features are in general more important than other features, but not whether a certain feature played a large role for a decision for a specific patient.
 
 # Stability
 
-Another problem that the SIRUS algorithm solves is that of model stability.
+Another problem that the SIRUS algorithm improves upon is that of model stability.
 A stable model is defined as a model which leads to similar conclusions for small changes to data [@yu2020veridical].
 Unstable models can be difficult to apply in practice as they might require processes to constantly change.
 This also makes such models appear less trustworthy.
 Put differently, an unstable model by definition leads to different conclusions for small changes to the data and, hence, small changes to the data could cause a sudden drop in predictive performance.
 One model which suffers from a low stability is a decision tree because it will first create the root node of the tree, so a small change in the data can cause the root, and therefore the rest, of the tree to be completely different [@molnar2022interpretable].
 Similarly, linear models can be highly sensitive to correlated data and, in the case of regularized linear models, the choice of hyperparameters.
-Instead, the SIRUS algorithm provides stability by "stabilizing the trees" and the authors have proven the correctness of this stabilization mathematically [@benard2021interpretable].
+Instead, the SIRUS algorithm provides stability by stabilizing the trees and the authors have proven the correctness of this stabilization mathematically [@benard2021interpretable].
 In the rest of this paper, we will compare decision trees [@sadeghi2022decisiontree], linear models, XGBoost [@chen2016xgboost], and SIRUS on their interpretability, stability, and predictive performance.
 The interpretability and stability are summarized in Table \ref{tab:is}.
 
@@ -123,11 +123,11 @@ The interpretability and stability are summarized in Table \ref{tab:is}.
 
 # Predictive Performance
 
-The model is based on random forests and therefore has good performance in settings where the number of variables is comparatively large to the number of datapoints [@biau2016random].
-The algorithm converts a large number of trees to a small number of rules to improve interpretability.
+The model is based on random forests and, therefore, well suited for settings where the number of variables is comparatively large to the number of datapoints [@biau2016random].
+To make the random forests interpretable, the large number of trees are converted a small number of rules.
 This trade-off between model complexity and interpretability comes at a small performance cost.
 
-Similar to Table \ref{tab:is}, we compared SIRUS to a decision tree linear model, and XGBoost.
+To show the performance, we compared SIRUS to a decision tree linear model, and XGBoost; similar to Table \ref{tab:is}.
 We have used SIRUS version 1.2.1, 10-fold cross-validation, and we will present variability as $1.96 * \text{standard error}$ for all evaluations with respectively the following datasets and measures:
 Titanic [@eaton1995titanic] with Area Under the Curve (AUC),
 Breast Cancer Wisconsin [@wolberg1995breast] with AUC,
