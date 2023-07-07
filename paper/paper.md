@@ -31,11 +31,11 @@ In turn, this allows others to research the algorithm further or easily port it 
 # Statement of need
 
 Many of the modern day machine learning models are non-interpretable models, also known as _black box_ models.
-These models can be problematic in high stakes domains where model decisions have real-world impact on individuals.
+These models can be problematic in high stakes domains, such as suggesting treatments or personnel selection, where model decisions have real-world impact on individuals.
 In such situations, black box models may lead to unsafe or unreliable predictions [@doshi2017towards; @barredo2020explainable].
 However, the set of fully interpretable models is often limited to linear models and decision trees.
-Linear models tend to perform poorly when the features are correlated or when the data does not satisfy suitable distributions and decision trees perform poorly compared to random forests [@james2013introduction].
-Instead, random forests [@breiman2001random] often outperform linear models and decision trees, but are not fully interpretable.
+Linear models can perform poorly when the features are correlated or can be sensitive to the choice of hyperparameters when using regularized models, and decision trees perform poorly compared to random forests [@james2013introduction].
+Instead, random forests [@breiman2001random] often outperform linear models and decision trees, but are not fully interpretable due to the large number of trees, typically thousands, in the forests.
 At the same time, visualization techniques, such as SHAP [@lundberg2017unified], allow inspection of feature importances, but do not provide enough information to reproduce the predictions made by the model.
 The SIRUS algorithm solves these issues by first restricting the split points in the random forest algorithm to a stable subset of points, and by then extracting a small and interpretable rule set [@benard2021interpretable].
 Furthermore, these rules are distribution-free and can describe complex relations in data.
@@ -46,8 +46,17 @@ A more permissive license makes it easier to port the code to other languages or
 
 # Interpretability
 
-To show that the algorithm is fully interpretable, we fitted the model on Haberman's Survival Dataset [@haberman1999survival].
-The dataset contains survival data on patients who had undergone surgery for breast cancer and contains three features, namely the number of auxillary `nodes` that were detected, the `age` of the patient at the time of the operation, and the patient's `year` of operation.
+To show that the algorithm is fully interpretable, we fit an example on the Haberman's Survival Dataset [@haberman1999survival].
+The dataset contains survival data on patients who had undergone surgery for breast cancer and contains three features, namely the number of axillary _nodes_ that were detected, the _age_ of the patient at the time of the operation, and the patient's _year_ of operation.
+For this example, we have set the hyperparameters for the maximum number of rules to 8 since this was a reasonable trade-off between predictive performance and interpretability.
+Generally, a higher maximum number of rules will yield a higher predictive performance.
+We have also set the maximum depth hyperparameter to 2.
+This hyperparameter means that the random forests inside the algorithm are not allowed to have a depth higher than 2.
+A rule can either contain 1 clause (`if A`) or 2 clauses (`if A & B`).
+When the maximum depth is set to 2, then the rules contain at most 2 clauses.
+Most rule-based models, including SIRUS, are restricted to depth of 1 or 2 [@benard2021interpretable].
+
+The fitted model is:
 
 ```
 StableRules model with 8 rules:
@@ -64,14 +73,16 @@ Note: showing only the probability for class 1.0 since class 0.0 has
       probability 1 - p.
 ```
 
-This shows that the model contains 8 rules. The first rule, for example, can be interpreted as:
-_If the number of detected auxillary nodes is lower than 8, then take 0.156, otherwise take 0.031._
+This shows that the model contains 8 rules.
+The first rule, for example, can be interpreted as:
 
-This is done for all 8 rules and the total score is summed to get a prediction.
-In essence, the first rule says that if there are less than 8 auxillary nodes detected, then the patient will most likely survive (`class == 1.0`).
-Put differently, the model states that if there are many auxillary nodes detected, then it is (unfortunately) less likely that the patient will survive.
+_If the number of detected axillary nodes is lower than 8, then take 0.156, otherwise take 0.031._
 
-This model is fully interpretable because there are few rules which can all be interpreted in isolation reasonably well.
+This calculation is done for all 8 rules and the score is summed to get a prediction.
+In essence, the first rule says that if there are less than 8 axillary nodes detected, then the patient will most likely survive (`class == 1.0`).
+Put differently, the model states that if there are many axillary nodes detected, then it is (unfortunately) less likely that the patient will survive.
+
+This model is fully interpretable because there are few rules which can all be interpreted in isolation and together.
 Random forests, in contrasts, consist of hundreds to thousands of trees, which are not interpretable due to this large number.
 A common workaround for this is to use SHAP or Shapley values to visualize the fitted model.
 The problem with those methods is that they do not allow full reproducibility of the predictions.
@@ -89,14 +100,10 @@ Unstable models can be difficult to apply in practice as they might require proc
 This also makes such models appear less trustworthy.
 Put differently, an unstable model by definition leads to different conclusions for small changes to the data and, hence, small changes to the data could cause a sudden drop in predictive performance.
 One model which suffers from a low stability is a decision tree because it will first create the root node of the tree, so a small change in the data can cause the root, and therefore the rest, of the tree to be completely different [@molnar2022interpretable].
-The SIRUS algorithm has solved the instability of random forests by "stabilizing the trees" and the authors have proven the correctness of this stabilization mathematically [@benard2021interpretable].
-
-Next, we will compare decision trees [@sadeghi2022decisiontree], linear models, XGBoost [@chen2016xgboost], and SIRUS on their interpretability, stability, and predictive performance.
+Similarly, linear models can be highly sensitive to correlated data and, in the case of regularized linear models, the choice of hyperparameters.
+Instead, the SIRUS algorithm provides stability by "stabilizing the trees" and the authors have proven the correctness of this stabilization mathematically [@benard2021interpretable].
+In the rest of this paper, we will compare decision trees [@sadeghi2022decisiontree], linear models, XGBoost [@chen2016xgboost], and SIRUS on their interpretability, stability, and predictive performance.
 The interpretability and stability are summarized in Table \ref{tab:is}.
-Here, the the stability for the linear model is set to _medium_ because linear models can be highly sensitive to correlated features and the choice of hyperparameters in regularized models.
-In our experiments, the SIRUS algorithm was less sensitive to correlated features and the choice of hyperparameters.
-Interpretability for XGBoost was set to _medium_ because model interpretation techniques such as SHAP do not contain enough information to reproduce predictions.
-Stability for the decision tree was set to _low_ because decision trees might change the root node for small pertubations in the data and, hence, drastically change predictions [@molnar2022interpretable].
 
 \begin{table}[h!]
 \small
@@ -118,13 +125,13 @@ Stability for the decision tree was set to _low_ because decision trees might ch
 
 The model is based on random forests and therefore has good performance in settings where the number of variables is comparatively large to the number of datapoints [@biau2016random].
 The algorithm converts a large number of trees to a small number of rules to improve interpretability.
-This tradeoff between model complexity and interpretability comes at a small performance cost.
+This trade-off between model complexity and interpretability comes at a small performance cost.
 
 Similar to Table \ref{tab:is}, we compared SIRUS to a decision tree linear model, and XGBoost.
 We have used SIRUS version 1.2.1, 10-fold cross-validation, and we will present variability as $1.96 * \text{standard error}$ for all evaluations with respectively the following datasets and measures:
 Titanic [@eaton1995titanic] with Area Under the Curve (AUC),
+Breast Cancer Wisconsin [@wolberg1995breast] with AUC,
 Pima Indians Diabetes [@smith1988using] with AUC,
-Breast Cancer Wisconsin [@wolberg1995breast] with accuracy,
 Haberman's Survival Dataset [@haberman1999survival] with AUC,
 Iris [@fisher1936use] with accuracy,
 and Boston Housing [@harrison1978hedonic] with $\text{R}^2$; see Table \ref{tab:perf}.
@@ -138,7 +145,7 @@ and Boston Housing [@harrison1978hedonic] with $\text{R}^2$; see Table \ref{tab:
 & & & \textbf{\scriptsize{max depth: $\mathbb{\infty}$}} & \textbf{\scriptsize{max depth: 2}} & \textbf{\scriptsize{max depth: 2}} \\
 \hline
 Titanic & $0.76 \pm 0.04$ & $0.84 \pm 0.02$ & $0.86 \pm 0.03$ & $0.87 \pm 0.02$ & $0.82 \pm 0.02$ \\
-Breast Cancer & $0.93 \pm 0.03$ & $0.93 \pm 0.03$ & $0.96 \pm 0.02$ & $0.96 \pm 0.02$ & $0.93 \pm 0.02$ \\
+Breast Cancer & $0.91 \pm 0.03$ & $0.98 \pm 0.01$ & $0.99 \pm 0.01$ & $0.99 \pm 0.01$ & $0.98 \pm 0.01$ \\
 Diabetes & $0.68 \pm 0.05$ & $0.70 \pm 0.06$ & $0.80 \pm 0.03$ & $0.83 \pm 0.03$ & $0.75 \pm 0.05$ \\
 Haberman & $0.53 \pm 0.07$ & $0.69 \pm 0.06$ & $0.65 \pm 0.04$ & $0.63 \pm 0.04$ & $0.67 \pm 0.07$ \\
 Iris & $0.95 \pm 0.03$ & $0.97 \pm 0.03$ & $0.95 \pm 0.04$ & $0.95 \pm 0.04$ & $0.69 \pm 0.09$ \\
@@ -149,16 +156,19 @@ Boston & $0.74 \pm 0.10$ & $0.70 \pm 0.05$ & $0.88 \pm 0.06$ & $0.87 \pm 0.04$ &
 \label{tab:perf}
 \end{table}
 
-Here, the tree depths are set to at most 2 because rules which belong to a depth of 3 will (almost) never show up in the final model, this is identical to the maximum depth in the original implementation [@benard2021interpretable].
-Table \ref{tab:perf} shows that the SIRUS algorithm outperforms the decision tree on the Titanic and Haberman datasets.
-Furthermore, the performance is similar to the linear model and XGBoost on the Titanic, Breast Cancer, Haberman datasets.
-For the Iris and Boston Housing datasets, the performance was worse than the other models.
-Further work is needed to find the root cause for these low scores.
+At the time of writing, SIRUS performs best on the binary classification datasets which can be recognized by the AUC measure.
+SIRUS outperforms the decision tree and performs similarly to the linear model on these datasets.
+
+For the multiclass Iris classification and the Boston Housing regression datasets, the performance was worse than the other models.
+It could be that this is caused by a bug in the implementation or because this is a fundamental issue in the algorithm.
+Further work is needed to find the root cause or workarounds for these low scores.
+One possible solution would be to add SymbolicRegression.jl [@cranmer2023interpretable] as a secondary back end for regression tasks.
+This achieves performance that is similar to XGBoost [@hanson2023discourse].
 
 # Code Example
 
 The model can be used via the `MLJ.jl` [@blaom2020mlj] machine learning interface.
-For example, this is the code used to fit the model on the full Haberman dataset: <br>
+For example, this is the code used to fit the Haberman example at the start of this paper: <br>
 \vspace{2mm}
 ```julia
 model = StableRulesClassifier(; max_depth=2, max_rules=8)
@@ -166,7 +176,7 @@ mach = machine(model, X, y)
 fit!(mach)
 ```
 \vspace{2mm}
-and model performance was estimated via cross-validation (`CV`):
+and model performances were estimated via the following cross-validation (`CV`) code:
 \vspace{2mm}
 ```julia
 resampling = CV(; nfolds=10, shuffle=true)
@@ -177,7 +187,7 @@ evaluate(model, X, y; resampling, measure=auc)
 
 This research was supported by the Ministry of Defence, the Netherlands.
 
-# Acknowledgements
+# Acknowledgments
 
 We thank Clément Bénard for his help in re-implementing the SIRUS algorithm.
 Furthermore, we thank Anthony Bloam and Dávid Hanák (Cursor Insight) for respectively doing code reviews and finding a critical bug.
