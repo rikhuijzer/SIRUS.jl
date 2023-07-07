@@ -34,7 +34,7 @@ Many of the modern day machine learning models are non-interpretable models, als
 These models can be problematic in high stakes domains where model decisions have real-world impact on individuals.
 In such situations, black box models may lead to unsafe or unreliable predictions [@doshi2017towards; @barredo2020explainable].
 However, the set of fully interpretable models is often limited to linear models and decision trees.
-Linear models tend to perform poorly when the data does not satisfy suitable distributions and decision trees perform poorly compared to random forests [@james2013introduction].
+Linear models tend to perform poorly when the features are correlated or when the data does not satisfy suitable distributions and decision trees perform poorly compared to random forests [@james2013introduction].
 Instead, random forests [@breiman2001random] often outperform linear models and decision trees, but are not fully interpretable.
 At the same time, visualization techniques, such as SHAP [@lundberg2017unified], allow inspection of feature importances, but do not provide enough information to reproduce the predictions made by the model.
 The SIRUS algorithm solves these issues by first restricting the split points in the random forest algorithm to a stable subset of points, and by then extracting a small and interpretable rule set [@benard2021interpretable].
@@ -91,15 +91,39 @@ Put differently, an unstable model by definition leads to different conclusions 
 One model which suffers from a low stability is a decision tree because it will first create the root node of the tree, so a small change in the data can cause the root, and therefore the rest, of the tree to be completely different [@molnar2022interpretable].
 The SIRUS algorithm has solved the instability of random forests by "stabilizing the trees" and the authors have proven the correctness of this stabilization mathematically [@benard2021interpretable].
 
+Next, we will compare decision trees [@sadeghi2022decisiontree], linear models, XGBoost [@chen2016xgboost], and SIRUS on their interpretability, stability, and predictive performance.
+The interpretability and stability are summarized in Table \ref{tab:is}.
+Here, the the stability for the linear model is set to _medium_ because linear models can be highly sensitive to correlated features and the choice of hyperparameters in regularized models.
+In our experiments, the SIRUS algorithm was less sensitive to correlated features and the choice of hyperparameters.
+Interpretability for XGBoost was set to _medium_ because model interpretation techniques such as SHAP do not contain enough information to reproduce predictions.
+Stability for the decision tree was set to _low_ because decision trees might change the root node for small pertubations in the data and, hence, drastically change predictions [@molnar2022interpretable].
+
+\begin{table}[h!]
+\small
+\centering
+\begin{tabular}{|l|c|c|c|c|c|}
+\hline
+ & \textbf{Decision Tree} & \textbf{Linear Model} & \textbf{XGBoost} & \textbf{XGBoost} & \textbf{SIRUS} \\
+& & & \textbf{\scriptsize{max depth: $\mathbb{\infty}$}} & \textbf{\scriptsize{max depth: 2}} & \textbf{\scriptsize{max depth: 2}} \\
+\hline
+\textbf{Interpretability} & High & High & Medium & Medium & High \\
+\textbf{Stability} & Low & Medium & High & High & High \\
+\hline
+\end{tabular}
+\caption{Summary of interpretability and stability for various models.}
+\label{tab:is}
+\end{table}
+
 # Predictive Performance
 
 The model is based on random forests and therefore has good performance in settings where the number of variables is comparatively large to the number of datapoints [@biau2016random].
 The algorithm converts a large number of trees to a small number of rules to improve interpretability.
 This tradeoff between model complexity and interpretability comes at a small performance cost.
 
-At the time of writing, we have compared SIRUS to a linear model, a decision tree [@sadeghi2022decisiontree], and the XGBoost [@chen2016xgboost] gradient boosting algorithm.
-We have used SIRUS.jl version 1.2.1, 10-fold cross-validation and present variability as $1.96 * \text{standard error}$ for all evaluations with respectively the following datasets and measures:
+Similar to Table \ref{tab:is}, we compared SIRUS to a decision tree linear model, and XGBoost.
+We have used SIRUS version 1.2.1, 10-fold cross-validation, and we will present variability as $1.96 * \text{standard error}$ for all evaluations with respectively the following datasets and measures:
 Titanic [@eaton1995titanic] with Area Under the Curve (AUC),
+Pima Indians Diabetes [@smith1988using] with AUC,
 Breast Cancer Wisconsin [@wolberg1995breast] with accuracy,
 Haberman's Survival Dataset [@haberman1999survival] with AUC,
 Iris [@fisher1936use] with accuracy,
@@ -108,19 +132,20 @@ and Boston Housing [@harrison1978hedonic] with $\text{R}^2$; see Table \ref{tab:
 \begin{table}[h!]
 \small
 \centering
-\begin{tabular}{|l|l|c|c|c|c|c|c|}
+\begin{tabular}{|l|c|c|c|c|c|}
 \hline
-& \textbf{Max} & & \textbf{Breast} & & & \textbf{Boston} \\
-\textbf{Model} & \textbf{depth} & \textbf{Titanic} & \textbf{Cancer} & \textbf{Haberman} & \textbf{Iris} & \textbf{Housing} \\
+\textbf{Dataset} & \textbf{Decision Tree} & \textbf{Linear Model} & \textbf{XGBoost} & \textbf{XGBoost} & \textbf{SIRUS} \\
+& & & \textbf{\scriptsize{max depth: $\mathbb{\infty}$}} & \textbf{\scriptsize{max depth: 2}} & \textbf{\scriptsize{max depth: 2}} \\
 \hline
-Linear & & $0.84 \pm 0.02$ & $0.93 \pm 0.03$ & $0.69 \pm 0.06$ & $0.97 \pm 0.03$ & $0.70 \pm 0.05$ \\
-Decision Tree & & $0.75 \pm 0.05$ & $0.92 \pm 0.02$ & $0.54 \pm 0.06$ & $0.95 \pm 0.03$ & $0.71 \pm 0.11$ \\
-XGBoost & & $0.86 \pm 0.03$ & $0.96 \pm 0.02$ & $0.65 \pm 0.04$ & $0.95 \pm 0.04$ & $0.88 \pm 0.06$ \\
-XGBoost & 2 & $0.87 \pm 0.02$ & $0.96 \pm 0.02$ & $0.63 \pm 0.04$ & $0.94 \pm 0.04$ & $0.87 \pm 0.04$ \\
-SIRUS & 2 & $0.82 \pm 0.02$ & $0.93 \pm 0.02$ & $0.67 \pm 0.07$ & $0.71 \pm 0.08$ & $0.63 \pm 0.10$ \\
+Titanic & $0.76 \pm 0.04$ & $0.84 \pm 0.02$ & $0.86 \pm 0.03$ & $0.87 \pm 0.02$ & $0.82 \pm 0.02$ \\
+Breast Cancer & $0.93 \pm 0.03$ & $0.93 \pm 0.03$ & $0.96 \pm 0.02$ & $0.96 \pm 0.02$ & $0.93 \pm 0.02$ \\
+Diabetes & $0.68 \pm 0.05$ & $0.70 \pm 0.06$ & $0.80 \pm 0.03$ & $0.83 \pm 0.03$ & $0.75 \pm 0.05$ \\
+Haberman & $0.53 \pm 0.07$ & $0.69 \pm 0.06$ & $0.65 \pm 0.04$ & $0.63 \pm 0.04$ & $0.67 \pm 0.07$ \\
+Iris & $0.95 \pm 0.03$ & $0.97 \pm 0.03$ & $0.95 \pm 0.04$ & $0.95 \pm 0.04$ & $0.69 \pm 0.09$ \\
+Boston & $0.74 \pm 0.10$ & $0.70 \pm 0.05$ & $0.88 \pm 0.06$ & $0.87 \pm 0.04$ & $0.63 \pm 0.10$ \\
 \hline
 \end{tabular}
-\caption{Predictive performance estimates over 10-fold cross-validation for a linear model, decision tree, XGBoost, and SIRUS on various public datasets.}
+\caption{Predictive performance estimates.}
 \label{tab:perf}
 \end{table}
 
