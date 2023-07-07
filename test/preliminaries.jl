@@ -99,6 +99,37 @@ function haberman()
     return df
 end
 
+if !haskey(ENV, "REGISTERED_DIABETES")
+    name = "Diabetes"
+    message = "Pima Indians Diabetes Database"
+    remote_path = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv"
+    checksum = "6bfe5d0f379d17a0e0819b996407e3c09bf80febd4287f2ed212190dfff154af"
+    DataDeps.register(DataDep(name, message, remote_path, checksum))
+    ENV["REGISTERED_DIABETES"] = "true"
+end
+
+function diabetes()
+    dir = datadep"Diabetes"
+    path = joinpath(dir, "pima-indians-diabetes.data.csv")
+    header = [
+        "Pregnancies",
+        "Glucose",
+        "BloodPressure",
+        "SkinThickness",
+        "Insulin",
+        "BMI",
+        "DiabetesPedigreeFunction",
+        "Age",
+        "Outcome",
+    ]
+    df = CSV.read(path, DataFrame; header)
+    for col in names(df)
+        df[!, col] = float.(df[:, col])
+    end
+    df[!, :Outcome] = categorical(df.Outcome)
+    return df
+end
+
 """
 Return the Boston Housing Dataset after changing the outcome to binary.
 """

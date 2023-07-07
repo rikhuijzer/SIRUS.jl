@@ -22,6 +22,11 @@ datasets = Dict{String,Tuple}(
         X = MLJBase.table(MLJBase.matrix(df[:, Not(:Diagnosis)]))
         (X, df.Diagnosis)
     end,
+    "diabetes" => let
+        df = diabetes()
+        X = MLJBase.table(MLJBase.matrix(df[:, Not(:Outcome)]))
+        (X, df.Outcome)
+    end,
     "haberman" => let
         df = haberman()
         X = MLJBase.table(MLJBase.matrix(df[:, Not(:survival)]))
@@ -195,7 +200,7 @@ end
 
 let
     data = "cancer"
-    measure = accuracy
+    measure = auc
 
     hyper = (;)
     e = _evaluate!(results, data, MultinomialClassifier, hyper; measure)
@@ -217,6 +222,30 @@ let
 
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     e = _evaluate!(results, data, StableRulesClassifier, hyper; measure)
+end
+
+let
+    data = "diabetes"
+    hyper = (;)
+
+    e = _evaluate!(results, data, LogisticClassifier, hyper)
+
+    e = _evaluate!(results, data, XGBoostClassifier, hyper)
+
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, data, XGBoostClassifier, hyper)
+
+    hyper = (;)
+    e = _evaluate!(results, data, DecisionTreeClassifier, hyper)
+
+    hyper = (; rng=_rng(), max_depth=2)
+    e = _evaluate!(results, data, StableForestClassifier, hyper)
+
+    hyper = (; rng=_rng(), max_depth=2, max_rules=30)
+    e = _evaluate!(results, data, StableRulesClassifier, hyper)
+
+    hyper = (; rng=_rng(), max_depth=2, max_rules=10)
+    e = _evaluate!(results, data, StableRulesClassifier, hyper)
 end
 
 let
