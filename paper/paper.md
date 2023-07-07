@@ -25,6 +25,7 @@ bibliography: paper.bib
 [`SIRUS.jl`](https://github.com/rikhuijzer/SIRUS.jl) is a pure Julia implementation of the original Stable and Interpretable RUle Sets (SIRUS) algorithm.
 The SIRUS algorithm is a fully interpretable version of random forests, that is, it reduces thousands of trees in the forest to tens of interpretable rules.
 With our Julia implementation, we aimed to reproduce the original C++ and R implementation in a high-level language to verify the algorithm as well as making the code easier to read.
+We show that the model performs well on binary classification tasks while retaining interpretability and stability.
 Furthermore, we made the code available under the permissive MIT license.
 In turn, this allows others to research the algorithm further or easily port it to production systems.
 
