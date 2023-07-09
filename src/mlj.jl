@@ -1,10 +1,13 @@
 module MLJImplementation
 
 import MLJModelInterface:
+    MLJModelInterface,
     fit,
     predict,
     metadata_model,
     metadata_pkg
+
+const MMI = MLJModelInterface
 
 using CategoricalArrays:
     CategoricalArray,
@@ -35,182 +38,52 @@ using SIRUS:
     _process_rules
 using Tables: Tables, matrix
 
-"""
-    StableForestClassifier(;
-        rng::AbstractRNG=default_rng(),
-        partial_sampling::Real=0.7,
-        n_trees::Int=1_000,
-        max_depth::Int=2,
-        q::Int=10,
-        min_data_in_leaf::Int=5
-    ) <: MLJModelInterface.Probabilistic
+const PARTIAL_SAMPLING_DEFAULT = 0.7
+const N_TREES_DEFAULT = 1000
+const MAX_DEPTH_DEFAULT = 2
+const Q_DEFAULT = 10
+const MIN_DATA_IN_LEAF_DEFAULT = 5
+const MAX_RULES_DEFAULT = 10
+const LAMBDA_DEFAULT = 1.0
 
-Random forest classifier with a stabilized forest structure (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html)).
-This stabilization increases stability when extracting rules.
-The impact on the predictive accuracy compared to standard random forests should be relatively small.
-
-!!! note
-    Just like normal random forests, this model is not easily explainable.
-    If you are interested in an explainable model, use the `StableRulesClassifier`.
-
-# Example
-
-The classifier satisfies the MLJ interface, so it can be used like any other MLJ model.
-For example, it can be used to create a machine:
-
-```julia
-julia> using SIRUS, MLJ
-
-julia> mach = machine(StableForestClassifier(), X, y);
-```
-
-# Arguments
-
-- `rng`: Random number generator. `StableRNGs` are advised.
-- `partial_sampling`:
-    Ratio of samples to use in each subset of the data.
-    The default of 0.7 should be fine for most cases.
-- `n_trees`:
-    The number of trees to use.
-    It is advisable to use at least thousand trees to for a better rule selection, and
-    in turn better predictive performance.
-- `max_depth`:
-    The depth of the tree.
-    A lower depth decreases model complexity and can therefore improve accuracy when the sample size is small (reduce overfitting).
-- `q`: Number of cutpoints to use per feature.
-    The default value of 10 should be good for most situations.
-- `min_data_in_leaf`: Minimum number of data points per leaf.
-"""
-Base.@kwdef mutable struct StableForestClassifier <: Probabilistic
+MMI.@mlj_model mutable struct StableForestClassifier <: Probabilistic
     rng::AbstractRNG=default_rng()
-    partial_sampling::Real=0.7
-    n_trees::Int=1_000
-    max_depth::Int=2
-    q::Int=10
-    min_data_in_leaf::Int=5
+    partial_sampling::Real=PARTIAL_SAMPLING_DEFAULT
+    n_trees::Int=N_TREES_DEFAULT
+    max_depth::Int=MAX_DEPTH_DEFAULT
+    q::Int=Q_DEFAULT
+    min_data_in_leaf::Int=MIN_DATA_IN_LEAF_DEFAULT
 end
 
-"""
-    StableRulesClassifier(;
-        rng::AbstractRNG=default_rng(),
-        partial_sampling::Real=0.7,
-        n_trees::Int=1_000,
-        max_depth::Int=2,
-        q::Int=10,
-        min_data_in_leaf::Int=5,
-        max_rules::Int=10
-    ) -> MLJModelInterface.Probabilistic
-
-Explainable rule-based model based on a random forest.
-This SIRUS algorithm extracts rules from a stabilized random forest.
-See the [main page of the documentation](https://huijzer.xyz/StableTrees.jl/dev/) for details about how it works.
-
-# Example
-
-The classifier satisfies the MLJ interface, so it can be used like any other MLJ model.
-For example, it can be used to create a machine:
-
-```julia
-julia> using SIRUS, MLJ
-
-julia> mach = machine(StableRulesClassifier(; max_rules=15), X, y);
-```
-
-# Arguments
-
-- `rng`: Random number generator. `StableRNGs` are advised.
-- `partial_sampling`:
-    Ratio of samples to use in each subset of the data.
-    The default of 0.7 should be fine for most cases.
-- `n_trees`:
-    The number of trees to use.
-    The higher the number, the more likely it is that the correct rules are extracted from the trees, but also the longer model fitting will take.
-    In most cases, 1000 rules should be more than enough, but it might be useful to run 2000 rules one time and verify that the model performance does not change much.
-- `max_depth`:
-    The depth of the tree.
-    A lower depth decreases model complexity and can therefore improve accuracy when the sample size is small (reduce overfitting).
-- `q`: Number of cutpoints to use per feature.
-    The default value of 10 should be good for most situations.
-- `min_data_in_leaf`: Minimum number of data points per leaf.
-- `max_rules`:
-    This is the most important hyperparameter.
-    In general, the more rules, the more accurate the model.
-    However, more rules will also decrease model interpretability.
-    So, it is important to find a good balance here.
-    In most cases, 10-40 rules should provide reasonable accuracy while remaining interpretable.
-- `lambda`:
-    The weights of the final rules are determined via a regularized regression over each rule as a binary feature.
-    This hyperparameter specifies the strength of the ridge (L2) regularizer.
-    Since the rules are quite strongly correlated, the ridge regularizer is the most useful to stabilize the weight estimates.
-"""
-Base.@kwdef mutable struct StableRulesClassifier <: Probabilistic
+MMI.@mlj_model mutable struct StableRulesClassifier <: Probabilistic
     rng::AbstractRNG=default_rng()
-    partial_sampling::Real=0.7
-    n_trees::Int=1_000
-    max_depth::Int=2
-    q::Int=10
-    min_data_in_leaf::Int=5
-    max_rules::Int=10
-    lambda::Float64=1.0
+    partial_sampling::Real=PARTIAL_SAMPLING_DEFAULT
+    n_trees::Int=N_TREES_DEFAULT
+    max_depth::Int=MAX_DEPTH_DEFAULT
+    q::Int=Q_DEFAULT
+    min_data_in_leaf::Int=MIN_DATA_IN_LEAF_DEFAULT
+    max_rules::Int=MAX_RULES_DEFAULT
+    lambda::Float64=LAMBDA_DEFAULT
 end
 
-"""
-    StableForestRegressor(;
-        rng::AbstractRNG=default_rng(),
-        partial_sampling::Real=0.7,
-        n_trees::Int=1_000,
-        max_depth::Int=2,
-        q::Int=10,
-        min_data_in_leaf::Int=5
-    ) <: MLJModelInterface.Probabilistic
-
-Random forest regressor with a stabilized forest structure (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html)).
-See the documentation for the `StableForestClassifier` for more information about the hyperparameters.
-
-# Example
-
-The classifier satisfies the MLJ interface, so it can be used like any other MLJ model.
-For example, it can be used to create a machine:
-
-```julia
-julia> using SIRUS, MLJ
-
-julia> mach = machine(StableForestRegressor(), X, y);
-```
-"""
-Base.@kwdef mutable struct StableForestRegressor <: Probabilistic
+MMI.@mlj_model mutable struct StableForestRegressor <: Probabilistic
     rng::AbstractRNG=default_rng()
-    partial_sampling::Real=0.7
-    n_trees::Int=1_000
-    max_depth::Int=2
-    q::Int=10
-    min_data_in_leaf::Int=5
+    partial_sampling::Real=PARTIAL_SAMPLING_DEFAULT
+    n_trees::Int=N_TREES_DEFAULT
+    max_depth::Int=MAX_DEPTH_DEFAULT
+    q::Int=Q_DEFAULT
+    min_data_in_leaf::Int=MIN_DATA_IN_LEAF_DEFAULT
 end
 
-"""
-    StableRulesRegressor(;
-        rng::AbstractRNG=default_rng(),
-        partial_sampling::Real=0.7,
-        n_trees::Int=1_000,
-        max_depth::Int=2,
-        q::Int=10,
-        min_data_in_leaf::Int=5,
-        max_rules::Int=10
-    ) -> MLJModelInterface.Probabilistic
-
-Explainable rule-based regression model based on a random forest.
-See the documentation for the `StableRulesClassifier` for more information about
-the model and the hyperparameters.
-"""
-Base.@kwdef mutable struct StableRulesRegressor <: Probabilistic
+MMI.@mlj_model mutable struct StableRulesRegressor <: Probabilistic
     rng::AbstractRNG=default_rng()
-    partial_sampling::Real=0.7
-    n_trees::Int=1_000
-    max_depth::Int=2
-    q::Int=10
-    min_data_in_leaf::Int=5
-    max_rules::Int=10
-    lambda::Float64=5
+    partial_sampling::Real=PARTIAL_SAMPLING_DEFAULT
+    n_trees::Int=N_TREES_DEFAULT
+    max_depth::Int=MAX_DEPTH_DEFAULT
+    q::Int=Q_DEFAULT
+    min_data_in_leaf::Int=MIN_DATA_IN_LEAF_DEFAULT
+    max_rules::Int=MAX_RULES_DEFAULT
+    lambda::Float64=LAMBDA_DEFAULT
 end
 
 metadata_model(
@@ -372,5 +245,110 @@ function predict(
     isempty(fitresult.rules) && error("Zero rules")
     return _predict(fitresult, matrix(Xnew))
 end
+
+const TRAINING_DATA_SECTION = """
+# Training data
+
+In MLJ or MLJBase, bind an instance `model` to data with
+
+    mach = machine(model, X, y)
+
+where
+
+- `X`: any table of input features (eg, a `DataFrame`) whose columns
+  each have one of the following element scitypes: `Continuous`,
+  `Count`, or `<:OrderedFactor`; check column scitypes with `schema(X)`
+
+- `y`: the target, which can be any `AbstractVector` whose element
+  scitype is `<:OrderedFactor` or `<:Multiclass`; check the scitype
+  with `scitype(y)`
+
+Train the machine with `fit!(mach, rows=...)`.
+"""
+
+const HYPERPARAMETERS_SECTION = """
+# Hyperparameters
+
+- `rng::AbstractRNG=default_rng()`: Random number generator.
+    Using a `StableRNG` from `StableRNGs.jl` is advised.
+- `partial_sampling::Float64=$PARTIAL_SAMPLING_DEFAULT`:
+    Ratio of samples to use in each subset of the data.
+    The default should be fine for most cases.
+- `n_trees::Int=$N_TREES_DEFAULT`:
+    The number of trees to use.
+    It is advisable to use at least thousand trees to for a better rule selection, and
+    in turn better predictive performance.
+- `max_depth::Int=$MAX_DEPTH_DEFAULT`:
+    The depth of the tree.
+    A lower depth decreases model complexity and can therefore improve accuracy when the sample size is small (reduce overfitting).
+- `q::Int=$Q_DEFAULT`: Number of cutpoints to use per feature.
+    The default value should be fine for most situations.
+- `min_data_in_leaf::Int=$MIN_DATA_IN_LEAF_DEFAULT`: Minimum number of data points per leaf.
+"""
+
+const RULES_HYPERPARAMETERS_SECTION = """
+- `max_rules::Int=$MAX_RULES_DEFAULT`:
+    This is the most important hyperparameter.
+    In general, the more rules, the more accurate the model.
+    However, more rules will also decrease model interpretability.
+    So, it is important to find a good balance here.
+    In most cases, 10 to 40 rules should provide reasonable accuracy while remaining interpretable.
+- `lambda::Float64=$LAMBDA_DEFAULT`:
+    The weights of the final rules are determined via a regularized regression over each rule as a binary feature.
+    This hyperparameter specifies the strength of the ridge (L2) regularizer.
+"""
+
+"""
+$(MMI.doc_header(StableForestClassifier))
+
+`StableForestClassifier` implements the random forest classifier with a stabilized forest structure (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html)).
+This stabilization increases stability when extracting rules.
+The impact on the predictive accuracy compared to standard random forests should be relatively small.
+
+!!! note
+    Just like normal random forests, this model is not easily explainable.
+    If you are interested in an explainable model, use the `StableRulesClassifier` or
+    `StableRulesRegressor`.
+
+$TRAINING_DATA_SECTION
+
+$HYPERPARAMETERS_SECTION
+"""
+StableForestClassifier
+
+"""
+$(MMI.doc_header(StableRulesClassifier))
+
+`StableRulesClassifier` implements the explainable rule-based model based on a random forest.
+
+$TRAINING_DATA_SECTION
+
+$HYPERPARAMETERS_SECTION
+$RULES_HYPERPARAMETERS_SECTION
+"""
+StableRulesClassifier
+
+"""
+$(MMI.doc_header(StableForestRegressor))
+
+`StableForestRegressor` implements the random forest regressor with a stabilized forest structure (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html)).
+
+$TRAINING_DATA_SECTION
+
+$HYPERPARAMETERS_SECTION
+"""
+StableForestRegressor
+
+"""
+$(MMI.doc_header(StableRulesRegressor))
+
+`StableRulesRegressor` implements the explainable rule-based regression model based on a random forest.
+
+$TRAINING_DATA_SECTION
+
+$HYPERPARAMETERS_SECTION
+$RULES_HYPERPARAMETERS_SECTION
+"""
+StableRulesRegressor
 
 end # module
