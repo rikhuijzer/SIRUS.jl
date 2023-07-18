@@ -280,6 +280,12 @@ function Base.hash(rule::Rule)
     hash([rule.path.splits, rule.then, rule.otherwise])
 end
 
+"""
+    StableRules{T} <: StableModel
+
+Stable rule-based model containing the rules, algorithm, classes and weights.
+This object is created by the MLJ-interface.
+"""
 struct StableRules{T} <: StableModel
     rules::Vector{Rule}
     algo::Algorithm

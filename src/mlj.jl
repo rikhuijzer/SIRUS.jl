@@ -294,6 +294,28 @@ const RULES_HYPERPARAMETERS_SECTION = """
     This hyperparameter specifies the strength of the ridge (L2) regularizer.
 """
 
+const OPERATIONS_SECTION = """
+# Operations
+
+- `predict(mach, Xnew)`: Return a vector of predictions for each row of `Xnew`.
+"""
+
+const FITTED_PARAMETERS_FOREST_SECTION = """
+# Fitted parameters
+
+The fields of `fitted_params(mach)` are:
+
+- `fitresult`: A `StableForest` object.
+"""
+
+const FITTED_PARAMETERS_RULES_SECTION = """
+# Fitted parameters
+
+The fields of `fitted_params(mach)` are:
+
+- `fitresult`: A `StableRules` object.
+"""
+
 """
 $(MMI.doc_header(StableForestClassifier))
 
@@ -309,6 +331,10 @@ The impact on the predictive accuracy compared to standard random forests should
 $TRAINING_DATA_SECTION
 
 $HYPERPARAMETERS_SECTION
+
+$FITTED_PARAMETERS_FOREST_SECTION
+
+$OPERATIONS_SECTION
 """
 StableForestClassifier
 
@@ -321,6 +347,10 @@ $TRAINING_DATA_SECTION
 
 $HYPERPARAMETERS_SECTION
 $RULES_HYPERPARAMETERS_SECTION
+
+$FITTED_PARAMETERS_RULES_SECTION
+
+$OPERATIONS_SECTION
 """
 StableRulesClassifier
 
@@ -332,6 +362,10 @@ $(MMI.doc_header(StableForestRegressor))
 $TRAINING_DATA_SECTION
 
 $HYPERPARAMETERS_SECTION
+
+$FITTED_PARAMETERS_FOREST_SECTION
+
+$OPERATIONS_SECTION
 """
 StableForestRegressor
 
@@ -344,6 +378,10 @@ $TRAINING_DATA_SECTION
 
 $HYPERPARAMETERS_SECTION
 $RULES_HYPERPARAMETERS_SECTION
+
+$FITTED_PARAMETERS_RULES_SECTION
+
+$OPERATIONS_SECTION
 """
 StableRulesRegressor
 

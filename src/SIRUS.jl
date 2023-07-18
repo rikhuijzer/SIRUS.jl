@@ -24,9 +24,11 @@ using .EmpiricalQuantiles: Cutpoints, cutpoints
 export Cutpoints, cutpoints
 
 include("forest.jl")
+export StableForest
 include("classification.jl")
 include("regression.jl")
 include("rules.jl")
+export StableRules
 include("ruleshow.jl")
 include("weights.jl")
 export TreePath
