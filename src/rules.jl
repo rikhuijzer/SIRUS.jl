@@ -353,7 +353,7 @@ function StableRules(
         classes,
         data,
         outcome,
-        model::Probabilistic
+        model::Union{Deterministic, Probabilistic}
     )::StableRules
     processed = _process_rules(rules, model.max_rules)
     weights = _weights(processed, algo, classes, data, outcome, model)
@@ -365,7 +365,7 @@ function StableRules(
         forest::StableForest,
         data,
         outcome,
-        model::Probabilistic,
+        model::Union{Deterministic, Probabilistic}
     )::StableRules
     rules = _rules(forest)
     return StableRules(rules, forest.algo, forest.classes, data, outcome, model)

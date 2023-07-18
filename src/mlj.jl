@@ -20,6 +20,7 @@ using MLJModelInterface:
     UnivariateFinite,
     Continuous,
     Count,
+    Deterministic,
     Finite,
     Probabilistic,
     Table
@@ -66,7 +67,7 @@ MMI.@mlj_model mutable struct StableRulesClassifier <: Probabilistic
     lambda::Float64=LAMBDA_DEFAULT
 end
 
-MMI.@mlj_model mutable struct StableForestRegressor <: Probabilistic
+MMI.@mlj_model mutable struct StableForestRegressor <: Deterministic
     rng::AbstractRNG=default_rng()
     partial_sampling::Real=PARTIAL_SAMPLING_DEFAULT
     n_trees::Int=N_TREES_DEFAULT
@@ -75,7 +76,7 @@ MMI.@mlj_model mutable struct StableForestRegressor <: Probabilistic
     min_data_in_leaf::Int=MIN_DATA_IN_LEAF_DEFAULT
 end
 
-MMI.@mlj_model mutable struct StableRulesRegressor <: Probabilistic
+MMI.@mlj_model mutable struct StableRulesRegressor <: Deterministic
     rng::AbstractRNG=default_rng()
     partial_sampling::Real=PARTIAL_SAMPLING_DEFAULT
     n_trees::Int=N_TREES_DEFAULT
