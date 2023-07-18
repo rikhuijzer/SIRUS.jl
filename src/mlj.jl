@@ -91,7 +91,6 @@ metadata_model(
     input_scitype=Table(Continuous, Count),
     target_scitype=AbstractVector{<:Finite},
     supports_weights=false,
-    docstring="Random forest classifier with a stabilized forest structure",
     path="SIRUS.StableForestClassifier"
 )
 
@@ -100,7 +99,6 @@ metadata_model(
     input_scitype=Table(Continuous, Count),
     target_scitype=AbstractVector{<:Finite},
     supports_weights=false,
-    docstring="Stable and Interpretable RUle Sets (SIRUS) classifier",
     path="SIRUS.StableForestClassifier"
 )
 
@@ -109,7 +107,6 @@ metadata_model(
     input_scitype=Table(Continuous, Count),
     target_scitype=AbstractVector{<:Continuous},
     supports_weights=false,
-    docstring="Random forest regressor with a stabilized forest structure",
     path="SIRUS.StableForestRegressor"
 )
 
@@ -118,7 +115,6 @@ metadata_model(
     input_scitype=Table(Continuous, Count),
     target_scitype=AbstractVector{<:Continuous},
     supports_weights=false,
-    docstring="Stable and Interpretable RUle Sets (SIRUS) regressor",
     path="SIRUS.StableForestRegressor"
 )
 
