@@ -22,6 +22,11 @@ This package is a pure Julia implementation of the **S**table and **I**nterpreta
 The algorithm was originally created by Clément Bénard, Gérard Biau, Sébastien Da Veiga, and Erwan Scornet (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html)).
 `SIRUS.jl` has implemented both classification and regression, but we found that performance is generally best on classification tasks.
 
+The main benefit of this algorithm is that it is **fully explainable**.
+This differs from model-agnostic explainability techniques such as SHAP, which convert the model to a simplified representation.
+However, **the complex model is still used for predictions**, which can lead to hidden biases or reliability issues.
+The SIRUS algorithm fixes this by using a simplified model for **both** for prediction and explanation.
+
 # Installation
 
 ```julia
