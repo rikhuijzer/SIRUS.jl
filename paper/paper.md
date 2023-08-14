@@ -37,9 +37,11 @@ In such situations, black box models may lead to unsafe or unreliable prediction
 However, the set of fully interpretable models is often limited to linear models and decision trees.
 Linear models can perform poorly when the features are correlated or can be sensitive to the choice of hyperparameters when using regularized models, and decision trees perform poorly compared to random forests [@james2013introduction].
 Instead, random forests [@breiman2001random] often outperform linear models and decision trees, but are not fully interpretable due to the large number of trees, typically thousands, in the forests.
-At the same time, visualization techniques, such as SHAP [@lundberg2017unified], allow inspection of feature importances, but do not provide enough information to reproduce the predictions made by the model.
-The SIRUS algorithm solves these issues by first restricting the split points in the random forest algorithm to a stable subset of points, and by then extracting a small and interpretable rule set [@benard2021interpretable].
-Furthermore, these rules are distribution-free and can describe complex relations in data.
+At the same time, model interpretation techniques, such as SHAP [@lundberg2017unified], do not clearly explain predictions made by the models.
+Most interpretation techniques convert the complex model to a simplified representation.
+This causes the simplified representation to be different from the complex model and may therefore hide biases and issues related to safety and reliability [@barredo2020explainable].
+The SIRUS algorithm solves this problem by simplifying the complex model, and by then using the simplified model for predictions.
+This ensures that the same model is used for interpretation and prediction.
 However, the original SIRUS algorithm was implemented in C++ and R, which makes it hard to inspect and extend due to the combination of two languages.
 An implementation in one high-level language allows verification of the algorithm and allows researchers to investigate further algorithmic improvements.
 Furthermore, the original algorithm was covered by the GPL-3 copyleft license meaning that copies are required to be made freely available.
@@ -81,17 +83,9 @@ _If the number of detected axillary nodes is lower than 8, then take 0.156, othe
 
 This calculation is done for all 8 rules and the score is summed to get a prediction.
 In essence, the first rule says that if there are less than 8 axillary nodes detected, then the patient will most likely survive (`class == 1.0`).
-Put differently, the model states that if there are many axillary nodes detected, then it is (unfortunately) less likely that the patient will survive.
-
+Put differently, the model states that if there are many axillary nodes detected, then it is, unfortunately, less likely that the patient will survive.
 This model is fully interpretable because there are few rules which can all be interpreted in isolation and together.
-Random forests, in contrasts, consist of hundreds to thousands of trees, which are not interpretable due to this large number.
-A common workaround for this is to use SHAP or Shapley values to visualize the fitted model.
-The problem with those methods is that they do not allow full reproducibility of the predictions.
-For example, if we would inspect the fitted model on the aforementioned Haberman dataset via SHAP, then we could only learn feature importances.
-In practice that would mean that we could tell which features were important.
-In many real-world situations this is not enough.
-For example, when using only feature importances, it would be unclear for a doctor how the prediction for a specific patient was made.
-The doctor would only only know that some features are in general more important than other features, but not whether a certain feature played a large role for a decision for a specific patient.
+In contrast, Random forests consist of hundreds to thousands of trees, which makes them too complex to interpret.
 
 # Stability
 
@@ -124,7 +118,7 @@ The interpretability and stability are summarized in Table \ref{tab:is}.
 
 # Predictive Performance
 
-The model is based on random forests and, therefore, well suited for settings where the number of variables is comparatively large to the number of datapoints [@biau2016random].
+The model is based on random forests and therefore well suited for settings where the number of variables is comparatively large to the number of datapoints [@biau2016random].
 To make the random forests interpretable, the large number of trees are converted a small number of rules.
 This trade-off between model complexity and interpretability comes at a small performance cost.
 
