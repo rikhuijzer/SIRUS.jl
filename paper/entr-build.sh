@@ -6,4 +6,8 @@ FILES=$(find "$DIR" \
     -iname "*.md" \
     -o -iname "*.bib")
 
+echo "Running build.sh..."
+
 echo "$FILES" | entr -s "$DIR/build.sh"
+
+echo "Build finished"

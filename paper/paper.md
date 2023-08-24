@@ -32,9 +32,10 @@ In turn, this allows others to research the algorithm further or easily port it 
 # Statement of need
 
 Many of the modern day machine learning models are non-interpretable models, also known as _black box_ models.
+For non-interpretable models, predictions cannot be understood by looking at the model parameters.
 These models can be problematic in high stakes domains, such as suggesting treatments or personnel selection, where model decisions have real-world impact on individuals.
-In such situations, black box models may lead to unsafe or unreliable predictions [@doshi2017towards; @barredo2020explainable].
-However, the set of fully interpretable models is often limited to linear models and decision trees.
+In such situations, non-interpretable models may lead to unsafe, unfair, or unreliable predictions [@doshi2017towards; @barredo2020explainable].
+However, the set of interpretable models is often limited to linear models and decision trees.
 Linear models can perform poorly when the features are correlated or can be sensitive to the choice of hyperparameters when using regularized models, and decision trees perform poorly compared to random forests [@james2013introduction].
 Instead, random forests [@breiman2001random] often outperform linear models and decision trees, but are not fully interpretable due to the large number of trees, typically thousands, in the forests.
 At the same time, model interpretation techniques, such as SHAP [@lundberg2017unified], do not clearly explain predictions made by the models.
@@ -57,9 +58,9 @@ We have also set the maximum depth hyperparameter to 2.
 This hyperparameter means that the random forests inside the algorithm are not allowed to have a depth higher than 2.
 In turn, this means that rules contain at most 2 clauses (`if A & B`).
 When the maximum depth is set to 1, then the rules contain at most 1 clause (`if A`).
-Most rule-based models, including SIRUS, are restricted to depth of 1 or 2 [@benard2021interpretable].
+Most rule-based models, including SIRUS, are restricted to depth of 1 or 2 [@beneard2021sirus].
 
-The fitted model is:
+The fitted model looks as follows (see Section _Code Example_ for the code):
 
 ```
 StableRules model with 8 rules:
@@ -71,12 +72,12 @@ StableRules model with 8 rules:
  if X[i, :nodes] < 2.0 then 0.107 else 0.034 +
  if X[i, :year] ≥ 1966.0 & X[i, :age] < 38.0 then 0.0 else 0.001 +
  if X[i, :year] < 1959.0 & X[i, :nodes] ≥ 2.0 then 0.0 else 0.003
-and 2 classes: [0.0, 1.0].
-Note: showing only the probability for class 1.0 since class 0.0 has
+and 2 classes: [0, 1].
+Note: showing only the probability for class 1 since class 0 has
       probability 1 - p.
 ```
 
-This shows that the model contains 8 rules.
+The output shows that the model contains 8 rules.
 The first rule, for example, can be interpreted as:
 
 _If the number of detected axillary nodes is lower than 8, then take 0.156, otherwise take 0.031._
@@ -96,7 +97,7 @@ This also makes such models appear less trustworthy.
 Put differently, an unstable model by definition leads to different conclusions for small changes to the data and, hence, small changes to the data could cause a sudden drop in predictive performance.
 One model which suffers from a low stability is a decision tree because it will first create the root node of the tree, so a small change in the data can cause the root, and therefore the rest, of the tree to be completely different [@molnar2022interpretable].
 Similarly, linear models can be highly sensitive to correlated data and, in the case of regularized linear models, the choice of hyperparameters.
-Instead, the SIRUS algorithm provides stability by stabilizing the trees and the authors have proven the correctness of this stabilization mathematically [@benard2021interpretable].
+Instead, the SIRUS algorithm provides stability by stabilizing the trees and the authors have proven the correctness of this stabilization mathematically [@beneard2021sirus].
 In the rest of this paper, we will compare decision trees [@sadeghi2022decisiontree], linear models, XGBoost [@chen2016xgboost], and SIRUS on their interpretability, stability, and predictive performance.
 The interpretability and stability are summarized in Table \ref{tab:is}.
 
@@ -119,17 +120,18 @@ The interpretability and stability are summarized in Table \ref{tab:is}.
 # Predictive Performance
 
 The model is based on random forests and therefore well suited for settings where the number of variables is comparatively large to the number of datapoints [@biau2016random].
-To make the random forests interpretable, the large number of trees are converted a small number of rules.
-This trade-off between model complexity and interpretability comes at a small performance cost.
+To make the random forests interpretable, the large number of trees are converted to a small number of rules.
+The conversion works by converting each tree to a set of rules and then pruning the rules by removing simple duplicates and linearly dependent duplicates, see the package documentation or the original paper [@benard2021interpretable] for details.
+In practice, this trade-off between between model complexity and interpretability comes at a small performance cost.
 
 To show the performance, we compared SIRUS to a decision tree linear model, and XGBoost; similar to Table \ref{tab:is}.
-We have used SIRUS version 1.2.1, 10-fold cross-validation, and we will present variability as $1.96 * \text{standard error}$ for all evaluations with respectively the following datasets and measures:
-Titanic [@eaton1995titanic] with Area Under the Curve (AUC),
-Breast Cancer Wisconsin [@wolberg1995breast] with AUC,
-Pima Indians Diabetes [@smith1988using] with AUC,
-Haberman's Survival Dataset [@haberman1999survival] with AUC,
-Iris [@fisher1936use] with accuracy,
-and Boston Housing [@harrison1978hedonic] with $\text{R}^2$; see Table \ref{tab:perf}.
+We have used SIRUS version 1.2.1, 10-fold cross-validation, and we will present variability as $1.96 * \text{standard error}$ for all evaluations with respectively the following datasets, outcome variable type, and measures:
+Titanic [@eaton1995titanic] binary classification dataset with Area Under the Curve (AUC),
+Breast Cancer Wisconsin [@wolberg1995breast] binary classification dataset with AUC,
+Pima Indians Diabetes [@smith1988using] binary classification dataset with AUC,
+Haberman's Survival Dataset [@haberman1999survival] binary classification dataset with AUC,
+Iris [@fisher1936use] multiclass classification dataset with accuracy,
+and Boston Housing [@harrison1978hedonic] regression dataset with $\text{R}^2$; see Table \ref{tab:perf}.
 
 \begin{table}[h!]
 \small
@@ -158,17 +160,19 @@ For the multiclass Iris classification and the Boston Housing regression dataset
 It could be that this is caused by a bug in the implementation or because this is a fundamental issue in the algorithm.
 Further work is needed to find the root cause or workarounds for these low scores.
 One possible solution would be to add SymbolicRegression.jl [@cranmer2023interpretable] as a secondary back end for regression tasks.
+Similar to SIRUS.jl, SymbolicRegression.jl can fit expressions of a pre-defined form to data albeit with more free parameters, which might fit better but also might cause overfitting, depending on the data.
 This achieves performance that is similar to XGBoost [@hanson2023discourse].
 
 # Code Example
 
 The model can be used via the `MLJ.jl` [@blaom2020mlj] machine learning interface.
-For example, this is the code used to fit the Haberman example at the start of this paper: <br>
+For example, this code was used to obtain the fit result for the Haberman example at the start of this paper: <br>
 \vspace{2mm}
 ```julia
 model = StableRulesClassifier(; max_depth=2, max_rules=8)
 mach = machine(model, X, y)
 fit!(mach)
+mach.fitresult
 ```
 \vspace{2mm}
 and model performances were estimated via the following cross-validation (`CV`) code:
