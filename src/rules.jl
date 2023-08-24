@@ -280,6 +280,12 @@ function Base.hash(rule::Rule)
     hash([rule.path.splits, rule.then, rule.otherwise])
 end
 
+"""
+    StableRules{T} <: StableModel
+
+Stable rule-based model containing the rules, algorithm, classes and weights.
+This object is created by the MLJ-interface.
+"""
 struct StableRules{T} <: StableModel
     rules::Vector{Rule}
     algo::Algorithm
@@ -347,7 +353,7 @@ function StableRules(
         classes,
         data,
         outcome,
-        model::Probabilistic
+        model::Union{Deterministic, Probabilistic}
     )::StableRules
     processed = _process_rules(rules, model.max_rules)
     weights = _weights(processed, algo, classes, data, outcome, model)
@@ -359,7 +365,7 @@ function StableRules(
         forest::StableForest,
         data,
         outcome,
-        model::Probabilistic,
+        model::Union{Deterministic, Probabilistic}
     )::StableRules
     rules = _rules(forest)
     return StableRules(rules, forest.algo, forest.classes, data, outcome, model)

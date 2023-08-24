@@ -53,7 +53,7 @@ function _estimate_coefficients!(
         algo::Algorithm,
         binary_feature_data::Matrix{Float16},
         outcome::Vector{Float16},
-        model::Probabilistic
+        model::Union{Deterministic, Probabilistic}
     )
     # Lasso and ridge are non-invariant and thus require normalized data.
     _normalize!(outcome)
@@ -88,7 +88,7 @@ function _weights(
         classes::AbstractVector,
         data,
         outcome::AbstractVector,
-        model::Probabilistic
+        model::Union{Deterministic, Probabilistic}
     )
     binary_feature_data = _binary_features(rules, data)
     y = convert(Vector{Float16}, outcome)

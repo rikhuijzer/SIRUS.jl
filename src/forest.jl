@@ -234,6 +234,13 @@ function _predict(node::Node, X::AbstractMatrix)
 end
 
 abstract type StableModel end
+
+"""
+    StableForest{T} <: StableModel
+
+Stable forest containing the trees, algorithm, and classes.
+This object is created by the MLJ-interface.
+"""
 struct StableForest{T} <: StableModel
     trees::Vector{Union{Node,Leaf}}
     algo::Algorithm

@@ -9,7 +9,7 @@ using InlineStrings: String255
 using LinearAlgebra: rank
 using MLJBase: mode
 using MLJLinearModels: MLJLinearModels, RidgeRegressor, glr
-using MLJModelInterface: UnivariateFinite, Probabilistic, fit
+using MLJModelInterface: Deterministic, UnivariateFinite, Probabilistic, fit
 using Random: AbstractRNG, default_rng, seed!, shuffle
 using Statistics: mean, median
 using Tables: Tables, matrix
@@ -24,9 +24,11 @@ using .EmpiricalQuantiles: Cutpoints, cutpoints
 export Cutpoints, cutpoints
 
 include("forest.jl")
+export StableForest
 include("classification.jl")
 include("regression.jl")
 include("rules.jl")
+export StableRules
 include("ruleshow.jl")
 include("weights.jl")
 export TreePath
