@@ -138,20 +138,27 @@ metadata_pkg.(
 Return a floating point vector of `A`.
 This method patches the version from CategoricalArrays.jl for `AbstractString`s.
 """
-function _float(A::CategoricalArray{T}) where T
+function _sanitize_outcomes(A::CategoricalArray{T}, regression::Bool) where T
     if !isconcretetype(T)
         msg = "`float` not defined on abstractly-typed arrays; please convert to a more specific type"
         throw(ArgumentError(msg))
     end
     if T isa Type{String}
         uniques = sort(unique(A))
-        A = collect(0.0:float(length(uniques) - 1))
+        A = regression ?
+            collect(0.0:float(length(uniques) - 1)) :
+            collect(0:length(uniques) - 1)
         # Workaround for https://github.com/rikhuijzer/SIRUS.jl/issues/24.
         @info "Converting outcome classes $(uniques) to $(A)."
     end
     return float(A)
 end
-_float(A::AbstractVector) = float.(A)
+function _sanitize_outcomes(A::CategoricalArray{<:Int}, regression::Bool)
+    return regression ? float.(A) : A
+end
+function _sanitize_outcomes(A::AbstractVector, regression::Bool)
+    return regression ? float.(A) : A
+end
 
 function fit(
         model::Union{StableForestClassifier, StableForestRegressor},
@@ -160,11 +167,12 @@ function fit(
         X,
         y
     )
+    regression = model isa StableForestRegressor
     forest = _forest(
         model.rng,
         algo,
         matrix(X),
-        _float(y),
+        _sanitize_outcomes(y, regression),
         colnames(X);
         model.partial_sampling,
         model.n_trees,
@@ -205,12 +213,13 @@ function fit(
         y
     )
     data = matrix(X)
-    outcome = _float(y)
+    regression = model isa StableForestRegressor
+    outcomes = _sanitize_outcomes(y, regression)
     forest = _forest(
         model.rng,
         algo,
         data,
-        outcome,
+        outcomes,
         colnames(X);
         model.partial_sampling,
         model.n_trees,
@@ -218,7 +227,7 @@ function fit(
         model.q,
         model.min_data_in_leaf
     )
-    fitresult = StableRules(forest, data, outcome, model)
+    fitresult = StableRules(forest, data, outcomes, model)
     cache = nothing
     report = nothing
     return fitresult, cache, report

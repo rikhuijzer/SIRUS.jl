@@ -2,7 +2,11 @@ import Base
 
 ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
 
-using CategoricalArrays: CategoricalValue, categorical, unwrap
+using CategoricalArrays:
+    CategoricalValue,
+    CategoricalVector,
+    categorical,
+    unwrap
 using CSV: CSV
 using DataDeps: DataDeps, DataDep, @datadep_str
 using Documenter: DocMeta, doctest
