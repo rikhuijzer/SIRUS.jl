@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.26
+# v0.19.27
 
 using Markdown
 using InteractiveUtils
@@ -27,7 +27,7 @@ begin
 	using DataDeps: DataDeps, DataDep, @datadep_str
 	using DataFrames
 	using DecisionTree: DecisionTree
-	using LightGBM.MLJInterface: LGBMClassifier
+	using EvoTrees: EvoTreeClassifier
 	using MLJDecisionTreeInterface: DecisionTreeClassifier
 	using MLJ: CV, MLJ, Not, PerformanceEvaluation, auc, fit!, evaluate, machine
 	using PlutoUI: TableOfContents # hide
@@ -196,9 +196,9 @@ Let's compare the following models:
 - Decision tree (`DecisionTreeClassifier`)
 - Stabilized random forest (`StableForestClassifier`)
 - SIRUS (`StableRulesClassifier`)
-- LightGBM (`LGBMClassifier`)
+- EvoTrees (`EvoTreeClassifier`)
 
-The latter is a state-of-the-art gradient boosting model created by Microsoft.
+The latter is a gradient boosting model.
 See the Appendix for more details about these results.
 """
 
@@ -626,7 +626,7 @@ e2 = let
 	model = StableRulesClassifier
 	hyperparameters = (; max_depth=2, max_rules=8, rng=_rng())
 	_evaluate(model, hyperparameters, X, y)
-end
+end;
 
 # ╔═╡ 88a708a7-87e8-4f97-b199-70d25ba91894
 # ╠═╡ show_logs = false
@@ -659,18 +659,17 @@ e5 = let
 	_evaluate(model, hyperparameters, X, y)
 end;
 
-# ╔═╡ 263ea81f-5fd6-4414-a571-defb1cabab4b
-# ╠═╡ show_logs = false
+# ╔═╡ 04d162f4-59a5-4ac3-9734-d9d9dfa6b682
 e6 = let
-	model = LGBMClassifier
-	hyperparameters = (;)
+	model = EvoTreeClassifier
+	hyperparameters = (; rng=_rng())
 	_evaluate(model, hyperparameters, X, y)
 end;
 
-# ╔═╡ 78ba7c69-10df-49d8-8fda-674a1ab05593
+# ╔═╡ 8c093e66-f476-4501-b098-705e274be8ee
 e7 = let
-	model = LGBMClassifier
-	hyperparameters = (; max_depth=2)
+	model = EvoTreeClassifier
+	hyperparameters = (; max_depth=2, rng=_rng())
 	_evaluate(model, hyperparameters, X, y)
 end;
 
@@ -678,7 +677,7 @@ end;
 #hideall
 results = let
 	df = DataFrame(getproperty.([e6, e7, e1, e5, e3, e2, e4], :row))
-	df[!, :Interpretability] = ["Medium", "Medium", "High", "Low", "High", "High", "High"]
+	df[!, :Interpretability] = ["Low", "Low", "High", "Low", "High", "High", "High"]
 	df[!, :Stability] = ["High", "High", "Low", "High", "High", "High", "High"]
 	df[!, :AUC] = map(df.AUC) do score
 		text = string(score)
@@ -726,8 +725,8 @@ end
 # ╠═88a708a7-87e8-4f97-b199-70d25ba91894
 # ╠═86ed4d56-23e6-4b4d-9b55-7067124da27f
 # ╠═5d875f9d-a0aa-47b0-8a75-75bb280fa1ba
-# ╠═263ea81f-5fd6-4414-a571-defb1cabab4b
-# ╠═78ba7c69-10df-49d8-8fda-674a1ab05593
+# ╠═04d162f4-59a5-4ac3-9734-d9d9dfa6b682
+# ╠═8c093e66-f476-4501-b098-705e274be8ee
 # ╠═622beb62-51ac-4b44-9409-550e5f422fe4
 # ╠═4a4ab7ef-659e-4048-ab16-94ad4cb4328a
 # ╠═16de5518-2a16-40ef-87a5-d2acd514d294
