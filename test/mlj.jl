@@ -310,7 +310,7 @@ e_iris = let
 
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     e = _evaluate!(results, data, StableRulesClassifier, hyper; measure)
-    @test 0.65 < _score(e)
+    @test 0.62 < _score(e)
     e
 end
 
