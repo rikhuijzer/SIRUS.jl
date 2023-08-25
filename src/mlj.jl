@@ -134,6 +134,11 @@ metadata_pkg.(
     is_wrapper=false
 )
 
+_is_regression(::StableForestClassifier) = false
+_is_regression(::StableForestRegressor) = true
+_is_regression(::StableRulesClassifier) = false
+_is_regression(::StableRulesRegressor) = true
+
 """
 Return a floating point vector of `A`.
 This method patches the version from CategoricalArrays.jl for `AbstractString`s.
@@ -167,7 +172,7 @@ function fit(
         X,
         y
     )
-    regression = model isa StableForestRegressor
+    regression = _is_regression(model)
     forest = _forest(
         model.rng,
         algo,
@@ -213,7 +218,7 @@ function fit(
         y
     )
     data = matrix(X)
-    regression = model isa StableForestRegressor
+    regression = _is_regression(model)
     outcomes = _sanitize_outcomes(y, regression)
     forest = _forest(
         model.rng,
