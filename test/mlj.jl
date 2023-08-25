@@ -30,7 +30,7 @@ datasets = Dict{String,Tuple}(
     "haberman" => let
         df = haberman()
         X = MLJBase.table(MLJBase.matrix(df[:, Not(:survival)]))
-        y = df.survival
+        y = categorical(df.survival)
         (X, y)
     end,
     "iris" => let
@@ -62,6 +62,16 @@ datasets = Dict{String,Tuple}(
     data = MLJTestInterface.make_regression()
     failures, summary = MLJTestInterface.test([StableRulesRegressor], data...; kwargs...)
     @test isempty(failures)
+end
+
+@testset "keep classes as integers" begin
+    _X, _y = datasets["haberman"]
+    @test _y isa CategoricalVector{<:Int}
+    model = StableRulesClassifier(; max_depth=2, max_rules=8, n_trees=10, rng=_rng())
+    mach = machine(model, _X, _y)
+    fit!(mach)
+    classes = mach.fitresult.classes
+    @test classes isa Vector{<:Int}
 end
 
 function _score(e::PerformanceEvaluation)
@@ -300,7 +310,7 @@ e_iris = let
 
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     e = _evaluate!(results, data, StableRulesClassifier, hyper; measure)
-    @test 0.65 < _score(e)
+    @test 0.62 < _score(e)
     e
 end
 

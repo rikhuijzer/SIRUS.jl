@@ -204,7 +204,7 @@ See the Appendix for more details about these results.
 
 # ╔═╡ 4a4ab7ef-659e-4048-ab16-94ad4cb4328a
 md"""
-As can be seen, the score of the stabilized random forest (`StableForestClassifier`) is almost as good as Microsoft's state-of-the-art classifier (`LGBMClassifier`), but both are not interpretable since that requires interpreting thousands of trees.
+As can be seen, the score of the stabilized random forest (`StableForestClassifier`) is comparable to the gradient boosted Evo Trees (`EvoTreesClassifier`), but both are not interpretable since that requires interpreting thousands of trees.
 With the rule-based classifier (`StableRulesClassifier`), a small amount of predictive performance can be traded for high interpretability.
 Note that the rule-based classifier may actually be more accurate in practice because verifying and debugging the model is much easier.
 
@@ -276,7 +276,7 @@ As shown in the previous sections, the model satisfies two things:
 Since the model shows good performance and makes theoretical sense, we can be reasonably sure that the model will generalize to new data in a similar context.
 Next, the model can be applied by fitting it on the full dataset and brining it to a real-world setting.
 
-Note that unlike the state-of-the-art random forest from Microsoft, each decision that the model makes can be fully explained.
+Note that unlike the random forests and gradient boosted trees, each decision that the model makes can be fully explained.
 All rules can be read stand-alone and interpreted.
 For example, when trying to interpret a random forest, it will only report feature importances.
 For the Haberman dataset, we would know more than `nodes` is negatively associated and `age` too.
