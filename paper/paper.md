@@ -58,9 +58,9 @@ We have also set the maximum depth hyperparameter to 2.
 This hyperparameter means that the random forests inside the algorithm are not allowed to have a depth higher than 2.
 In turn, this means that rules contain at most 2 clauses (`if A & B`).
 When the maximum depth is set to 1, then the rules contain at most 1 clause (`if A`).
-Most rule-based models, including SIRUS, are restricted to depth of 1 or 2 [@beneard2021sirus].
+Most rule-based models, including SIRUS, are restricted to depth of 1 or 2 [@benard2021sirus].
 
-The fitted model looks as follows (see Section _Code Example_ for the code):
+The output for the fitted model looks as follows (see Section _Code Example_ for the code):
 
 ```
 StableRules model with 8 rules:
@@ -77,7 +77,7 @@ Note: showing only the probability for class 1 since class 0 has
       probability 1 - p.
 ```
 
-The output shows that the model contains 8 rules.
+This shows that the model contains 8 rules.
 The first rule, for example, can be interpreted as:
 
 _If the number of detected axillary nodes is lower than 8, then take 0.156, otherwise take 0.031._
@@ -85,19 +85,19 @@ _If the number of detected axillary nodes is lower than 8, then take 0.156, othe
 This calculation is done for all 8 rules and the score is summed to get a prediction.
 In essence, the first rule says that if there are less than 8 axillary nodes detected, then the patient will most likely survive (`class == 1.0`).
 Put differently, the model states that if there are many axillary nodes detected, then it is, unfortunately, less likely that the patient will survive.
-This model is fully interpretable because there are few rules which can all be interpreted in isolation and together.
-In contrast, Random forests consist of hundreds to thousands of trees, which makes them too complex to interpret.
+This model is fully interpretable because the model contains a few dozen rules which can all be interpreted in isolation and together.
+In contrast, Random forests require hundreds to thousands of trees, which makes them too complex to interpret.
 
 # Stability
 
-Another problem that the SIRUS algorithm improves upon is that of model stability.
+Another problem that the SIRUS algorithm addresses is that of model stability.
 A stable model is defined as a model which leads to similar conclusions for small changes to data [@yu2020veridical].
 Unstable models can be difficult to apply in practice as they might require processes to constantly change.
 This also makes such models appear less trustworthy.
 Put differently, an unstable model by definition leads to different conclusions for small changes to the data and, hence, small changes to the data could cause a sudden drop in predictive performance.
 One model which suffers from a low stability is a decision tree because it will first create the root node of the tree, so a small change in the data can cause the root, and therefore the rest, of the tree to be completely different [@molnar2022interpretable].
 Similarly, linear models can be highly sensitive to correlated data and, in the case of regularized linear models, the choice of hyperparameters.
-Instead, the SIRUS algorithm provides stability by stabilizing the trees and the authors have proven the correctness of this stabilization mathematically [@beneard2021sirus].
+Instead, the SIRUS algorithm provides stability by stabilizing the trees and the authors have proven the correctness of this stabilization mathematically [@benard2021sirus].
 In the rest of this paper, we will compare decision trees [@sadeghi2022decisiontree], linear models, XGBoost [@chen2016xgboost], and SIRUS on their interpretability, stability, and predictive performance.
 The interpretability and stability are summarized in Table \ref{tab:is}.
 
@@ -126,10 +126,10 @@ In practice, this trade-off between between model complexity and interpretabilit
 
 To show the performance, we compared SIRUS to a decision tree linear model, and XGBoost; similar to Table \ref{tab:is}.
 We have used SIRUS version 1.2.1, 10-fold cross-validation, and we will present variability as $1.96 * \text{standard error}$ for all evaluations with respectively the following datasets, outcome variable type, and measures:
+Haberman's Survival Dataset [@haberman1999survival] binary classification dataset with AUC,
 Titanic [@eaton1995titanic] binary classification dataset with Area Under the Curve (AUC),
 Breast Cancer Wisconsin [@wolberg1995breast] binary classification dataset with AUC,
 Pima Indians Diabetes [@smith1988using] binary classification dataset with AUC,
-Haberman's Survival Dataset [@haberman1999survival] binary classification dataset with AUC,
 Iris [@fisher1936use] multiclass classification dataset with accuracy,
 and Boston Housing [@harrison1978hedonic] regression dataset with $\text{R}^2$; see Table \ref{tab:perf}.
 
@@ -141,10 +141,10 @@ and Boston Housing [@harrison1978hedonic] regression dataset with $\text{R}^2$; 
 \textbf{Dataset} & \textbf{Decision Tree} & \textbf{Linear Model} & \textbf{XGBoost} & \textbf{XGBoost} & \textbf{SIRUS} \\
 & & & \textbf{\scriptsize{max depth: $\mathbb{\infty}$}} & \textbf{\scriptsize{max depth: 2}} & \textbf{\scriptsize{max depth: 2}} \\
 \hline
+Haberman & $0.53 \pm 0.07$ & $0.69 \pm 0.06$ & $0.65 \pm 0.04$ & $0.63 \pm 0.04$ & $0.67 \pm 0.07$ \\
 Titanic & $0.76 \pm 0.04$ & $0.84 \pm 0.02$ & $0.86 \pm 0.03$ & $0.87 \pm 0.02$ & $0.82 \pm 0.02$ \\
 Breast Cancer & $0.91 \pm 0.03$ & $0.98 \pm 0.01$ & $0.99 \pm 0.01$ & $0.99 \pm 0.01$ & $0.98 \pm 0.01$ \\
 Diabetes & $0.68 \pm 0.05$ & $0.70 \pm 0.06$ & $0.80 \pm 0.03$ & $0.83 \pm 0.03$ & $0.75 \pm 0.05$ \\
-Haberman & $0.53 \pm 0.07$ & $0.69 \pm 0.06$ & $0.65 \pm 0.04$ & $0.63 \pm 0.04$ & $0.67 \pm 0.07$ \\
 Iris & $0.95 \pm 0.03$ & $0.97 \pm 0.03$ & $0.95 \pm 0.04$ & $0.95 \pm 0.04$ & $0.69 \pm 0.09$ \\
 Boston & $0.74 \pm 0.10$ & $0.70 \pm 0.05$ & $0.88 \pm 0.06$ & $0.87 \pm 0.04$ & $0.63 \pm 0.10$ \\
 \hline
@@ -153,8 +153,10 @@ Boston & $0.74 \pm 0.10$ & $0.70 \pm 0.05$ & $0.88 \pm 0.06$ & $0.87 \pm 0.04$ &
 \label{tab:perf}
 \end{table}
 
-At the time of writing, SIRUS performs best on the binary classification datasets which can be recognized by the AUC measure.
-SIRUS outperforms the decision tree and performs similarly to the linear model on these datasets.
+At the time of writing, SIRUS's predictive performance is comparable to the linear model and XGBoost on the binary classification datasets, that is, Haberman, Titanic, Breast Cancer, and Diabetes.
+The reason for outperforming the linear model could be that negative effects are often nonlinear for fragile systems [@taleb2020statistical].
+For example, it could be that an increase in auxillary nodes in the Haberman dataset reduces the chance of survival exponentially.
+In such cases, the hard cutoff points chosen by random forests and SIRUS may fit the data better.
 
 For the multiclass Iris classification and the Boston Housing regression datasets, the performance was worse than the other models.
 It could be that this is caused by a bug in the implementation or because this is a fundamental issue in the algorithm.
@@ -162,6 +164,7 @@ Further work is needed to find the root cause or workarounds for these low score
 One possible solution would be to add SymbolicRegression.jl [@cranmer2023interpretable] as a secondary back end for regression tasks.
 Similar to SIRUS.jl, SymbolicRegression.jl can fit expressions of a pre-defined form to data albeit with more free parameters, which might fit better but also might cause overfitting, depending on the data.
 This achieves performance that is similar to XGBoost [@hanson2023discourse].
+In conclusion, the SIRUS algorithm generally performs best on binary classification tasks and can obtain a high predictive performance while retaining model interpretability and stability.
 
 # Code Example
 
