@@ -77,8 +77,7 @@ Note: showing only the probability for class 1 since class 0 has
       probability 1 - p.
 ```
 
-This shows that the model contains 8 rules.
-The first rule, for example, can be interpreted as:
+This shows that the model contains 8 rules where the first rule, for example, can be interpreted as:
 
 _If the number of detected axillary nodes is lower than 8, then take 0.156, otherwise take 0.031._
 
@@ -98,7 +97,7 @@ Put differently, an unstable model by definition leads to different conclusions 
 One model which suffers from a low stability is a decision tree because it will first create the root node of the tree, so a small change in the data can cause the root, and therefore the rest, of the tree to be completely different [@molnar2022interpretable].
 Similarly, linear models can be highly sensitive to correlated data and, in the case of regularized linear models, the choice of hyperparameters.
 Instead, the SIRUS algorithm provides stability by stabilizing the trees and the authors have proven the correctness of this stabilization mathematically [@benard2021sirus].
-In the rest of this paper, we will compare decision trees [@sadeghi2022decisiontree], linear models, XGBoost [@chen2016xgboost], and SIRUS on their interpretability, stability, and predictive performance.
+In the rest of this paper, we will compare decision trees [@sadeghi2022decisiontree], linear models, XGBoost [@chen2016xgboost], and SIRUS on their predictive performance.
 The interpretability and stability are summarized in Table \ref{tab:is}.
 
 \begin{table}[h!]
@@ -154,9 +153,10 @@ Boston & $0.74 \pm 0.10$ & $0.70 \pm 0.05$ & $0.88 \pm 0.06$ & $0.87 \pm 0.04$ &
 \end{table}
 
 At the time of writing, SIRUS's predictive performance is comparable to the linear model and XGBoost on the binary classification datasets, that is, Haberman, Titanic, Breast Cancer, and Diabetes.
-The reason for outperforming the linear model could be that negative effects are often nonlinear for fragile systems [@taleb2020statistical].
-For example, it could be that an increase in auxillary nodes in the Haberman dataset reduces the chance of survival exponentially.
-In such cases, the hard cutoff points chosen by random forests and SIRUS may fit the data better.
+The best performance occurs at the Diabetes dataset where both XGBoost and SIRUS outperform the linear model.
+The reason for this could be that negative effects are often nonlinear for fragile systems [@taleb2020statistical].
+For example, it could be that an increase in oral glucose tolerance increases the chance of diabetes exponentially.
+In such cases, the hard cutoff points chosen by tree-based models, such as XGBoost and SIRUS, may fit the data better.
 
 For the multiclass Iris classification and the Boston Housing regression datasets, the performance was worse than the other models.
 It could be that this is caused by a bug in the implementation or because this is a fundamental issue in the algorithm.
