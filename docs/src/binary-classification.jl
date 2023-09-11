@@ -59,7 +59,7 @@ As an example, we take Haberman's Survival Data Set (see the _Appendix_ below fo
 md"""
 This dataset contains observations from a study with patients who had breast cancer.
 The `survival` column contains a `0` if a patient has died within 5 years and `1` if the patient has survived for at least 5 years.
-The aim is to predict survival based on the `age`, the `year` in which the operation was conducted and the number of detected auxillary `nodes`.
+The aim is to predict survival based on the `age`, the `year` in which the operation was conducted and the number of detected axillary `nodes`.
 """
 
 # ╔═╡ f75aa57f-6e84-4f7e-88e4-11a00cb9ad2b
@@ -228,15 +228,6 @@ Finally, let's interpret the rules that the model has learned.
 Since we know that the model performs well on the cross-validations, we can fit our preferred model on the complete dataset:
 """
 
-# ╔═╡ 6d0b29b6-61fb-4d16-9389-071892a3d9db
-md"""
-The interpretation of the fitted model is as follows.
-The model has learned three rules for this dataset.
-For making a prediction for some value at row `i`, the model will first look at the value for the `nodes` feature.
-If the value is below the listed number, then the number after `then` is chosen and otherwise the number after `else`.
-This is done for all the rules and, finally, the rules are summed to obtain the final prediction.
-"""
-
 # ╔═╡ 3c415a26-803e-4f35-866f-2e582c6c1c45
 md"""
 ## Visualization
@@ -245,23 +236,26 @@ Since our rules are relatively simple with only a binary outcome and only one cl
 For multiple clauses, I would not know how to visualize the rules.
 Also, this plot is probably not perfect; let me know if you have suggestions.
 
-This figure shows the model uncertainty.
-The x-position on the left shows `log(else-scores / if-scores)`, the vertical lines on the right show the threshold, and the histograms on the right show the data. 
+This figure shows the model uncertainty by visualizing the obtained models for different cross-validation folds.
+The subfigure on the left shows how the fitted rules affect the outcome.
+A point on the left means that a lower value for the data is related to higher outcome (i.e., a higher chance of survival in this dataset) whereas a point on the right is means that a higher value for the data is related to a higher outcome. 
+The subfigure on the right shows the thresholds used by the rules in the cross-validation folds via the vertical lines.
+In the background, the histograms show the data.
+
 For example, for the `nodes`, it can be seen that all rules (fitted in the different cross-validation folds) base their decision on whether the `nodes` are below, roughly, 5. 
-Next, the left side indicates that the individuals who had less than 5 nodes are more likely to survive, according to the model. 
+Next, the left side indicates in which direction this effect works.
+More specifically, the individuals who had less than 5 nodes are more likely to survive, according to the model. 
 The sizes of the dots indicate the weight that the rule has, so a bigger dot means that a rule plays a larger role in the final outcome. 
-These dots are sized in such a way that a doubling in weight means a doubling in surface size. 
-Finally, the variables are ordered by the sum of the weights.
+These dots are sized in such a way that a doubling in weight means a doubling in surface size.
 """
 
 # ╔═╡ ab5423cd-c8a9-488e-9bb0-bb41e583c2fa
 md"""
-What this plot shows is that the `nodes` feature is on average chosen as the feature with the most predictive power.
-This can be concluded because the `nodes` feature is shown as the first feature and the tickness of the dots is the biggest.
+What this plot shows is that the `nodes` feature is on average chosen as the feature with the most predictive power because the `nodes` feature is shown as the first feature and the tickness of the dots is the biggest.
 Furthermore, there is agreement on the effect of the `nodes` and `age` features.
 In both cases, a lower number is associated with survival.
-This is as expected because the model essentially implies that people where less cancerous auxillary nodes are detected and who are younger are more likely to survive.
-The `year` in which the operation was conducted shouldn't have serious effect on the survivability and the model shoes this by a high variability on that feature.
+This is as expected because the model essentially implies that people where fewer cancerous axillary nodes are detected and who are younger are more likely to survive.
+The `year` in which the operation was conducted might not have a serious effect on the survivability and the model shoes this by a high variability on the direction of that feature.
 """
 
 # ╔═╡ f2fee9a8-7f6f-4213-9046-2f1a8f14a7e6
@@ -407,12 +401,21 @@ y = data.survival;
 
 # ╔═╡ c2650040-f398-4a2e-bfe0-ce139c6ca879
 # ╠═╡ show_logs = false
-let
-	model = StableRulesClassifier(; max_depth=2, max_rules=8, rng=_rng())
+fitresult = let
+	model = StableRulesClassifier(; q=4, max_depth=2, max_rules=8, rng=_rng())
 	mach = machine(model, X, y)
 	fit!(mach)
 	mach.fitresult
 end
+
+# ╔═╡ 6d0b29b6-61fb-4d16-9389-071892a3d9db
+md"""
+The interpretation of the fitted model is as follows.
+The model has learned $(length(fitresult.rules)) rules for this dataset.
+For making a prediction for some value at row `i`, the model will first look at $(string(fitresult.rules[1].path)[11:end-3]).
+If the current value satisfies this rule, then the number after `then` is chosen and otherwise the number after `else`.
+The `then` or `else` outcome is chosen for all the rules and, finally, the outcomes are summed to obtain the final prediction.
+"""
 
 # ╔═╡ 172d3263-2e39-483c-9d82-8c22059e63c3
 nodes = sort(data.age);
@@ -518,11 +521,23 @@ function _odds_plot(e::PerformanceEvaluation)
 
 		name = feature_name
 
-		rules_weights = map(fitresults) do fitresult
-			index = _rule_index(fitresult, feature_name)
-			isnothing(index) && return nothing
-			rule = fitresult.rules[index]::SIRUS.Rule
-			return (rule, fitresult.weights[index])
+		nested_rules_weights = map(fitresults) do fitresult
+			subresult = Tuple{SIRUS.Rule,Float64}[]
+			zipped = zip(fitresult.rules, fitresult.weights)
+			for (rule, weight) in zipped
+				feat_name = only(rule.path.splits).splitpoint.feature_name
+				if feat_name == feature_name	
+					push!(subresult, (rule, weight))
+				end
+			end
+			subresult
+		end
+		rules_weights = Tuple{SIRUS.Rule,Float64}[]
+		for nested in nested_rules_weights
+			isnothing(nested) && continue
+			for rule_weight in nested
+				push!(rules_weights, rule_weight)
+			end
 		end
 		rw::Vector{Tuple{SIRUS.Rule,Float64}} = 
 			filter(!isnothing, rules_weights)
@@ -624,7 +639,7 @@ end;
 # ╠═╡ show_logs = false
 e2 = let
 	model = StableRulesClassifier
-	hyperparameters = (; max_depth=2, max_rules=8, rng=_rng())
+	hyperparameters = (; q=4, max_depth=2, max_rules=8, rng=_rng())
 	_evaluate(model, hyperparameters, X, y)
 end;
 
@@ -632,14 +647,14 @@ end;
 # ╠═╡ show_logs = false
 e3 = let
 	model = StableRulesClassifier
-	hyperparameters = (; max_depth=2, max_rules=25, rng=_rng())
+	hyperparameters = (; q=4, max_depth=2, max_rules=25, rng=_rng())
 	_evaluate(model, hyperparameters, X, y)
 end;
 
 # ╔═╡ 86ed4d56-23e6-4b4d-9b55-7067124da27f
 e4 = let
 	model = StableRulesClassifier
-	hyperparameters = (; max_depth=1, max_rules=25, rng=_rng())
+	hyperparameters = (; q=4, max_depth=1, max_rules=25, rng=_rng())
 	_evaluate(model, hyperparameters, X, y)
 end;
 
@@ -655,7 +670,7 @@ fitresults = getproperty.(e4.e.fitted_params_per_fold, :fitresult);
 # ╠═╡ show_logs = false
 e5 = let
 	model = StableForestClassifier
-	hyperparameters = (; max_depth=2, rng=_rng())
+	hyperparameters = (; q=4, max_depth=2, rng=_rng())
 	_evaluate(model, hyperparameters, X, y)
 end;
 
