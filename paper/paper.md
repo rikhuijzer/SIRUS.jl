@@ -43,8 +43,8 @@ Most interpretation techniques convert the complex model to a simplified represe
 This causes the simplified representation to be different from the complex model and may therefore hide biases and issues related to safety and reliability [@barredo2020explainable].
 The SIRUS algorithm solves this problem by simplifying the complex model, and by then using the simplified model for predictions.
 This ensures that the same model is used for interpretation and prediction.
-However, the original SIRUS algorithm was implemented in C++ and R[^1] which makes it hard to inspect and extend due to the combination of two languages.
-An implementation in one high-level language allows verification of the algorithm and allows researchers to investigate further algorithmic improvements.
+However, the original SIRUS algorithm was implemented in about 10k lines of C++ and 2k lines of R[^1] code which makes it hard to inspect and extend due to the combination of two languages.
+Our implementation in about 2k lines of Julia code allows researchers to more easily verify the algorithm and investigate further improvements.
 Furthermore, the original algorithm was covered by the GPL-3 copyleft license meaning that copies are required to be made freely available.
 A more permissive license makes it easier to port the code to other languages or production systems.
 
