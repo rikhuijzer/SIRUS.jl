@@ -6,8 +6,9 @@ The algorithm was originally created by Clément Bénard, Gérard Biau, Sébasti
 Performance is generally the best on binary classification tasks.
 
 For R users, the original version of the SIRUS algorithm is available via [CRAN](https://cran.r-project.org/web/packages/sirus/index.html).
+The source code is available under the GPL-3 license at <https://gitlab.com/drti/sirus>.
 Compared to the R version, this Julia implementation is more easy to inspect than the original R and C++ implementation.
-Furthermore, this implementation is fast and integrated with the `MLJ.jl` machine learning ecosystem.
+Furthermore, this implementation is integrated with the `MLJ.jl` machine learning ecosystem.
 With this, multiple benchmarks are executed and checked with every test run.
 The results are listed in the GitHub Actions summary.
 
