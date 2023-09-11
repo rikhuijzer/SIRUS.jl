@@ -169,34 +169,6 @@ e = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees), X, y)
 e2 = _evaluate(StableRulesClassifier(; rng=_rng(), n_trees), X, y)
 @test _score(e) == _score(e2)
 @test 0.7 < _score(e)
-
-let
-    data = "titanic"
-    hyper = (;)
-
-    e = _evaluate!(results, data, LogisticClassifier, hyper)
-
-    e = _evaluate!(results, data, XGBoostClassifier, hyper)
-
-    hyper = (; max_depth=2)
-    e = _evaluate!(results, data, XGBoostClassifier, hyper)
-
-    hyper = (;)
-    e = _evaluate!(results, data, DecisionTreeClassifier, hyper)
-
-    hyper = (; rng=_rng(), max_depth=2)
-    e = _evaluate!(results, data, StableForestClassifier, hyper)
-    @test 0.80 < _score(e)
-
-    hyper = (; rng=_rng(), max_depth=2, max_rules=30)
-    e = _evaluate!(results, data, StableRulesClassifier, hyper)
-    @test 0.79 < _score(e)
-
-    hyper = (; rng=_rng(), max_depth=2, max_rules=10)
-    e = _evaluate!(results, data, StableRulesClassifier, hyper)
-    @test 0.79 < _score(e)
-end
-
 @testset "feature names" begin
     rng = _rng()
     n = 50
@@ -209,66 +181,18 @@ end
 end
 
 let
-    data = "cancer"
-    measure = auc
-
-    hyper = (;)
-    e = _evaluate!(results, data, MultinomialClassifier, hyper; measure)
-
-    hyper = (;)
-    e = _evaluate!(results, data, XGBoostClassifier, hyper; measure)
-
-    hyper = (; max_depth=2)
-    e = _evaluate!(results, data, XGBoostClassifier, hyper; measure)
-
-    hyper = (;)
-    e = _evaluate!(results, data, DecisionTreeClassifier, hyper; measure)
-
-    hyper = (; rng=_rng(), max_depth=2)
-    e = _evaluate!(results, data, StableForestClassifier, hyper; measure)
-
-    hyper = (; rng=_rng(), max_depth=2, max_rules=30)
-    e = _evaluate!(results, data, StableRulesClassifier, hyper; measure)
-
-    hyper = (; rng=_rng(), max_depth=2, max_rules=10)
-    e = _evaluate!(results, data, StableRulesClassifier, hyper; measure)
-end
-
-let
-    data = "diabetes"
-    hyper = (;)
-
-    e = _evaluate!(results, data, LogisticClassifier, hyper)
-
-    e = _evaluate!(results, data, XGBoostClassifier, hyper)
-
-    hyper = (; max_depth=2)
-    e = _evaluate!(results, data, XGBoostClassifier, hyper)
-
-    hyper = (;)
-    e = _evaluate!(results, data, DecisionTreeClassifier, hyper)
-
-    hyper = (; rng=_rng(), max_depth=2)
-    e = _evaluate!(results, data, StableForestClassifier, hyper)
-
-    hyper = (; rng=_rng(), max_depth=2, max_rules=30)
-    e = _evaluate!(results, data, StableRulesClassifier, hyper)
-
-    hyper = (; rng=_rng(), max_depth=2, max_rules=10)
-    e = _evaluate!(results, data, StableRulesClassifier, hyper)
-end
-
-let
     data = "haberman"
+    hyper = (; rng=_rng())
+    _evaluate!(results, data, DecisionTreeClassifier)
+
     hyper = (;)
     _evaluate!(results, data, LogisticClassifier, hyper)
 
+    hyper = (;)
     e = _evaluate!(results, data, XGBoostClassifier, hyper)
 
     hyper = (; max_depth=2)
     e = _evaluate!(results, data, XGBoostClassifier, hyper)
-
-    _evaluate!(results, data, DecisionTreeClassifier)
 
     hyper = (; rng=_rng(), max_depth=2)
     e = _evaluate!(results, data, StableForestClassifier, hyper)
@@ -285,9 +209,39 @@ let
     @test 0.60 < _score(e)
 end
 
-e_iris = let
-    data = "iris"
-    measure = accuracy
+let
+    data = "titanic"
+    hyper = (; rng=_rng())
+    e = _evaluate!(results, data, DecisionTreeClassifier, hyper)
+
+    hyper = (;)
+    e = _evaluate!(results, data, LogisticClassifier, hyper)
+
+    hyper = (;)
+    e = _evaluate!(results, data, XGBoostClassifier, hyper)
+
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, data, XGBoostClassifier, hyper)
+
+    hyper = (; rng=_rng(), max_depth=2)
+    e = _evaluate!(results, data, StableForestClassifier, hyper)
+    @test 0.80 < _score(e)
+
+    hyper = (; rng=_rng(), max_depth=2, max_rules=30)
+    e = _evaluate!(results, data, StableRulesClassifier, hyper)
+    @test 0.79 < _score(e)
+
+    hyper = (; rng=_rng(), max_depth=2, max_rules=10)
+    e = _evaluate!(results, data, StableRulesClassifier, hyper)
+    @test 0.79 < _score(e)
+end
+
+let
+    data = "cancer"
+    measure = auc
+
+    hyper = (; rng=_rng())
+    e = _evaluate!(results, data, DecisionTreeClassifier, hyper; measure)
 
     hyper = (;)
     e = _evaluate!(results, data, MultinomialClassifier, hyper; measure)
@@ -298,8 +252,55 @@ e_iris = let
     hyper = (; max_depth=2)
     e = _evaluate!(results, data, XGBoostClassifier, hyper; measure)
 
+    hyper = (; rng=_rng(), max_depth=2)
+    e = _evaluate!(results, data, StableForestClassifier, hyper; measure)
+
+    hyper = (; rng=_rng(), max_depth=2, max_rules=30)
+    e = _evaluate!(results, data, StableRulesClassifier, hyper; measure)
+
+    hyper = (; rng=_rng(), max_depth=2, max_rules=10)
+    e = _evaluate!(results, data, StableRulesClassifier, hyper; measure)
+end
+
+let
+    data = "diabetes"
+    hyper = (; rng=_rng())
+    e = _evaluate!(results, data, DecisionTreeClassifier, hyper)
+
     hyper = (;)
+    e = _evaluate!(results, data, LogisticClassifier, hyper)
+
+    hyper = (;)
+    e = _evaluate!(results, data, XGBoostClassifier, hyper)
+
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, data, XGBoostClassifier, hyper)
+
+    hyper = (; rng=_rng(), max_depth=2)
+    e = _evaluate!(results, data, StableForestClassifier, hyper)
+
+    hyper = (; rng=_rng(), max_depth=2, max_rules=30)
+    e = _evaluate!(results, data, StableRulesClassifier, hyper)
+
+    hyper = (; rng=_rng(), max_depth=2, max_rules=10)
+    e = _evaluate!(results, data, StableRulesClassifier, hyper)
+end
+
+e_iris = let
+    data = "iris"
+    measure = accuracy
+
+    hyper = (; rng=_rng())
     e = _evaluate!(results, data, DecisionTreeClassifier, hyper; measure)
+
+    hyper = (;)
+    e = _evaluate!(results, data, MultinomialClassifier, hyper; measure)
+
+    hyper = (;)
+    e = _evaluate!(results, data, XGBoostClassifier, hyper; measure)
+
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, data, XGBoostClassifier, hyper; measure)
 
     hyper = (; rng=_rng(), max_depth=2)
     e = _evaluate!(results, data, StableForestClassifier, hyper; measure)
@@ -327,16 +328,17 @@ let
     hyper = (;)
     data = "boston"
     measure = rsq
+    hyper = (; rng=_rng())
+    elgbm = _evaluate!(results, data, DecisionTreeRegressor, hyper; measure)
+
     hyper = (;)
     _evaluate!(results, data, LinearRegressor, hyper; measure)
 
+    hyper = (;)
     e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
 
     hyper = (; max_depth=2)
     ex = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
-
-    hyper = (;)
-    elgbm = _evaluate!(results, data, DecisionTreeRegressor, hyper; measure)
 
     hyper = (; max_depth=2, rng=_rng())
     ef = _evaluate!(results, data, StableForestRegressor, hyper; measure)
@@ -354,16 +356,17 @@ end
 emr = let
     measure = rsq
     data = "make_regression"
+    hyper = (; rng=_rng())
+    _evaluate!(results, data, DecisionTreeRegressor, hyper; measure)
+
     hyper = (;)
     e = _evaluate!(results, data, LinearRegressor, hyper; measure)
 
+    hyper = (;)
     e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
 
     hyper = (; max_depth=2)
     e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
-
-    hyper = (;)
-    _evaluate!(results, data, DecisionTreeRegressor, hyper; measure)
 
     hyper = (; max_depth=2, rng=_rng())
     _evaluate!(results, data, StableForestRegressor, hyper; measure)
