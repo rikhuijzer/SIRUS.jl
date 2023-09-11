@@ -22,7 +22,7 @@ Specifically, the subsets are as follows:
     Samples these features without replacement.
     Note that the subset of features is chosen at each split of the tree and not only once for each tree.
     If you choose the subset only at the start of the tree building, then an important feature might not end up in the tree at all, which results in poor predictive performance.
-    So, chosing this at each split is the best of both worlds since it (1) avoids that each tree splits the root node on the same feature and (2) does still allow the important features to all be used inside the tree.
+    So, choosing this at each split is the best of both worlds since it (1) avoids that each tree splits the root node on the same feature and (2) does still allow the important features to all be used inside the tree.
 
 Before continuing with the algorithm description, we need a small digression on the splitpoints that the algorithm uses.
 What is different in the SIRUS algorithm compared to vanilla random forest implementations, is that the SIRUS algorithm calculates the splitpoints before splitting.
@@ -192,8 +192,8 @@ For example, the stabilization could result in the rules ``\text{if } x_1 < 3 \t
 Secondly, by pruning rules which are a linear combination of other rules.
 
 The first step requires setting a hyperparameter ``p_0`` in the original algorithm.
-This hyperparameter specifies a threshold which is then used to remove rules with a occurence frequency below ``p_0``.
-The implementation in this Julia package ignores this step because it is superseeded by the second step and because it is quite difficult to pick the right ``p_0``.
+This hyperparameter specifies a threshold which is then used to remove rules with a occurrence frequency below ``p_0``.
+The implementation in this Julia package ignores this step because it is superseded by the second step and because it is quite difficult to pick the right ``p_0``.
 In other words, this step is ignored because it seems like a premature optimization (but I'm happy to be proven wrong of course).
 
 The second step is more important and more involved.
@@ -238,7 +238,7 @@ We can assume that we are limited to a set of rules where either `A & B`, `A & !
 This last case is not a valid rule in this algorithm, so that will not happen.
 Now, given `A` and `B`, we can create a binary matrix with a row for `A & B`, `A & !B`, `!A & B`, `!A & !B`.
 Next, generate one column containing `true`s and one column for each rule in `rules`.
-In each column, answer whether the rule holds for some point that satisifies the conditional.
+In each column, answer whether the rule holds for some point that satisfies the conditional.
 Next, calculate the rank and see whether the rank increases when adding additional rules.
 If the rank increases, then the added rule was not linearly dependent and if the rank does not increase, then the added rule is linearly dependent with earlier added rules.
 
