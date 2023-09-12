@@ -228,7 +228,7 @@ Simplify the rules that contain a single split by only retaining rules that poin
 removing duplicates.
 """
 function _simplify_single_rules(rules::Vector{Rule})::Vector{Rule}
-    out = Set{Rule}()
+    out = OrderedSet{Rule}()
     for rule in rules
         splits = _splits(rule)
         if length(splits) == 1

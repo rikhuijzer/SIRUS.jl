@@ -11,6 +11,7 @@ using MLJBase: mode
 using MLJLinearModels: MLJLinearModels, RidgeRegressor, glr
 using MLJModelInterface: Deterministic, UnivariateFinite, Probabilistic, fit
 using Random: AbstractRNG, default_rng, seed!, shuffle
+using OrderedCollections: OrderedSet
 using Statistics: mean, median
 using Tables: Tables, matrix
 
