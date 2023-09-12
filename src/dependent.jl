@@ -219,7 +219,8 @@ This allows the linearly dependent filter to remove the rules further down the l
 they have a smaller gap.
 """
 function _sort_by_gap_size(rules::Vector{Rule})
-    return sort(rules; by=_gap_size, rev=true)
+    alg = Helpers.STABLE_SORT_ALG
+    return sort(rules; alg, by=_gap_size, rev=true)
 end
 
 """
@@ -262,7 +263,8 @@ function _filter_linearly_dependent(rules::Vector{Rule})::Vector{Rule}
         @assert length(indexes) == length(subset)
         @assert length(dependent_subset) == length(subset)
         dependent_indexes = indexes[dependent_subset]
-        deleteat!(out, sort(dependent_indexes))
+        alg = Helpers.STABLE_SORT_ALG
+        deleteat!(out, sort(dependent_indexes; alg))
     end
     return out
 end

@@ -1,3 +1,9 @@
+@testset "sort is deterministic" begin
+    rng = StableRNG(1)
+    X = rand(rng, 1:10, 10_000)
+    @test SIRUS._sort_by_frequency(X) == SIRUS._sort_by_frequency(X)
+end
+
 let
     text = " X[i, 1] < 1.0 & X[i, 1] ≥ 4.0 "
     @test repr(TreePath(text)) == "TreePath(\"$text\")"
