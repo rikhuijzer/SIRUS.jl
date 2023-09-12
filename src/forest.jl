@@ -306,7 +306,8 @@ function _forest(
     n_samples = floor(Int, partial_sampling * length(y))
 
     trees = Vector{Union{Node,Leaf}}(undef, n_trees)
-    Threads.@threads for i in 1:n_trees
+    # Threads.@threads
+    for i in 1:n_trees
         _rng = copy(rng)
         _change_rng_state!(_rng, i)
         # Note that this is sampling with replacement; keep it this way.
