@@ -219,7 +219,8 @@ This allows the linearly dependent filter to remove the rules further down the l
 they have a smaller gap.
 """
 function _sort_by_gap_size(rules::Vector{Rule})
-    return sort(rules; by=_gap_size, rev=true)
+    alg = Helpers.STABLE_SORT_ALG
+    return sort(rules; alg, by=_gap_size, rev=true)
 end
 
 """
@@ -227,7 +228,7 @@ Simplify the rules that contain a single split by only retaining rules that poin
 removing duplicates.
 """
 function _simplify_single_rules(rules::Vector{Rule})::Vector{Rule}
-    out = Set{Rule}()
+    out = OrderedSet{Rule}()
     for rule in rules
         splits = _splits(rule)
         if length(splits) == 1
@@ -262,7 +263,8 @@ function _filter_linearly_dependent(rules::Vector{Rule})::Vector{Rule}
         @assert length(indexes) == length(subset)
         @assert length(dependent_subset) == length(subset)
         dependent_indexes = indexes[dependent_subset]
-        deleteat!(out, sort(dependent_indexes))
+        alg = Helpers.STABLE_SORT_ALG
+        deleteat!(out, sort(dependent_indexes; alg))
     end
     return out
 end

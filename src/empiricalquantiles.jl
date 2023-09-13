@@ -1,6 +1,9 @@
 module EmpiricalQuantiles
 
-using ..Helpers: nfeatures, view_feature
+using ..Helpers:
+    STABLE_SORT_ALG,
+    nfeatures,
+    view_feature
 
 "Set of possible cutpoints, that is, empirical quantiles."
 const Cutpoints = Vector{Float32}
@@ -28,7 +31,8 @@ function _empirical_quantile(V::AbstractVector, quantile::Real)
     if index == n + 1
         index = n
     end
-    sorted = sort(V)
+    alg = STABLE_SORT_ALG
+    sorted = sort(V; alg)
     return Float32(sorted[index])
 end
 

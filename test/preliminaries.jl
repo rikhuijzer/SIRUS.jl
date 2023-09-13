@@ -42,7 +42,7 @@ using MLJDecisionTreeInterface: DecisionTreeClassifier, DecisionTreeRegressor
 using MLJLinearModels: LogisticClassifier, LinearRegressor, MultinomialClassifier
 using MLJTestInterface: MLJTestInterface
 using MLJXGBoostInterface: XGBoostClassifier, XGBoostRegressor
-using Random: shuffle
+using Random: shuffle, seed!
 using StableRNGs: StableRNG
 using SIRUS
 using Statistics: mean, var

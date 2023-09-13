@@ -248,15 +248,32 @@ struct StableForest{T} <: StableModel
 end
 _elements(model::StableForest) = model.trees
 
-"Increase the state of `rng` by `i`."
-_change_rng_state!(rng::AbstractRNG, i::Int) = seed!(rng, i)
+"""
+Increase the state of `rng` by `i`.
+This function aims to change the RNG state for any RNG type.
+"""
+function _change_rng_state!(rng::T, i::Int)::T where {T<:AbstractRNG}
+    # Should reduce the chance for https://github.com/JuliaRandom/StableRNGs.jl/issues/9
+    # to occur.
+    new_seed = 1000 * i
+    seed!(rng, new_seed)
+    return rng
+end
+
+"""
+Return a copy of `rng` which is not affected by the state of `rng`.
+This is tested in `test/forest.jl`.
+"""
+function _copy_rng(rng::AbstractRNG)
+    return copy(rng)
+end
 
 """
 Return an unique and sorted vector of classes based on `y`.
 The vector is sorted to ensure that class ordering is the same between cross-validations.
 This holds as long as each class is in each fold.
 """
-_classes(y::AbstractVector) = sort(unique(y))
+_classes(y::AbstractVector) = sort(unique(y); alg=Helpers.STABLE_SORT_ALG)
 
 const PARTIAL_SAMPLING_DEFAULT = 0.7
 const N_TREES_DEFAULT = 1_000
@@ -306,9 +323,9 @@ function _forest(
     n_samples = floor(Int, partial_sampling * length(y))
 
     trees = Vector{Union{Node,Leaf}}(undef, n_trees)
+    rngs = [_change_rng_state!(_copy_rng(rng), i) for i in 1:n_trees]
     Threads.@threads for i in 1:n_trees
-        _rng = copy(rng)
-        _change_rng_state!(_rng, i)
+        _rng = rngs[i]
         # Note that this is sampling with replacement; keep it this way.
         rows = rand(_rng, 1:length(y), n_samples)
         _X = X[rows, :]

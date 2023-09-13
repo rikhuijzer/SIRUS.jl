@@ -124,6 +124,14 @@ function _canonicalize(rules::Vector{SIRUS.Rule})
 end
 
 allrules = [r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17]
+
+@testset "_simplify_single_rules is deterministic" begin
+    singles = S._simplify_single_rules(allrules)
+    for i in 1:1_000
+        @test singles == S._simplify_single_rules(allrules)
+    end
+end
+
 expected = [r1, r3, r5, r7, r8, r10, r13, r14, r16]
 actual = S._filter_linearly_dependent(allrules)
 @test Set(actual) == Set(expected)

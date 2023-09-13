@@ -320,10 +320,13 @@ function _count_unique(V::AbstractVector{T}) where T
     return counts
 end
 
-"Return a vector of unique values in `V` sorted by frequency."
+"""
+Return a vector of unique values in `V` sorted by frequency.
+"""
 function _sort_by_frequency(V::AbstractVector{T}) where T
     counts = _count_unique(V)::Dict{T, Int}
-    sorted = sort(collect(counts), by=last, rev=true)
+    alg = Helpers.STABLE_SORT_ALG
+    sorted = sort(collect(counts); alg, by=last, rev=true)
     return first.(sorted)
 end
 
