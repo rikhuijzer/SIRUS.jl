@@ -24,7 +24,7 @@ const LeafContent = Vector{Float64}
 "Return the number of elements in `V` being equal to `x`."
 function _count_equal(V::AbstractVector, x)::Int
     c = 0
-    @inbounds @simd for v in V
+    @inbounds for v in V
         if x == v
             c += 1
         end
