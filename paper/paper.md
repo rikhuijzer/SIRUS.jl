@@ -109,6 +109,7 @@ The interpretability and stability are summarized in Table \ref{tab:is}.
 \hline
  & \textbf{Decision Tree} & \textbf{Linear Model} & \textbf{XGBoost} & \textbf{XGBoost} & \textbf{SIRUS} \\
 & & & \textbf{\scriptsize{max depth: $\mathbb{\infty}$}} & \textbf{\scriptsize{max depth: 2}} & \textbf{\scriptsize{max depth: 2}} \\
+& & & & & \textbf{\scriptsize{max rules: 10}} \\
 \hline
 \textbf{Interpretability} & High & High & Medium & Medium & High \\
 \textbf{Stability} & Low & Medium & High & High & High \\
@@ -126,7 +127,7 @@ The conversion works by converting each tree to a set of rules and then pruning 
 In practice, this trade-off between between model complexity and interpretability comes at a small performance cost.
 
 To show the performance, we compared SIRUS to a decision tree linear model, and XGBoost; similar to Table \ref{tab:is}.
-We have used SIRUS version 1.2.1, 10-fold cross-validation, and we will present variability as $1.96 * \text{standard error}$ for all evaluations with respectively the following datasets, outcome variable type, and measures:
+We have used Julia version 1.9.3 with SIRUS version 1.3.2 (commit `ec9fa73`), 10-fold cross-validation, and we will present variability as $1.96 * \text{standard error}$ for all evaluations with respectively the following datasets, outcome variable type, and measures:
 Haberman's Survival Dataset [@haberman1999survival] binary classification dataset with AUC,
 Titanic [@eaton1995titanic] binary classification dataset with Area Under the Curve (AUC),
 Breast Cancer Wisconsin [@wolberg1995breast] binary classification dataset with AUC,
@@ -141,13 +142,14 @@ and Boston Housing [@harrison1978hedonic] regression dataset with $\text{R}^2$; 
 \hline
 \textbf{Dataset} & \textbf{Decision Tree} & \textbf{Linear Model} & \textbf{XGBoost} & \textbf{XGBoost} & \textbf{SIRUS} \\
 & & & \textbf{\scriptsize{max depth: $\mathbb{\infty}$}} & \textbf{\scriptsize{max depth: 2}} & \textbf{\scriptsize{max depth: 2}} \\
+& & & & & \textbf{\scriptsize{max rules: 10}} \\
 \hline
-Haberman & $0.53 \pm 0.07$ & $0.69 \pm 0.06$ & $0.65 \pm 0.04$ & $0.63 \pm 0.04$ & $0.67 \pm 0.07$ \\
-Titanic & $0.76 \pm 0.04$ & $0.84 \pm 0.02$ & $0.86 \pm 0.03$ & $0.87 \pm 0.02$ & $0.82 \pm 0.02$ \\
-Breast Cancer & $0.91 \pm 0.03$ & $0.98 \pm 0.01$ & $0.99 \pm 0.01$ & $0.99 \pm 0.01$ & $0.98 \pm 0.01$ \\
-Diabetes & $0.68 \pm 0.05$ & $0.70 \pm 0.06$ & $0.80 \pm 0.03$ & $0.83 \pm 0.03$ & $0.75 \pm 0.05$ \\
-Iris & $0.95 \pm 0.03$ & $0.97 \pm 0.03$ & $0.95 \pm 0.04$ & $0.95 \pm 0.04$ & $0.69 \pm 0.09$ \\
-Boston & $0.74 \pm 0.10$ & $0.70 \pm 0.05$ & $0.88 \pm 0.06$ & $0.87 \pm 0.04$ & $0.63 \pm 0.10$ \\
+Haberman & $0.54 \pm 0.07$ & $0.69 \pm 0.06$ & $0.65 \pm 0.04$ & $0.63 \pm 0.04$ & $0.67 \pm 0.06$ \\
+Titanic & $0.76 \pm 0.05$ & $0.84 \pm 0.02$ & $0.86 \pm 0.03$ & $0.87 \pm 0.02$ & $0.83 \pm 0.02$ \\
+Breast Cancer & $0.92 \pm 0.03$ & $0.98 \pm 0.01$ & $0.99 \pm 0.01$ & $0.99 \pm 0.01$ & $0.98 \pm 0.01$ \\
+Diabetes & $0.67 \pm 0.05$ & $0.70 \pm 0.06$ & $0.80 \pm 0.03$ & $0.82 \pm 0.03$ & $0.75 \pm 0.05$ \\
+Iris & $0.95 \pm 0.03$ & $0.97 \pm 0.03$ & $0.95 \pm 0.04$ & $0.95 \pm 0.04$ & $0.77 \pm 0.07$ \\
+Boston & $0.74 \pm 0.11$ & $0.70 \pm 0.05$ & $0.88 \pm 0.06$ & $0.87 \pm 0.04$ & $0.62 \pm 0.09$ \\
 \hline
 \end{tabular}
 \caption{Predictive performance estimates.}
