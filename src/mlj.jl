@@ -9,6 +9,8 @@ import MLJModelInterface:
 
 const MMI = MLJModelInterface
 
+using ..Helpers: STABLE_SORT_ALG
+
 using CategoricalArrays:
     CategoricalArray,
     CategoricalValue,
@@ -149,7 +151,8 @@ function _sanitize_outcomes(A::CategoricalArray{T}, regression::Bool) where T
         throw(ArgumentError(msg))
     end
     if T isa Type{String}
-        uniques = sort(unique(A))
+        alg = STABLE_SORT_ALG
+        uniques = sort(unique(A); alg)
         A = regression ?
             collect(0.0:float(length(uniques) - 1)) :
             collect(0:length(uniques) - 1)

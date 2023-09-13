@@ -1,3 +1,16 @@
+rng = StableRNG(1)
+
+@testset "_copy_rng makes independent copies" begin
+    expected = rand(rng)
+    expected2 = rand(rng)
+    for i in 1:50
+        _rng = SIRUS._copy_rng(rng)
+        seed!(_rng, 1)
+        @test rand(_rng) == expected
+        @test rand(_rng) == expected2
+    end
+end
+
 X = [1 2;
      3 4]
 y = [1, 2]
