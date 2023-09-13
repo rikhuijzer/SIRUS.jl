@@ -25,7 +25,7 @@ The range [0.0, 1.0] is chosen because the features are also in this range.
 function _normalize!(X::Vector{T}) where {T<:Real}
     lower = minimum(X)
     upper = maximum(X)
-    @inbounds for i in eachindex(X)
+    @inbounds @simd for i in eachindex(X)
         X[i] = (X[i] - lower) / (upper - lower)
     end
     return X

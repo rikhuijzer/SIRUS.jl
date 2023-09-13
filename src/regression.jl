@@ -12,7 +12,7 @@ end
 function _rss(y::AbstractVector)::Real
     m = mean(y)
     out = 0.0
-    @inbounds for x in y
+    @inbounds @simd for x in y
         out += (x - m)^2
     end
     return out
