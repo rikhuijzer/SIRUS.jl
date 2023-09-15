@@ -19,8 +19,6 @@ end
 
 # ╔═╡ f833dab6-31d4-4353-a68b-ef0501d606d4
 begin
-	ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
-
 	using CairoMakie
 	using CategoricalArrays: categorical
 	using CSV: CSV
@@ -42,6 +40,8 @@ TableOfContents()
 
 # ╔═╡ b1c17349-fd80-43f1-bbc2-53fdb539d1c0
 md"""
+# Advanced Example: Binary Classification
+
 This page will provide an overview of the algorithm and describe how it works and how it can be used.
 To do this, let's start by briefly describing random forests.
 """

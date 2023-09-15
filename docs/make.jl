@@ -42,7 +42,8 @@ do_build_notebooks = is_ci
 if do_build_notebooks
     build()
     getting_started::Pair = "Getting Started" => [
-        "Simple Binary Classification" => "binary-classification.md"
+        "Basic Example" => "basic-example.md",
+        "Advanced Example" => "binary-classification.md"
     ]
     insert!(pages, 2, getting_started)
 end
