@@ -16,7 +16,7 @@ affiliations:
    index: 1
  - name: Researchable, Assen, the Netherlands
    index: 2
-date: '12 September 2023'
+date: '15 September 2023'
 bibliography: paper.bib
 ---
 
@@ -66,22 +66,20 @@ The output for the fitted model looks as follows (see Section _Code Example_ for
 
 ```
 StableRules model with 8 rules:
- if X[i, :nodes] < 8.0 then 0.156 else 0.031 +
- if X[i, :nodes] < 14.0 then 0.164 else 0.026 +
- if X[i, :nodes] < 4.0 then 0.128 else 0.037 +
- if X[i, :nodes] ≥ 8.0 & X[i, :age] < 38.0 then 0.0 else 0.008 +
- if X[i, :year] ≥ 1966.0 & X[i, :age] < 42.0 then 0.0 else 0.005 +
- if X[i, :nodes] < 2.0 then 0.107 else 0.034 +
- if X[i, :year] ≥ 1966.0 & X[i, :age] < 38.0 then 0.0 else 0.001 +
- if X[i, :year] < 1959.0 & X[i, :nodes] ≥ 2.0 then 0.0 else 0.003
+ if X[i, :nodes] < 7.0 then 0.238 else 0.046 +
+ if X[i, :nodes] < 2.0 then 0.183 else 0.055 +
+ if X[i, :age] ≥ 62.0 & X[i, :year] < 1959.0 then 0.0 else 0.001 +
+ if X[i, :year] < 1959.0 & X[i, :nodes] ≥ 2.0 then 0.0 else 0.006 +
+ if X[i, :nodes] ≥ 7.0 & X[i, :age] ≥ 62.0 then 0.0 else 0.008 +
+ if X[i, :year] < 1959.0 & X[i, :nodes] ≥ 7.0 then 0.0 else 0.003 +
+ if X[i, :year] ≥ 1966.0 & X[i, :age] < 42.0 then 0.0 else 0.008 +
+ if X[i, :nodes] ≥ 7.0 & X[i, :age] ≥ 42.0 then 0.014 else 0.045
 and 2 classes: [0, 1].
-Note: showing only the probability for class 1 since class 0 has
-      probability 1 - p.
 ```
 
 This shows that the model contains 8 rules where the first rule, for example, can be interpreted as:
 
-_If the number of detected axillary nodes is lower than 8, then take 0.156, otherwise take 0.031._
+_If the number of detected axillary nodes is lower than 7, then take 0.238, otherwise take 0.046._
 
 This calculation is done for all 8 rules and the score is summed to get a prediction.
 In essence, the first rule says that if there are less than 8 axillary nodes detected, then the patient will most likely survive (`class == 1.0`).
@@ -134,6 +132,8 @@ Breast Cancer Wisconsin [@wolberg1995breast] binary classification dataset with 
 Pima Indians Diabetes [@smith1988using] binary classification dataset with AUC,
 Iris [@fisher1936use] multiclass classification dataset with accuracy,
 and Boston Housing [@harrison1978hedonic] regression dataset with $\text{R}^2$; see Table \ref{tab:perf}.
+For full details, see [`test/mlj.jl`](https://github.com/rikhuijzer/SIRUS.jl/blob/ec9fa73cb1304de6aa6ce4ec0e116abf59629612/test/mlj.jl).
+The output here was copied from the [GitHub Actions Job Summary for commit `ec9fa73`](https://github.com/rikhuijzer/SIRUS.jl/actions/runs/6147235329/attempts/1#summary-16678249371).
 
 \begin{table}[h!]
 \small
@@ -176,18 +176,46 @@ The model can be used via the `MLJ.jl` [@blaom2020mlj] machine learning interfac
 For example, this code was used to obtain the fit result for the Haberman example at the start of this paper: <br>
 \vspace{2mm}
 ```julia
-model = StableRulesClassifier(; max_depth=2, max_rules=8)
-mach = machine(model, X, y)
-fit!(mach)
+using CategoricalArrays: categorical
+using CSV: CSV
+using DataDeps: DataDeps, DataDep, @datadep_str
+using DataFrames
+using MLJ
+using StableRNGs: StableRNG
+using SIRUS: StableRulesClassifier
+
+function register_haberman()
+    name = "Haberman"
+    message = "Haberman's Survival Data Set"
+    remote_path = "https://github.com/rikhuijzer/haberman-survival-dataset/releases/
+        download/v1.0.0/haberman.csv"
+    checksum = "a7e9aeb249e11ac17c2b8ea4fdafd5c9392219d27cb819ffaeb8a869eb727a0f"
+    DataDeps.register(DataDep(name, message, remote_path, checksum))
+end
+
+function load_haberman()::DataFrame
+    register_haberman()
+    path = joinpath(datadep"Haberman", "haberman.csv")
+    df = CSV.read(path, DataFrame)
+    df[!, :survival] = categorical(df.survival)
+    return df
+end
+
+data = load_haberman()
+X = select(data, Not(:survival))
+y = data.survival
+
+model = StableRulesClassifier(; rng=StableRNG(1), q=4, max_depth=2, max_rules=8)
+
+mach = let
+    mach = machine(model, X, y)
+    MLJ.fit!(mach)
+end
+
 mach.fitresult
 ```
 \vspace{2mm}
-and model performances were estimated via the following cross-validation (`CV`) code:
-\vspace{2mm}
-```julia
-resampling = CV(; nfolds=10, shuffle=true)
-evaluate(model, X, y; resampling, measure=auc)
-```
+This code and the output are also available in the [docs](https://sirus.jl.huijzer.xyz/dev/basic-example/).
 
 # Funding
 
