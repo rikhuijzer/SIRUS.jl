@@ -35,6 +35,10 @@ md"""
 This page shows a basic example for using SIRUS.jl on a dataset via the Machine Learning Julia (MLJ.jl) interface.
 """
 
+# ╔═╡ 3e9f7866-edaa-460a-81d4-abf76ab066dc
+# hideall
+TableOfContents()
+
 # ╔═╡ 0b4f89c4-ccb0-4cc9-b7bb-3f630ba2398c
 md"""
 To show the algorithm, we'll use Haberman's survival dataset.
@@ -89,7 +93,7 @@ using SIRUS: StableRulesClassifier
 """
 
 # ╔═╡ ccce5f3e-e396-4765-bf5f-6f79e905aca8
-model = StableRulesClassifier(; rng=StableRNG(1), max_depth=2, max_rules=8);
+model = StableRulesClassifier(; rng=StableRNG(1), q=4, max_depth=2, max_rules=8);
 
 # ╔═╡ 97c9ea2a-2897-472b-b15e-215f40049cf5
 md"""
@@ -121,7 +125,7 @@ mach.fitresult
 md"""
 This shows that the model contains $(length(mach.fitresult.rules)) rules where the first rule, for example, can be interpreted as
 
-_If the number of detected axillary nodes is lower than 8, then take 0.136 and otherwise take 0.02._
+_If the number of detected axillary nodes is lower than 7, then take 0.238 and otherwise take 0.046._
 
 This calculation is done for all $(length(mach.fitresult.rules)) rules and the score is summed to get a prediction.
 """
@@ -172,6 +176,7 @@ evaluate(model, X, y; resampling, measure=auc)
 # ╔═╡ Cell order:
 # ╠═3071aa12-92df-47b2-a5ce-a54a7110ab6a
 # ╠═8ca5e9f4-539c-11ee-0b5a-ab77d2a5bfbf
+# ╠═3e9f7866-edaa-460a-81d4-abf76ab066dc
 # ╠═1c1bd75a-9266-4256-bfea-ad60dd1c1d1c
 # ╠═0b4f89c4-ccb0-4cc9-b7bb-3f630ba2398c
 # ╠═75550619-b310-4c66-9371-93656f78765c

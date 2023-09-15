@@ -389,7 +389,7 @@ if step_summary_path != "nothing"
         ```
         $(repr(pretty))
 
-        with Julia version $VERSION.
+        with Julia version $VERSION
         ```
         """
     write(step_summary_path, job_summary)
