@@ -22,7 +22,8 @@ These rules fully explain the predictions while remaining easy to interpret.
 
 ## Where to Start?
 
-- [Binary Classification Example](/dev/binary-classification)
+- [Basic Example](/dev/basic-example)
+- [Advanced Example](/dev/binary-classification)
 
 ## Acknowledgements
 

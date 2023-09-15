@@ -33,6 +33,8 @@ md"""
 # Basic Example
 
 This page shows a basic example for using SIRUS.jl on a dataset via the Machine Learning Julia (MLJ.jl) interface.
+For more details on what SIRUS is and how it works, see the
+[Advanced Example](/dev/binary-classification).
 """
 
 # ╔═╡ 3e9f7866-edaa-460a-81d4-abf76ab066dc
@@ -171,6 +173,7 @@ For this measure, a score of 0.5 means that our model is as good (or bad, actual
 """
 
 # ╔═╡ b8c6c9e0-679e-41d5-80c0-ffd65e652489
+# ╠═╡ show_logs = false
 evaluate(model, X, y; resampling, measure=auc)
 
 # ╔═╡ Cell order:
