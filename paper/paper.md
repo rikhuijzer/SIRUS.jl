@@ -23,7 +23,7 @@ bibliography: paper.bib
 # Summary
 
 [`SIRUS.jl`](https://github.com/rikhuijzer/SIRUS.jl) is a pure Julia implementation of the original Stable and Interpretable RUle Sets (SIRUS) algorithm.
-The SIRUS algorithm is a fully interpretable version of random forests, that is, it reduces thousands of trees in the forest to tens of interpretable rules.
+The SIRUS algorithm is a fully interpretable version of random forests, that is, it reduces thousands of trees in the forest to a much lower number of interpretable rules (e.g., 10 or 20).
 With our Julia implementation, we aimed to reproduce the original C++ and R implementation in a high-level language to verify the algorithm as well as making the code easier to read.
 We show that the model performs well on binary classification tasks while retaining interpretability and stability.
 Furthermore, we made the code available under the permissive MIT license.
@@ -31,15 +31,15 @@ In turn, this allows others to research the algorithm further or easily port it 
 
 # Statement of need
 
-Many of the modern day machine learning models are non-interpretable models, also known as _black box_ models.
-For example, the following are some commonly used models; available via the Machine Learning Julia (MLJ) framework [@blaom2020mlj].
+Many of the modern day machine learning models are noninterpretable models, also known as _black box_ models.
+For example, the following are some commonly used models, available via the Machine Learning Julia (MLJ) framework [@blaom2020mlj].
 Flux.jl [@innes2018flux] is a package that provides lightweight abstractions for various advanced models including neural networks.
 A more user-friendly alternative is BetaML.jl [@lobianco2021betaml], which provides pure Julia implementations for many models including the perceptron classifier, pegasos classifier [@shalev2007pegasos], neural networks, decision tree classifier and regressor.
 Furthermore, an interface to Microsoft's gradient boosting machine called LightGBM [@ke2017lightgbm] is available via LightGBM.jl.
 Finally, an interface to many of Python's packages is available via ScikitLearn.jl[^3].
 
-However, although these models are commonly used, these non-interpretable models can be problematic in high stakes domains where model decisions have real-world impact on individuals, such as suggesting treatments or selecting personnel.
-Non-interpretable models may lead to unsafe, unfair, or unreliable predictions [@doshi2017towards; @barredo2020explainable].
+However, although these models are commonly used, these noninterpretable models can be problematic in high stakes domains where model decisions have real-world impact on individuals, such as suggesting treatments or selecting personnel.
+Noninterpretable models may lead to unsafe, unfair, or unreliable predictions [@doshi2017towards; @barredo2020explainable].
 Yet, the set of fully interpretable models is often limited to ordinary and generalized regression models, decision trees, RuleFit, naive Bayes classification, and k-nearest neighbors [@molnar2022interpretable].
 In general, linear models can perform poorly when the features are correlated or can be sensitive to the choice of hyperparameters when using regularized models.
 Furthermore, decision trees perform poorly compared to random forests [@james2013introduction] and RuleFit's performance, anecdotally, was disappointing [@molnar2022interpretable].
