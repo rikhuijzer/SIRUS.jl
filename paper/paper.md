@@ -16,7 +16,7 @@ affiliations:
    index: 1
  - name: Researchable, Assen, the Netherlands
    index: 2
-date: '22 September 2023'
+date: '25 September 2023'
 bibliography: paper.bib
 ---
 
@@ -32,18 +32,17 @@ In turn, this allows others to research the algorithm further or easily port it 
 # Statement of need
 
 Many of the modern day machine learning models are non-interpretable models, also known as _black box_ models.
-For non-interpretable models, predictions cannot be understood by looking at the model parameters.
-For example, in Julia, multiple non-interpretable models are available.
-One of such models is Flux.jl [@innes2018flux], which provides lightweight abstractions for various advanced models including neural networks.
+For example, the following are some commonly used models; available via the Machine Learning Julia (MLJ) framework [@blaom2020mlj].
+Flux.jl [@innes2018flux] is a package that provides lightweight abstractions for various advanced models including neural networks.
 A more user-friendly alternative is BetaML.jl [@lobianco2021betaml], which provides pure Julia implementations for many models including the perceptron classifier, pegasos classifier [@shalev2007pegasos], neural networks, decision tree classifier and regressor.
-Furthermore, an interface to many of Python's packages is available via  ScikitLearn.jl[^3].
-Another package is LightGBM.jl, an interface to Microsoft's LightGBM [@ke2017lightgbm]; a gradient boosting machine.
-These models are all available via the Machine Learning Julia (MLJ) framework [@blaom2020mlj].
-MLJ is the Julia equivalent for Python's scikit-learn [@grisel2023scikit].
+Furthermore, an interface to Microsoft's gradient boosting machine called LightGBM [@ke2017lightgbm] is available via LightGBM.jl.
+Finally, an interface to many of Python's packages is available via ScikitLearn.jl[^3].
 
-For high stakes domains where model decisions have real-world impact on individuals, such as suggesting treatments or personnel selection, these non-interpretable models can be problematic because they may lead to unsafe, unfair, or unreliable predictions [@doshi2017towards; @barredo2020explainable].
-However, the set of fully interpretable models is often limited to ordinary and generalized regression models, decision trees, RuleFit, naive Bayes classification, and k-nearest neighbors [@molnar2022interpretable].
-In general, linear models can perform poorly when the features are correlated or can be sensitive to the choice of hyperparameters when using regularized models, decision trees perform poorly compared to random forests [@james2013introduction], and RuleFit's performance, anecdotally, was disappointing [@molnar2022interpretable].
+However, although these models are commonly used, these non-interpretable models can be problematic in high stakes domains where model decisions have real-world impact on individuals, such as suggesting treatments or selecting personnel.
+Non-interpretable models may lead to unsafe, unfair, or unreliable predictions [@doshi2017towards; @barredo2020explainable].
+Yet, the set of fully interpretable models is often limited to ordinary and generalized regression models, decision trees, RuleFit, naive Bayes classification, and k-nearest neighbors [@molnar2022interpretable].
+In general, linear models can perform poorly when the features are correlated or can be sensitive to the choice of hyperparameters when using regularized models.
+Furthermore, decision trees perform poorly compared to random forests [@james2013introduction] and RuleFit's performance, anecdotally, was disappointing [@molnar2022interpretable].
 Naive Bayes, available in Julia as NaiveBayes.jl[^1], is often overlooked and can be very suitable for many situations; especially when the features are independent [@ashari2013performance].
 Alternatively, random forests [@breiman2001random; @sadeghi2022decisiontree] often outperform linear models and decision trees, but are not fully interpretable due to the large number of trees, typically thousands, in the forests.
 At the same time, model interpretation techniques, such as SHAP [@lundberg2017unified], do not clearly explain predictions made by the models.
@@ -53,7 +52,8 @@ This causes the simplified representation to be different from the complex model
 The SIRUS algorithm solves this problem by simplifying the complex model, and by then using the simplified model for predictions.
 This ensures that the same model is used for interpretation and prediction.
 However, the original SIRUS algorithm was implemented in about 10k lines of C++ and 2k lines of R[^2] code which makes it hard to inspect and extend due to the combination of two languages.
-Our implementation in about 2k lines of Julia code allows researchers to more easily verify the algorithm and investigate further improvements.
+Our implementation is written in Julia only and takes about 2k lines of code.
+This allows researchers to more easily verify the algorithm and investigate further improvements.
 Furthermore, the original algorithm was covered by the GPL-3 copyleft license meaning that copies are required to be made freely available.
 A more permissive license makes it easier to port the code to other languages or production systems.
 
@@ -96,7 +96,7 @@ This calculation is done for all 8 rules and the score is summed to get a predic
 In essence, the first rule says that if there are less than 8 axillary nodes detected, then the patient will most likely survive (`class == 1.0`).
 Put differently, the model states that if there are many axillary nodes detected, then it is, unfortunately, less likely that the patient will survive.
 This model is fully interpretable because the model contains a few dozen rules which can all be interpreted in isolation and together.
-In contrast, Random forests require hundreds to thousands of trees, which makes them too complex to interpret.
+In contrast, random forests often require hundreds to thousands of trees, which makes them too complex to interpret.
 
 # Stability
 
@@ -235,6 +235,6 @@ This research was supported by the Ministry of Defence, the Netherlands.
 # Acknowledgments
 
 We thank Clément Bénard for his help in re-implementing the SIRUS algorithm.
-Furthermore, we thank Anthony Bloam and Dávid Hanák (Cursor Insight) for respectively doing code reviews and finding a critical bug.
+Furthermore, we thank Anthony Blaom and Dávid Hanák (Cursor Insight) for respectively doing code reviews and finding a critical bug.
 
 # References
