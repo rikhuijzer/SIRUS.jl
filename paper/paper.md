@@ -22,10 +22,10 @@ bibliography: paper.bib
 
 # Summary
 
-[`SIRUS.jl`](https://github.com/rikhuijzer/SIRUS.jl) is a pure Julia implementation of the original Stable and Interpretable RUle Sets (SIRUS) algorithm.
+SIRUS.jl[^1] is a pure Julia implementation of the original Stable and Interpretable RUle Sets (SIRUS) algorithm.
 The SIRUS algorithm is a fully interpretable version of random forests, that is, it reduces thousands of trees in the forest to a much lower number of interpretable rules (e.g., 10 or 20).
 With our Julia implementation, we aimed to reproduce the original C++ and R implementation in a high-level language to verify the algorithm as well as making the code easier to read.
-We show that the model performs well on binary classification tasks while retaining interpretability and stability.
+We show that the model performs well on classification tasks while retaining interpretability and stability.
 Furthermore, we made the code available under the permissive MIT license.
 In turn, this allows others to research the algorithm further or easily port it to production systems.
 
@@ -40,21 +40,23 @@ For these models, predictive performance can be poor.
 Linear models, for instance, may perform poor when features are correlated and can be sensitive to the choice of hyperparameters.
 For decision trees, predictive performance is poor compared to random forests [@james2013introduction].
 RuleFit is not available in Julia and is _unstable_, which will be discussed later.
-Naive Bayes, available in Julia as NaiveBayes.jl[^1], is often overlooked and can be very suitable for many situations; especially when the features are independent [@ashari2013performance].
-The main problem of some of the aforementioned models is that they often outperform linear models and decision trees, but are not fully interpretable due to the large number of trees, typically thousands, in the forests.
+Naive Bayes, available in Julia as NaiveBayes.jl[^2], is often overlooked and can be very suitable for many situations, but does require features to be independent [@ashari2013performance].
+Random forests outperform linear models and decision trees and are often considered interpretable.
+However, they are not fully interpretable due to the large number of trees, typically thousands, in the forests.
 Model interpretation techniques, such as SHAP [@lundberg2017unified], do not solve this as they do not clearly explain predictions made by the models.
 This is because model interpretation techniques convert the complex model to a simplified representation.
 This causes the simplified representation to be different from the complex model and may therefore hide biases and issues related to safety and reliability [@barredo2020explainable].
 The SIRUS algorithm solves this by simplifying the complex model and by then using the simplified model for predictions.
 This ensures that the same model is used for interpretation and prediction.
-However, the original SIRUS algorithm was implemented in about 10k lines of C++ and 2k lines of R code[^2] which makes it hard to inspect and extend due to the combination of two languages.
+However, the original SIRUS algorithm was implemented in about 10k lines of C++ and 2k lines of R code[^3] which makes it hard to inspect and extend due to the combination of two languages.
 Our implementation is written in pure Julia and takes about 2k lines of code.
 This allows researchers to more easily verify the algorithm and investigate further improvements.
 Furthermore, the original algorithm was covered by the GPL-3 copyleft license meaning that copies are required to be made freely available.
 A more permissive license makes it easier to port the code to other languages or production systems.
 
-[^1]: Source code available at <https://github.com/dfdx/NaiveBayes.jl>.
-[^2]: Source code available at <https://gitlab.com/drti/sirus>.
+[^1]: Source code available at <https://github.com/rikhuijzer/SIRUS.jl>.
+[^2]: Source code available at <https://github.com/dfdx/NaiveBayes.jl>.
+[^3]: Source code available at <https://gitlab.com/drti/sirus>.
 
 # Interpretability
 
@@ -180,7 +182,9 @@ In conclusion, the SIRUS algorithm generally performs best on binary classificat
 # Code Example
 
 The model can be used via the Machine Learning Julia (MLJ) [@blaom2020mlj] interface.
-For example, this code was used to obtain the fit result for the Haberman example at the start of this paper: <br>
+The following code, for example, was used to obtain the fitted model for the Haberman example at the start of this paper, and is also available in the SIRUS.jl docs[^4].
+
+We first load the dependencies:
 \vspace{2mm}
 ```julia
 using CategoricalArrays: categorical
@@ -190,7 +194,11 @@ using DataFrames
 using MLJ
 using StableRNGs: StableRNG
 using SIRUS: StableRulesClassifier
-
+```
+\vspace{2mm}
+And specify the Haberman dataset via DataDeps.jl, which allows data verification via the checksum and enables caching: <br>
+\vspace{2mm}
+```julia
 function register_haberman()
     name = "Haberman"
     message = "Haberman's Survival Data Set"
@@ -199,7 +207,11 @@ function register_haberman()
     checksum = "a7e9aeb249e11ac17c2b8ea4fdafd5c9392219d27cb819ffaeb8a869eb727a0f"
     DataDeps.register(DataDep(name, message, remote_path, checksum))
 end
-
+```
+\vspace{2mm}
+Next, we load the data into a `DataFrame`: <br>
+\vspace{2mm}
+```julia
 function load_haberman()::DataFrame
     register_haberman()
     path = joinpath(datadep"Haberman", "haberman.csv")
@@ -207,13 +219,23 @@ function load_haberman()::DataFrame
     df[!, :survival] = categorical(df.survival)
     return df
 end
-
+```
+We split the data into features (`X`) and outcomes (`y`):
+```julia
 data = load_haberman()
 X = select(data, Not(:survival))
 y = data.survival
-
+```
+\vspace{2mm}
+We define the model that we want to use with some reasonable hyperparameters for this small dataset:
+\vspace{2mm}
+```julia
 model = StableRulesClassifier(; rng=StableRNG(1), q=4, max_depth=2, max_rules=8)
-
+```
+\vspace{2mm}
+Finally, we fit the model to the data via MLJ and show the fitted model:
+\vspace{2mm}
+```julia
 mach = let
     mach = machine(model, X, y)
     MLJ.fit!(mach)
@@ -222,7 +244,9 @@ end
 mach.fitresult
 ```
 \vspace{2mm}
-This code and the output are also available in the [docs](https://sirus.jl.huijzer.xyz/dev/basic-example/).
+Resulting in the fitresult that was presented at the start of this paper.
+
+[^4]: <https://sirus.jl.huijzer.xyz/dev/basic-example/>
 
 # Funding
 
