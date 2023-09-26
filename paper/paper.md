@@ -43,7 +43,7 @@ RuleFit is not available in Julia and is _unstable_, which will be discussed lat
 Naive Bayes, available in Julia as NaiveBayes.jl[^2], is often overlooked and can be very suitable for many situations, but does require features to be independent [@ashari2013performance].
 Random forests outperform linear models and decision trees and are often considered interpretable.
 However, they are not fully interpretable due to the large number of trees, typically thousands, in the forests.
-Model interpretation techniques, such as SHAP [@lundberg2017unified], do not solve this as they do not clearly explain predictions made by the models.
+Model interpretation techniques, such as SHAP [@lundberg2017unified] or Shapley, available via Shapley.jl[^5], do not solve this as they do not clearly explain predictions made by the models.
 This is because model interpretation techniques convert the complex model to a simplified representation.
 This causes the simplified representation to be different from the complex model and may therefore hide biases and issues related to safety and reliability [@barredo2020explainable].
 The SIRUS algorithm solves this by simplifying the complex model and by then using the simplified model for predictions.
@@ -57,6 +57,7 @@ A more permissive license makes it easier to port the code to other languages or
 [^1]: Source code available at <https://github.com/rikhuijzer/SIRUS.jl>.
 [^2]: Source code available at <https://github.com/dfdx/NaiveBayes.jl>.
 [^3]: Source code available at <https://gitlab.com/drti/sirus>.
+[^5]: Source code available at <https://gitlab.com/ExpandingMan/Shapley.jl>.
 
 # Interpretability
 
