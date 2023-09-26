@@ -698,6 +698,9 @@ results = let
 		text = string(score)
 		length(text) < 4 ? text * '0' : text
 	end
+	for col in names(df)
+		df[!, col] = Base.Text.(df[:, col])
+	end
 	rename!(df, :se => "1.96*SE")
 end
 
