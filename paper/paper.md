@@ -16,7 +16,7 @@ affiliations:
    index: 1
  - name: Researchable, Assen, the Netherlands
    index: 2
-date: '25 September 2023'
+date: '27 September 2023'
 bibliography: paper.bib
 ---
 
@@ -32,19 +32,20 @@ In turn, this allows others to research the algorithm further or easily port it 
 # Statement of need
 
 Many of the modern day machine learning models are noninterpretable models, also known as _black box_ models.
+Well-known examples of noninterpretable models are random forests [@breiman2001random] and neural networks, available in Julia via, for example, LightGBM.jl [@ke2017lightgbm], Flux.jl [@innes2018flux], and BetaML.jl [@lobianco2021betaml].
 Although these models are commonly used, they can be problematic in high stakes domains where model decisions have real-world impact on individuals, such as suggesting treatments or selecting personnel.
 Such noninterpretable models may lead to unsafe, unfair, or unreliable predictions [@doshi2017towards; @barredo2020explainable].
 On the other hand, interpretable models are often limited to ordinary and generalized regression models, decision trees, RuleFit, naive Bayes classification, and k-nearest neighbors [@molnar2022interpretable].
-For such models, predictive performance can be poor, especially when the features are correlated.
-Furthermore, linear models can be sensitive to the choice of hyperparameters.
-Also, decision trees predictive performance is poor compared to random forests [@james2013introduction] and RuleFit's performance, anecdotally, was disappointing [@molnar2022interpretable].
+For these models, predictive performance can be poor.
+Linear models, for instance, may perform poor when features are correlated and can be sensitive to the choice of hyperparameters.
+For decision trees, predictive performance is poor compared to random forests [@james2013introduction].
+RuleFit's performance, anecdotally, was disappointing [@molnar2022interpretable] and is not available in Julia.
 Naive Bayes, available in Julia as NaiveBayes.jl[^1], is often overlooked and can be very suitable for many situations; especially when the features are independent [@ashari2013performance].
-Alternatively, random forests [@breiman2001random; @sadeghi2022decisiontree] often outperform linear models and decision trees, but are not fully interpretable due to the large number of trees, typically thousands, in the forests.
-At the same time, model interpretation techniques, such as SHAP [@lundberg2017unified], do not clearly explain predictions made by the models.
-Most interpretation techniques convert the complex model to a simplified representation.
+The main problem of some of the aforementioned models is that they often outperform linear models and decision trees, but are not fully interpretable due to the large number of trees, typically thousands, in the forests.
+Model interpretation techniques, such as SHAP [@lundberg2017unified], do not solve this as they do not clearly explain predictions made by the models.
+This is because model interpretation techniques convert the complex model to a simplified representation.
 This causes the simplified representation to be different from the complex model and may therefore hide biases and issues related to safety and reliability [@barredo2020explainable].
-
-The SIRUS algorithm solves this problem by simplifying the complex model and by then using the simplified model for predictions.
+The SIRUS algorithm solves this by simplifying the complex model and by then using the simplified model for predictions.
 This ensures that the same model is used for interpretation and prediction.
 However, the original SIRUS algorithm was implemented in about 10k lines of C++ and 2k lines of R code[^2] which makes it hard to inspect and extend due to the combination of two languages.
 Our implementation is written in pure Julia and takes about 2k lines of code.
@@ -54,18 +55,6 @@ A more permissive license makes it easier to port the code to other languages or
 
 [^1]: Source code available at <https://github.com/dfdx/NaiveBayes.jl>.
 [^2]: Source code available at <https://gitlab.com/drti/sirus>.
-[^3]: Source code available at <https://github.com/cstjean/ScikitLearn.jl>.
-
-Some of the aforementioned and commonly used models are available in Julia via the Machine Learning Julia (MLJ) framework [@blaom2020mlj].
-For example, MLJLinearModels.jl[^4] provides, interpretable, linear models.
-For noninterpretable neural networks and similar models, Flux.jl [@innes2018flux] provides lightweight abstractions.
-A more user-friendly alternative is BetaML.jl [@lobianco2021betaml], which provides pure Julia implementations for many models including the perceptron classifier, pegasos classifier [@shalev2007pegasos], neural networks, decision tree classifier and regressor.
-Furthermore, an interface to Microsoft's gradient boosting machine called LightGBM [@ke2017lightgbm] is available via LightGBM.jl.
-Finally, an interface to many of Python's machine learning packages is available via ScikitLearn.jl[^3].
-However, interpretable rule-based models with useful predictive performance are not yet available via Julia.
-The SIRUS.jl package solves this by making the SIRUS model available via MLJ.
-
-[^4]: Source code available at <https://github.com/JuliaAI/MLJLinearModels.jl>.
 
 # Interpretability
 
@@ -189,7 +178,7 @@ In conclusion, the SIRUS algorithm generally performs best on binary classificat
 
 # Code Example
 
-The model can be used via the `MLJ.jl` [@blaom2020mlj] machine learning interface.
+The model can be used via the Machine Learning Julia (MLJ) [@blaom2020mlj] interface.
 For example, this code was used to obtain the fit result for the Haberman example at the start of this paper: <br>
 \vspace{2mm}
 ```julia
