@@ -72,12 +72,12 @@ function load_haberman()::DataFrame
     df
 end;
 
-# ╔═╡ 08a4ca2b-bc65-4c29-9528-f4789272143a
-md"And split it into features (`X`) and outcomes (`y`):"
-
 # ╔═╡ 472a1dd1-dc10-4707-81f8-f2a0b68082fb
 # ╠═╡ show_logs = false
 data = load_haberman()
+
+# ╔═╡ 08a4ca2b-bc65-4c29-9528-f4789272143a
+md"And split it into features (`X`) and outcomes (`y`):"
 
 # ╔═╡ e037d952-e489-41b6-afc9-317a8c17e6c4
 X = select(data, Not(:survival));
@@ -190,8 +190,8 @@ evaluate(model, X, y; resampling, measure=auc)
 # ╠═75550619-b310-4c66-9371-93656f78765c
 # ╠═05aaa007-0fe0-44ef-b815-ecf9e5f474f7
 # ╠═ac2d7dbc-364f-437f-b66f-8eb288395275
-# ╠═08a4ca2b-bc65-4c29-9528-f4789272143a
 # ╠═472a1dd1-dc10-4707-81f8-f2a0b68082fb
+# ╠═08a4ca2b-bc65-4c29-9528-f4789272143a
 # ╠═e037d952-e489-41b6-afc9-317a8c17e6c4
 # ╠═2f921f63-5148-4726-9839-c84217f60e0b
 # ╠═a1764625-4b7a-42f3-9e61-3d26122d86da
