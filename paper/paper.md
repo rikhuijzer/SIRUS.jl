@@ -33,13 +33,13 @@ In turn, this allows others to research the algorithm further or easily port it 
 
 Many of the modern day machine learning models are noninterpretable models, also known as _black box_ models.
 Well-known examples of noninterpretable models are random forests [@breiman2001random] and neural networks, available in Julia via, for example, LightGBM.jl [@ke2017lightgbm], Flux.jl [@innes2018flux], and BetaML.jl [@lobianco2021betaml].
-Although these models are commonly used, they can be problematic in high stakes domains where model decisions have real-world impact on individuals, such as suggesting treatments or selecting personnel.
+Although these models are very capable and commonly used, they can be problematic in high stakes domains where model decisions have real-world impact on individuals, such as suggesting treatments or selecting personnel.
 Such noninterpretable models may lead to unsafe, unfair, or unreliable predictions [@doshi2017towards; @barredo2020explainable].
-On the other hand, interpretable models are often limited to ordinary and generalized regression models, decision trees, RuleFit, naive Bayes classification, and k-nearest neighbors [@molnar2022interpretable].
+However, the set of interpretable models is often limited to ordinary and generalized regression models, decision trees, RuleFit, naive Bayes classification, and k-nearest neighbors [@molnar2022interpretable].
 For these models, predictive performance can be poor.
 Linear models, for instance, may perform poor when features are correlated and can be sensitive to the choice of hyperparameters.
 For decision trees, predictive performance is poor compared to random forests [@james2013introduction].
-RuleFit's performance, anecdotally, was disappointing [@molnar2022interpretable] and is not available in Julia.
+RuleFit is not available in Julia and is _unstable_, which will be discussed later.
 Naive Bayes, available in Julia as NaiveBayes.jl[^1], is often overlooked and can be very suitable for many situations; especially when the features are independent [@ashari2013performance].
 The main problem of some of the aforementioned models is that they often outperform linear models and decision trees, but are not fully interpretable due to the large number of trees, typically thousands, in the forests.
 Model interpretation techniques, such as SHAP [@lundberg2017unified], do not solve this as they do not clearly explain predictions made by the models.
@@ -100,9 +100,10 @@ A stable model is defined as a model which leads to similar conclusions for smal
 Unstable models can be difficult to apply in practice as they might require processes to constantly change.
 This also makes such models appear less trustworthy.
 Put differently, an unstable model by definition leads to different conclusions for small changes to the data and, hence, small changes to the data could cause a sudden drop in predictive performance.
-One model which suffers from a low stability is a decision tree because it will first create the root node of the tree, so a small change in the data can cause the root, and therefore the rest, of the tree to be completely different [@molnar2022interpretable].
+One model which suffers from a low stability is a decision tree, available via DecisionTree.jl [@sadeghi2022decisiontree], because it will first create the root node of the tree, so a small change in the data can cause the root, and therefore the rest, of the tree to be completely different [@molnar2022interpretable].
 Similarly, linear models can be highly sensitive to correlated data and, in the case of regularized linear models, the choice of hyperparameters.
-Instead, the SIRUS algorithm provides stability by stabilizing the trees and the authors have proven the correctness of this stabilization mathematically [@benard2021sirus].
+The aforementioned RuleFit algorithm also suffers from stability issues due to the unstable combination of tree fitting and rule extraction [@benard2021sirus].
+The SIRUS algorithm solves this problem by stabilizing the trees inside the forest, and the authors have proven the correctness of this stabilization mathematically [@benard2021sirus].
 In the rest of this paper, we will compare decision trees [@sadeghi2022decisiontree], linear models, XGBoost [@chen2016xgboost], and SIRUS on their predictive performance.
 The interpretability and stability are summarized in Table \ref{tab:is}.
 
@@ -127,7 +128,7 @@ The interpretability and stability are summarized in Table \ref{tab:is}.
 
 The model is based on random forests and therefore well suited for settings where the number of variables is comparatively large to the number of datapoints [@biau2016random].
 To make the random forests interpretable, the large number of trees are converted to a small number of rules.
-The conversion works by converting each tree to a set of rules and then pruning the rules by removing simple duplicates and linearly dependent duplicates, see the package documentation or the original paper [@benard2021interpretable] for details.
+The conversion works by converting each tree to a set of rules and then pruning the rules by removing simple duplicates and linearly dependent duplicates, see the SIRUS.jl documentation or the original paper [@benard2021interpretable] for details.
 In practice, this trade-off between between model complexity and interpretability comes at a small performance cost.
 
 To show the performance, we compared SIRUS to a decision tree linear model, and XGBoost; similar to Table \ref{tab:is}.
