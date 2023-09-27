@@ -46,7 +46,7 @@ RuleFit is not available in Julia and is _unstable_ [@benard2021sirus], meaning 
 Naive Bayes, available in Julia as NaiveBayes.jl[^2], is often overlooked and can be a suitable solution, but only if the features are independent [@ashari2013performance].
 
 Researchers have attempted to make the random forest models more interpretable.
-Model interpretation techniques, such as SHAP [@lundberg2017unified] or Shapley, available via Shapley.jl[^5], have been used to vizualize the fitted model.
+Model interpretation techniques, such as SHAP [@lundberg2017unified] or Shapley, available via Shapley.jl[^5], have been used to visualize the fitted model.
 However, the disadvantage of these techniques are that they convert the complex model to a simplified representation.
 This causes the simplified representation to be different from the complex model and may therefore hide biases and issues related to safety and reliability [@barredo2020explainable].
 
