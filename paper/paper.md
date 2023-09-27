@@ -22,7 +22,7 @@ bibliography: paper.bib
 
 # Summary
 
-SIRUS.jl[^1] is a pure Julia implementation of the original Stable and Interpretable RUle Sets (SIRUS) algorithm.
+SIRUS.jl[^1] is an implementation of the original Stable and Interpretable RUle Sets (SIRUS) algorithm in the Julia programming language.
 The SIRUS algorithm is a fully interpretable version of random forests, that is, it reduces thousands of trees in the forest to a much lower number of interpretable rules (e.g., 10 or 20).
 With our Julia implementation, we aimed to reproduce the original C++ and R implementation in a high-level language to verify the algorithm as well as making the code easier to read.
 We show that the model performs well on classification tasks while retaining interpretability and stability.
@@ -32,24 +32,28 @@ In turn, this allows others to research the algorithm further or easily port it 
 # Statement of need
 
 Many of the modern day machine learning models are noninterpretable models, also known as _black box_ models.
-Well-known examples of noninterpretable models are random forests [@breiman2001random] and neural networks, available in Julia via, for example, LightGBM.jl [@ke2017lightgbm], Flux.jl [@innes2018flux], and BetaML.jl [@lobianco2021betaml].
-Although these models are very capable and commonly used, they can be problematic in high stakes domains where model decisions have real-world impact on individuals, such as suggesting treatments or selecting personnel.
-Such noninterpretable models may lead to unsafe, unfair, or unreliable predictions [@doshi2017towards; @barredo2020explainable].
+Well-known examples of noninterpretable models are random forests [@breiman2001random] and neural networks.
+Such models are available in the Julia programming language via, for example, LightGBM.jl [@ke2017lightgbm], Flux.jl [@innes2018flux], and BetaML.jl [@lobianco2021betaml].
+Although these models can obtain high predictive performance and are commonly used, they can be problematic in high stakes domains where model decisions have real-world impact on individuals, such as suggesting treatments or selecting personnel.
+The reason is that noninterpretable models may lead to unsafe, unfair, or unreliable predictions [@doshi2017towards; @barredo2020explainable].
+Furthermore, interpretable models may allow researchers to learn more from the model, which in turn may allow researchers to make better model decisions and achieve a higher predictive performance.
+
 However, the set of interpretable models is often limited to ordinary and generalized regression models, decision trees, RuleFit, naive Bayes classification, and k-nearest neighbors [@molnar2022interpretable].
-For these models, predictive performance can be poor.
+For these models, however, predictive performance can be poor for certain tasks.
 Linear models, for instance, may perform poor when features are correlated and can be sensitive to the choice of hyperparameters.
 For decision trees, predictive performance is poor compared to random forests [@james2013introduction].
-RuleFit is not available in Julia and is _unstable_, which will be discussed later.
-Naive Bayes, available in Julia as NaiveBayes.jl[^2], is often overlooked and can be very suitable for many situations, but does require features to be independent [@ashari2013performance].
-Random forests outperform linear models and decision trees and are often considered interpretable.
-However, they are not fully interpretable due to the large number of trees, typically thousands, in the forests.
-Model interpretation techniques, such as SHAP [@lundberg2017unified] or Shapley, available via Shapley.jl[^5], do not solve this as they do not clearly explain predictions made by the models.
-This is because model interpretation techniques convert the complex model to a simplified representation.
+RuleFit is not available in Julia and is _unstable_ [@benard2021sirus], meaning sensitive to small changes in data.
+Naive Bayes, available in Julia as NaiveBayes.jl[^2], is often overlooked and can be a suitable solution, but only if the features are independent [@ashari2013performance].
+
+Researchers have attempted to make the random forest models more interpretable.
+Model interpretation techniques, such as SHAP [@lundberg2017unified] or Shapley, available via Shapley.jl[^5], have been used to vizualize the fitted model.
+However, the disadvantage of these techniques are that they convert the complex model to a simplified representation.
 This causes the simplified representation to be different from the complex model and may therefore hide biases and issues related to safety and reliability [@barredo2020explainable].
+
 The SIRUS algorithm solves this by simplifying the complex model and by then using the simplified model for predictions.
 This ensures that the same model is used for interpretation and prediction.
 However, the original SIRUS algorithm was implemented in about 10k lines of C++ and 2k lines of R code[^3] which makes it hard to inspect and extend due to the combination of two languages.
-Our implementation is written in pure Julia and takes about 2k lines of code.
+Our implementation is written in about 2k lines of pure Julia code.
 This allows researchers to more easily verify the algorithm and investigate further improvements.
 Furthermore, the original algorithm was covered by the GPL-3 copyleft license meaning that copies are required to be made freely available.
 A more permissive license makes it easier to port the code to other languages or production systems.
@@ -94,7 +98,6 @@ This calculation is done for all 8 rules and the score is summed to get a predic
 In essence, the first rule says that if there are less than 8 axillary nodes detected, then the patient will most likely survive (`class == 1.0`).
 Put differently, the model states that if there are many axillary nodes detected, then it is, unfortunately, less likely that the patient will survive.
 This model is fully interpretable because the model contains a few dozen rules which can all be interpreted in isolation and together.
-In contrast, random forests often require hundreds to thousands of trees, which makes them too complex to interpret.
 
 # Stability
 
@@ -106,7 +109,7 @@ Put differently, an unstable model by definition leads to different conclusions 
 One model which suffers from a low stability is a decision tree, available via DecisionTree.jl [@sadeghi2022decisiontree], because it will first create the root node of the tree, so a small change in the data can cause the root, and therefore the rest, of the tree to be completely different [@molnar2022interpretable].
 Similarly, linear models can be highly sensitive to correlated data and, in the case of regularized linear models, the choice of hyperparameters.
 The aforementioned RuleFit algorithm also suffers from stability issues due to the unstable combination of tree fitting and rule extraction [@benard2021sirus].
-The SIRUS algorithm solves this problem by stabilizing the trees inside the forest, and the authors have proven the correctness of this stabilization mathematically [@benard2021sirus].
+The SIRUS algorithm solves this problem by stabilizing the trees inside the forest, and the original authors have proven the correctness of this stabilization mathematically [@benard2021sirus].
 In the rest of this paper, we will compare decision trees [@sadeghi2022decisiontree], linear models, XGBoost [@chen2016xgboost], and SIRUS on their predictive performance.
 The interpretability and stability are summarized in Table \ref{tab:is}.
 
@@ -129,12 +132,12 @@ The interpretability and stability are summarized in Table \ref{tab:is}.
 
 # Predictive Performance
 
-The model is based on random forests and therefore well suited for settings where the number of variables is comparatively large to the number of datapoints [@biau2016random].
+The SIRUS model is based on random forests and therefore well suited for settings where the number of variables is comparatively large to the number of datapoints [@biau2016random].
 To make the random forests interpretable, the large number of trees are converted to a small number of rules.
 The conversion works by converting each tree to a set of rules and then pruning the rules by removing simple duplicates and linearly dependent duplicates, see the SIRUS.jl documentation or the original paper [@benard2021interpretable] for details.
 In practice, this trade-off between between model complexity and interpretability comes at a small performance cost.
 
-To show the performance, we compared SIRUS to a decision tree linear model, and XGBoost; similar to Table \ref{tab:is}.
+To show the performance, we compared SIRUS to a decision tree, linear model, and XGBoost; similar to Table \ref{tab:is}.
 We have used Julia version 1.9.3 with SIRUS version 1.3.2 (commit `ec9fa73`), 10-fold cross-validation, and we will present variability as $1.96 * \text{standard error}$ for all evaluations with respectively the following datasets, outcome variable type, and measures:
 Haberman's Survival Dataset [@haberman1999survival] binary classification dataset with AUC,
 Titanic [@eaton1995titanic] binary classification dataset with Area Under the Curve (AUC),
@@ -178,7 +181,9 @@ Further work is needed to find the root cause or workarounds for these low score
 One possible solution would be to add SymbolicRegression.jl [@cranmer2023interpretable] as a secondary back end for regression tasks.
 Similar to SIRUS.jl, SymbolicRegression.jl can fit expressions of a pre-defined form to data albeit with more free parameters, which might fit better but also might cause overfitting, depending on the data.
 This achieves performance that is similar to XGBoost [@hanson2023discourse].
-In conclusion, the SIRUS algorithm generally performs best on binary classification tasks and can obtain a high predictive performance while retaining model interpretability and stability.
+
+In conclusion, interpretability and stability are often required in high-stakes decision making contexts such as personnel or treatment selection.
+In such contexts and when the task is classification, SIRUS obtains a reasonable predictive performance, while retaining model stability and interpretability.
 
 # Code Example
 
@@ -203,8 +208,8 @@ And specify the Haberman dataset via DataDeps.jl, which allows data verification
 function register_haberman()
     name = "Haberman"
     message = "Haberman's Survival Data Set"
-    remote_path = "https://github.com/rikhuijzer/haberman-survival-dataset/releases/
-        download/v1.0.0/haberman.csv"
+    remote_path = "https://github.com/rikhuijzer/haberman-survival-dataset/
+        releases/download/v1.0.0/haberman.csv"
     checksum = "a7e9aeb249e11ac17c2b8ea4fdafd5c9392219d27cb819ffaeb8a869eb727a0f"
     DataDeps.register(DataDep(name, message, remote_path, checksum))
 end
