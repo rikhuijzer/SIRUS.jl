@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.27
+# v0.19.28
 
 using Markdown
 using InteractiveUtils
@@ -631,7 +631,7 @@ end
 # ╠═╡ show_logs = false
 e1 = let
 	model = DecisionTreeClassifier
-	hyperparameters = (; max_depth=2, rng=_rng())
+	hyperparameters = (; rng=_rng(), max_depth=2)
 	_evaluate(model, hyperparameters, X, y)
 end;
 
@@ -639,7 +639,7 @@ end;
 # ╠═╡ show_logs = false
 e2 = let
 	model = StableRulesClassifier
-	hyperparameters = (; q=4, max_depth=2, max_rules=8, rng=_rng())
+	hyperparameters = (; rng=_rng(), q=4, max_depth=2, max_rules=8)
 	_evaluate(model, hyperparameters, X, y)
 end;
 
@@ -647,14 +647,14 @@ end;
 # ╠═╡ show_logs = false
 e3 = let
 	model = StableRulesClassifier
-	hyperparameters = (; q=4, max_depth=2, max_rules=25, rng=_rng())
+	hyperparameters = (; rng=_rng(), q=4, max_depth=2, max_rules=25)
 	_evaluate(model, hyperparameters, X, y)
 end;
 
 # ╔═╡ 86ed4d56-23e6-4b4d-9b55-7067124da27f
 e4 = let
 	model = StableRulesClassifier
-	hyperparameters = (; q=4, max_depth=1, max_rules=25, rng=_rng())
+	hyperparameters = (; rng=_rng(), q=4, max_depth=1, max_rules=25)
 	_evaluate(model, hyperparameters, X, y)
 end;
 
@@ -670,7 +670,7 @@ fitresults = getproperty.(e4.e.fitted_params_per_fold, :fitresult);
 # ╠═╡ show_logs = false
 e5 = let
 	model = StableForestClassifier
-	hyperparameters = (; q=4, max_depth=2, rng=_rng())
+	hyperparameters = (; rng=_rng(), q=4, max_depth=2)
 	_evaluate(model, hyperparameters, X, y)
 end;
 
@@ -684,7 +684,7 @@ end;
 # ╔═╡ 8c093e66-f476-4501-b098-705e274be8ee
 e7 = let
 	model = EvoTreeClassifier
-	hyperparameters = (; max_depth=2, rng=_rng())
+	hyperparameters = (; rng=_rng(), max_depth=2)
 	_evaluate(model, hyperparameters, X, y)
 end;
 
@@ -697,6 +697,16 @@ results = let
 	df[!, :AUC] = map(df.AUC) do score
 		text = string(score)
 		length(text) < 4 ? text * '0' : text
+	end
+	df[:, :Model] = map(zip(df.Model, df.Hyperparameters)) do (model, param)
+		text = string(model, param)
+		text = replace(text, " = " => "=")
+		text = replace(text, ",)" => ")")
+		text = replace(text, "(;)" => "()")
+	end
+	select!(df, Not(:Hyperparameters))
+	for col in names(df)
+		df[!, col] = Base.Text.(df[:, col])
 	end
 	rename!(df, :se => "1.96*SE")
 end
