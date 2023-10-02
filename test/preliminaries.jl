@@ -27,8 +27,6 @@ using MLJBase:
     CV,
     MLJBase,
     PerformanceEvaluation,
-    accuracy,
-    auc,
     evaluate,
     mode,
     fit!,
@@ -36,7 +34,6 @@ using MLJBase:
     make_blobs,
     make_moons,
     make_regression,
-    rsq,
     predict
 using MLJDecisionTreeInterface: DecisionTreeClassifier, DecisionTreeRegressor
 using MLJLinearModels: LogisticClassifier, LinearRegressor, MultinomialClassifier
@@ -44,6 +41,10 @@ using MLJTestInterface: MLJTestInterface
 using MLJXGBoostInterface: XGBoostClassifier, XGBoostRegressor
 using Random: shuffle, seed!
 using StableRNGs: StableRNG
+using StatisticalMeasures:
+    accuracy,
+    auc,
+    rsq
 using SIRUS
 using Statistics: mean, var
 using Tables: Tables
