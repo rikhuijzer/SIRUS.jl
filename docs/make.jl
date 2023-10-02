@@ -52,7 +52,7 @@ prettyurls = is_ci
 size_threshold_warn = nothing
 format = HTML(; mathengine=MathJax3(), prettyurls, size_threshold_warn)
 modules = [SIRUS]
-warnonly = !do_build_notebooks
+warnonly = [:cross_references]
 checkdocs = :none
 makedocs(; sitename, pages, format, modules, warnonly, checkdocs)
 
