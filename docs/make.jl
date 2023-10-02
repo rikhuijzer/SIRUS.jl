@@ -51,9 +51,9 @@ end
 prettyurls = is_ci
 format = HTML(; mathengine=MathJax3(), prettyurls)
 modules = [SIRUS]
-strict = do_build_notebooks
+warnonly = !do_build_notebooks
 checkdocs = :none
-makedocs(; sitename, pages, format, modules, strict, checkdocs)
+makedocs(; sitename, pages, format, modules, warnonly, checkdocs)
 
 deploydocs(;
     branch="docs-output",
