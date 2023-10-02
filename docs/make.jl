@@ -49,7 +49,8 @@ if do_build_notebooks
 end
 
 prettyurls = is_ci
-format = HTML(; mathengine=MathJax3(), prettyurls)
+size_threshold_warn = nothing
+format = HTML(; mathengine=MathJax3(), prettyurls, size_threshold_warn)
 modules = [SIRUS]
 warnonly = !do_build_notebooks
 checkdocs = :none
