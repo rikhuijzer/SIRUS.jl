@@ -49,11 +49,12 @@ if do_build_notebooks
 end
 
 prettyurls = is_ci
-format = HTML(; mathengine=MathJax3(), prettyurls)
+size_threshold_warn = nothing
+format = HTML(; mathengine=MathJax3(), prettyurls, size_threshold_warn)
 modules = [SIRUS]
-strict = do_build_notebooks
+warnonly = [:cross_references]
 checkdocs = :none
-makedocs(; sitename, pages, format, modules, strict, checkdocs)
+makedocs(; sitename, pages, format, modules, warnonly, checkdocs)
 
 deploydocs(;
     branch="docs-output",
