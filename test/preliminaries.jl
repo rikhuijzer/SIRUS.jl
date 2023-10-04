@@ -57,6 +57,12 @@ function _score(e::PerformanceEvaluation)
     return round(only(e.measurement); sigdigits=2)
 end
 
+function _evaluate(model, X, y; nfolds=10, measure=auc)
+    resampling = CV(; nfolds, shuffle=true, rng=_rng())
+    acceleration = MLJBase.CPUThreads()
+    evaluate(model, X, y; acceleration, verbosity=0, resampling, measure)
+end
+
 if !haskey(ENV, "REGISTERED_CANCER")
     name = "Cancer"
     message = "Wisconsin Diagnostic Breast Cancer (WDBC) dataset"
