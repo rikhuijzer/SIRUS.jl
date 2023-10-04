@@ -38,8 +38,10 @@ end
     include("weights.jl")
 end
 
-@testset "rcall" begin
-    include("rcall.jl")
+if v"1.8" < VERSION
+    @testset "rcall" begin
+        include("rcall.jl")
+    end
 end
 
 @testset "mlj" begin
