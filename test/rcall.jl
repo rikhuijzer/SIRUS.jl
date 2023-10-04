@@ -54,7 +54,7 @@ function fit(
             seed=1
         )
         # print(sirus.print(fitted.model))
-        fitted_model
+        fitted.model
     """
     fitresult = fitted_model
     cache = nothing
