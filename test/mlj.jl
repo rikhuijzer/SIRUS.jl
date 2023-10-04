@@ -74,10 +74,6 @@ end
     @test classes isa Vector{<:Int}
 end
 
-function _score(e::PerformanceEvaluation)
-    return round(only(e.measurement); sigdigits=2)
-end
-
 function _with_trailing_zero(score::Real)::String
     text = string(score)::String
     if length(text) == 3

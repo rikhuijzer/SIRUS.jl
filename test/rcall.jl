@@ -38,9 +38,8 @@ function fit(
         X,
         y
     )
-    
-    sfit = R"""
-        sirus.fit(
+    fitted_model = R"""
+        fitted.model <- sirus.fit(
             $X,
             $y,
             type="auto",
@@ -51,12 +50,44 @@ function fit(
             max.depth=2,
             num.trees=NULL,
             num.threads=1,
-            verbose=TRUE,
+            verbose=FALSE,
             seed=1
         )
+        # print(sirus.print(fitted.model))
+        fitted_model
     """
+    fitresult = fitted_model
+    cache = nothing
+    report = nothing
+    return fitresult, cache, report
 end
 
+verbosity = 0
+
 model = RSirusRegressor()
-mach = machine(model, X, y)
-fit!(mach)
+verbosity = 3
+mach = machine(model, X, y, verbosity)
+fit!(mach; verbosity)
+# mach.fitresult
+
+function predict(
+        model::RSirusRegressor,
+        fitresult::RObject,
+        Xnew
+    )
+    if !Tables.istable(Xnew)
+        error("Expected a Table but got $(typeof(Xnew))")
+    end
+    df = DataFrame(Xnew)
+    predictions = R"""
+        sirus.predict($fitresult, $df)
+    """
+    return rcopy(predictions)
+end
+
+predict(mach, X)
+
+resampling = CV(; nfolds=3)
+acceleration = MLJBase.CPUThreads()
+e = evaluate(model, X, y; verbosity, acceleration, resampling, measure=rsq)
+@test 0.6 < _score(e)

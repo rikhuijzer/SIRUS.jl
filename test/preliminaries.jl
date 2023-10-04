@@ -53,6 +53,10 @@ using Test
 const S = SIRUS
 _rng(seed::Int=1) = StableRNG(seed)
 
+function _score(e::PerformanceEvaluation)
+    return round(only(e.measurement); sigdigits=2)
+end
+
 if !haskey(ENV, "REGISTERED_CANCER")
     name = "Cancer"
     message = "Wisconsin Diagnostic Breast Cancer (WDBC) dataset"
