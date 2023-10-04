@@ -107,7 +107,7 @@ function _evaluate!(
     X, y = datasets[dataset]
     nfolds = 10
     model = modeltype(; hyperparameters...)
-    e = _evaluate(model, X, y, nfolds, measure)
+    e = _evaluate(model, X, y; nfolds, measure)
     score = _with_trailing_zero(_score(e))
     se = let
         val = round(only(MLJBase._standard_errors(e)); digits=2)

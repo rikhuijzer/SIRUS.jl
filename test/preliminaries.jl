@@ -57,7 +57,7 @@ function _score(e::PerformanceEvaluation)
     return round(only(e.measurement); sigdigits=2)
 end
 
-function _evaluate(model, X, y; nfolds=10, measure=auc)
+function _evaluate(model, X, y; nfolds::Number=10, measure=auc)
     resampling = CV(; nfolds, shuffle=true, rng=_rng())
     acceleration = MLJBase.CPUThreads()
     evaluate(model, X, y; acceleration, verbosity=0, resampling, measure)
