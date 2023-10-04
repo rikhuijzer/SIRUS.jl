@@ -38,6 +38,10 @@ end
     include("weights.jl")
 end
 
+@testset "rcall" begin
+    include("rcall.jl")
+end
+
 @testset "mlj" begin
     include("mlj.jl")
 end
