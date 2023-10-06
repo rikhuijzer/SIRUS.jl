@@ -2,6 +2,8 @@ import Base
 
 ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
 
+const CAN_RUN_R_SIRUS = v"1.8" < VERSION
+
 using CategoricalArrays:
     CategoricalValue,
     CategoricalVector,
@@ -52,6 +54,16 @@ using Test
 
 const S = SIRUS
 _rng(seed::Int=1) = StableRNG(seed)
+
+function _score(e::PerformanceEvaluation)
+    return round(only(e.measurement); sigdigits=2)
+end
+
+function _evaluate(model, X, y; nfolds::Number=10, measure=auc)
+    resampling = CV(; nfolds, shuffle=true, rng=_rng())
+    acceleration = MLJBase.CPUThreads()
+    evaluate(model, X, y; acceleration, verbosity=0, resampling, measure)
+end
 
 if !haskey(ENV, "REGISTERED_CANCER")
     name = "Cancer"

@@ -31,3 +31,6 @@ tmp**
 
 paper/*.pdf
 paper/*.jats
+
+.RData
+.Rhistory

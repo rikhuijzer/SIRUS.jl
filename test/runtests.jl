@@ -38,6 +38,12 @@ end
     include("weights.jl")
 end
 
+if CAN_RUN_R_SIRUS
+    @testset "rcall" begin
+        include("rcall.jl")
+    end
+end
+
 @testset "mlj" begin
     include("mlj.jl")
 end

@@ -74,10 +74,6 @@ end
     @test classes isa Vector{<:Int}
 end
 
-function _score(e::PerformanceEvaluation)
-    return round(only(e.measurement); sigdigits=2)
-end
-
 function _with_trailing_zero(score::Real)::String
     text = string(score)::String
     if length(text) == 3
@@ -85,12 +81,6 @@ function _with_trailing_zero(score::Real)::String
     else
         return text
     end
-end
-
-function _evaluate(model, X, y, nfolds=10, measure=auc)
-    resampling = CV(; nfolds, shuffle=true, rng=_rng())
-    acceleration = MLJBase.CPUThreads()
-    evaluate(model, X, y; acceleration, verbosity=0, resampling, measure)
 end
 
 results = DataFrame(;
@@ -117,7 +107,7 @@ function _evaluate!(
     X, y = datasets[dataset]
     nfolds = 10
     model = modeltype(; hyperparameters...)
-    e = _evaluate(model, X, y, nfolds, measure)
+    e = _evaluate(model, X, y; nfolds, measure)
     score = _with_trailing_zero(_score(e))
     se = let
         val = round(only(MLJBase._standard_errors(e)); digits=2)
@@ -207,6 +197,11 @@ let
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     e = _evaluate!(results, data, StableRulesClassifier, hyper)
     @test 0.60 < _score(e)
+
+    if CAN_RUN_R_SIRUS
+        hyper = (; max_depth=2, max_rules=10)
+        e = _evaluate!(results, data, RSirusClassifier, hyper)
+    end
 end
 
 let
@@ -234,6 +229,11 @@ let
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     e = _evaluate!(results, data, StableRulesClassifier, hyper)
     @test 0.79 < _score(e)
+
+    if CAN_RUN_R_SIRUS
+        hyper = (; max_depth=2, max_rules=10)
+        e = _evaluate!(results, data, RSirusClassifier, hyper)
+    end
 end
 
 let
@@ -260,6 +260,11 @@ let
 
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     e = _evaluate!(results, data, StableRulesClassifier, hyper; measure)
+
+    if CAN_RUN_R_SIRUS
+        hyper = (; max_depth=2, max_rules=10)
+        e = _evaluate!(results, data, RSirusClassifier, hyper; measure)
+    end
 end
 
 let
@@ -284,9 +289,14 @@ let
 
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     e = _evaluate!(results, data, StableRulesClassifier, hyper)
+
+    if CAN_RUN_R_SIRUS
+        hyper = (; max_depth=2, max_rules=10)
+        e = _evaluate!(results, data, RSirusClassifier, hyper)
+    end
 end
 
-e_iris = let
+let
     data = "iris"
     measure = accuracy
 
@@ -312,7 +322,8 @@ e_iris = let
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     e = _evaluate!(results, data, StableRulesClassifier, hyper; measure)
     @test 0.62 < _score(e)
-    e
+
+    # R sirus doesn't appear to support multiclass classification.
 end
 
 rulesmodel = StableRulesRegressor(; max_depth=2, max_rules=30, rng=_rng())
@@ -351,6 +362,11 @@ let
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     er = _evaluate!(results, data, StableRulesRegressor, hyper; measure=rsq)
     @test 0.55 < _score(er)
+
+    if CAN_RUN_R_SIRUS
+        hyper = (; max_depth=2, max_rules=10)
+        _evaluate!(results, data, RSirusRegressor, hyper; measure=rsq)
+    end
 end
 
 emr = let
@@ -377,6 +393,11 @@ emr = let
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     er = _evaluate!(results, data, StableRulesRegressor, hyper; measure)
     @test 0.50 < _score(er)
+
+    if CAN_RUN_R_SIRUS
+        hyper = (; max_depth=2, max_rules=10)
+        _evaluate!(results, data, RSirusRegressor, hyper; measure=rsq)
+    end
 end
 
 pretty = rename(results, :se => "1.96*SE")
