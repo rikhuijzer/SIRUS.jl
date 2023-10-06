@@ -260,6 +260,11 @@ let
 
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     e = _evaluate!(results, data, StableRulesClassifier, hyper; measure)
+
+    if CAN_RUN_R_SIRUS
+        hyper = (; max_depth=2, max_rules=10)
+        e = _evaluate!(results, data, RSirusClassifier, hyper; measure)
+    end
 end
 
 let
@@ -284,9 +289,14 @@ let
 
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     e = _evaluate!(results, data, StableRulesClassifier, hyper)
+
+    if CAN_RUN_R_SIRUS
+        hyper = (; max_depth=2, max_rules=10)
+        e = _evaluate!(results, data, RSirusClassifier, hyper)
+    end
 end
 
-e_iris = let
+let
     data = "iris"
     measure = accuracy
 
@@ -312,7 +322,8 @@ e_iris = let
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     e = _evaluate!(results, data, StableRulesClassifier, hyper; measure)
     @test 0.62 < _score(e)
-    e
+
+    # R sirus doesn't appear to support multiclass classification.
 end
 
 rulesmodel = StableRulesRegressor(; max_depth=2, max_rules=30, rng=_rng())
@@ -351,6 +362,11 @@ let
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     er = _evaluate!(results, data, StableRulesRegressor, hyper; measure=rsq)
     @test 0.55 < _score(er)
+
+    if CAN_RUN_R_SIRUS
+        hyper = (; max_depth=2, max_rules=10)
+        _evaluate!(results, data, RSirusRegressor, hyper; measure=rsq)
+    end
 end
 
 emr = let
@@ -377,6 +393,11 @@ emr = let
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     er = _evaluate!(results, data, StableRulesRegressor, hyper; measure)
     @test 0.50 < _score(er)
+
+    if CAN_RUN_R_SIRUS
+        hyper = (; max_depth=2, max_rules=10)
+        _evaluate!(results, data, RSirusRegressor, hyper; measure=rsq)
+    end
 end
 
 pretty = rename(results, :se => "1.96*SE")

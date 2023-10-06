@@ -56,7 +56,7 @@ function fit(
         fitted.model <- sirus.fit(
             $df,
             $y,
-            type="auto",
+            type="reg",
             num.rule=$(model.max_rules),
             p0=NULL,
             num.rule.max=$(model.max_rules),
@@ -126,7 +126,7 @@ function fit(
         fitted.model <- sirus.fit(
             $df,
             $outcomes,
-            type="auto",
+            type="classif",
             num.rule=$(model.max_rules),
             p0=NULL,
             num.rule.max =$(model.max_rules),
@@ -168,12 +168,17 @@ function predict(
     classes = MMI.classes(a_target_element)
     predictions = rcopy(rpredictions)
     augment = ndims(predictions) == 1
+    @show classes
+    @show predictions
+    @show augment
     return UnivariateFinite(classes, predictions; augment)
 end
 
 predict(mach, X)
 
-resampling = CV(; nfolds=3)
-acceleration = MLJBase.CPUThreads()
-e = evaluate(model, X, y; verbosity, acceleration, resampling, measure=auc)
+e = _evaluate(model, X, y; measure=auc)
 @test 0.5 < _score(e)
+
+# Looks like sirus does not support multiclass classification.
+# y = categorical(rand(_rng(), [0, 1, 2], n))
+# _evaluate(model, X, y; measure=accuracy)
