@@ -110,20 +110,21 @@ One model which suffers from a low stability is a decision tree, available via D
 Similarly, linear models can be highly sensitive to correlated data and, in the case of regularized linear models, the choice of hyperparameters.
 The aforementioned RuleFit algorithm also suffers from stability issues due to the unstable combination of tree fitting and rule extraction [@benard2021sirus].
 The SIRUS algorithm solves this problem by stabilizing the trees inside the forest, and the original authors have proven the correctness of this stabilization mathematically [@benard2021sirus].
-In the rest of this paper, we will compare decision trees [@sadeghi2022decisiontree], linear models, XGBoost [@chen2016xgboost], and SIRUS on their predictive performance.
+In the rest of this paper, we will compare the predictive performance of SIRUS to the performance of decision trees [@sadeghi2022decisiontree], linear models, XGBoost [@chen2016xgboost], and the original (C++/R) SIRUS implementation [@benard2021sirus].
 The interpretability and stability are summarized in Table \ref{tab:is}.
 
 \begin{table}[h!]
 \small
 \centering
-\begin{tabular}{|l|c|c|c|c|c|}
+\begin{tabular}{|l|c|c|c|c|c|c|}
 \hline
- & \textbf{Decision Tree} & \textbf{Linear Model} & \textbf{XGBoost} & \textbf{XGBoost} & \textbf{SIRUS} \\
-& & & \textbf{\scriptsize{max depth: $\mathbb{\infty}$}} & \textbf{\scriptsize{max depth: 2}} & \textbf{\scriptsize{max depth: 2}} \\
-& & & & & \textbf{\scriptsize{max rules: 10}} \\
+ & \textbf{Decision} & \textbf{Linear} & \textbf{XGBoost} & \textbf{XGBoost} & \textbf{Original} & \textbf{SIRUS.jl} \\
+ & \textbf{Tree} & \textbf{Model} & & & \textbf{SIRUS} & \\
+& & & \textbf{\scriptsize{max depth: $\mathbb{\infty}$}} & \textbf{\scriptsize{max depth: 2}} & \textbf{\scriptsize{max depth: 2}} & \textbf{\scriptsize{max depth: 2}} \\
+& & & & & \textbf{\scriptsize{max rules: 10}} & \textbf{\scriptsize{max rules: 10}} \\
 \hline
-\textbf{Interpretability} & High & High & Medium & Medium & High \\
-\textbf{Stability} & Low & Medium & High & High & High \\
+\textbf{Interpretability} & High & High & Medium & Medium & High & High \\
+\textbf{Stability} & Low & Medium & High & High & High & High \\
 \hline
 \end{tabular}
 \caption{Summary of interpretability and stability for various models.}
@@ -137,32 +138,34 @@ To make the random forests interpretable, the large number of trees are converte
 The conversion works by converting each tree to a set of rules and then pruning the rules by removing simple duplicates and linearly dependent duplicates, see the SIRUS.jl documentation or the original paper [@benard2021interpretable] for details.
 In practice, this trade-off between between model complexity and interpretability comes at a small performance cost.
 
-To show the performance, we compared SIRUS to a decision tree, linear model, and XGBoost; similar to Table \ref{tab:is}.
-We have used Julia version 1.9.3 with SIRUS version 1.3.2 (commit `ec9fa73`), 10-fold cross-validation, and we will present variability as $1.96 * \text{standard error}$ for all evaluations with respectively the following datasets, outcome variable type, and measures:
+To show the performance, we compared SIRUS to a decision tree, linear model, XGBoost, and the original (C++/R) SIRUS algorithm; similar to Table \ref{tab:is}.
+We have used Julia version 1.9.3 with SIRUS version 1.3.3 (at commit `5c87eda`), 10-fold cross-validation, and we will present variability as $1.96 * \text{standard error}$ for all evaluations with respectively the following datasets, outcome variable type, and measures:
 Haberman's Survival Dataset [@haberman1999survival] binary classification dataset with AUC,
 Titanic [@eaton1995titanic] binary classification dataset with Area Under the Curve (AUC),
 Breast Cancer Wisconsin [@wolberg1995breast] binary classification dataset with AUC,
 Pima Indians Diabetes [@smith1988using] binary classification dataset with AUC,
 Iris [@fisher1936use] multiclass classification dataset with accuracy,
 and Boston Housing [@harrison1978hedonic] regression dataset with $\text{R}^2$; see Table \ref{tab:perf}.
-For full details, see [`test/mlj.jl`](https://github.com/rikhuijzer/SIRUS.jl/blob/ec9fa73cb1304de6aa6ce4ec0e116abf59629612/test/mlj.jl).
-The output here was copied from the [GitHub Actions Job Summary for commit `ec9fa73`](https://github.com/rikhuijzer/SIRUS.jl/actions/runs/6147235329/attempts/1#summary-16678249371).
+For full details, see [`test/mlj.jl`](https://github.com/rikhuijzer/SIRUS.jl/blob/5c87eda4d0c50e0b78d12d6bd2c4387f5a83f518/test/mlj.jl).
+The performance scores were taken from the [GitHub Actions Job Summary for commit `5c87eda`](https://github.com/rikhuijzer/SIRUS.jl/actions/runs/6429413860/attempts/1#summary-17458424403).
+The result for the Iris dataset for the original SIRUS algorithm is missing because the original algorithm has not implemented multiclass classification.
 
 \begin{table}[h!]
 \small
 \centering
-\begin{tabular}{|l|c|c|c|c|c|}
+\begin{tabular}{|l|c|c|c|c|c|c|}
 \hline
-\textbf{Dataset} & \textbf{Decision Tree} & \textbf{Linear Model} & \textbf{XGBoost} & \textbf{XGBoost} & \textbf{SIRUS} \\
-& & & \textbf{\scriptsize{max depth: $\mathbb{\infty}$}} & \textbf{\scriptsize{max depth: 2}} & \textbf{\scriptsize{max depth: 2}} \\
-& & & & & \textbf{\scriptsize{max rules: 10}} \\
+\textbf{Dataset} & \textbf{Decision} & \textbf{Linear} & \textbf{XGBoost} & \textbf{XGBoost} & \textbf{Original} & \textbf{SIRUS.jl} \\
+& \textbf{Tree} & \textbf{Model} & & & \textbf{SIRUS} & \\
+& & & \textbf{\scriptsize{max depth: $\mathbb{\infty}$}} & \textbf{\scriptsize{max depth: 2}} & \textbf{\scriptsize{max depth: 2}} & \textbf{\scriptsize{max depth: 2}} \\
+& & & & & \textbf{\scriptsize{max rules: 10}} & \textbf{\scriptsize{max rules: 10}} \\
 \hline
-Haberman & $0.54 \pm 0.07$ & $0.69 \pm 0.06$ & $0.65 \pm 0.04$ & $0.63 \pm 0.04$ & $0.67 \pm 0.06$ \\
-Titanic & $0.76 \pm 0.05$ & $0.84 \pm 0.02$ & $0.86 \pm 0.03$ & $0.87 \pm 0.02$ & $0.83 \pm 0.02$ \\
-Breast Cancer & $0.92 \pm 0.03$ & $0.98 \pm 0.01$ & $0.99 \pm 0.01$ & $0.99 \pm 0.01$ & $0.98 \pm 0.01$ \\
-Diabetes & $0.67 \pm 0.05$ & $0.70 \pm 0.06$ & $0.80 \pm 0.03$ & $0.82 \pm 0.03$ & $0.75 \pm 0.05$ \\
-Iris & $0.95 \pm 0.03$ & $0.97 \pm 0.03$ & $0.95 \pm 0.04$ & $0.95 \pm 0.04$ & $0.77 \pm 0.07$ \\
-Boston & $0.74 \pm 0.11$ & $0.70 \pm 0.05$ & $0.88 \pm 0.06$ & $0.87 \pm 0.04$ & $0.62 \pm 0.09$ \\
+Haberman & $0.54 \pm 0.06$ & $0.69 \pm 0.06$ & $0.65 \pm 0.04$ & $0.63 \pm 0.04$ & 0.66 \pm 0.05 & $0.67 \pm 0.06$ \\
+Titanic & $0.76 \pm 0.05$ & $0.84 \pm 0.02$ & $0.86 \pm 0.03$ & $0.87 \pm 0.03$ & 0.81 \pm 0.02 & $0.83 \pm 0.02$ \\
+Cancer & $0.92 \pm 0.03$ & $0.98 \pm 0.01$ & $0.99 \pm 0.00$ & $0.99 \pm 0.00$ & 0.96 \pm 0.02 & $0.98 \pm 0.01$ \\
+Diabetes & $0.67 \pm 0.05$ & $0.70 \pm 0.06$ & $0.80 \pm 0.04$ & $0.82 \pm 0.03$ & 0.80 \pm 0.02 & $0.75 \pm 0.05$ \\
+Iris & $0.95 \pm 0.03$ & $0.97 \pm 0.03$ & $0.94 \pm 0.04$ & $0.93 \pm 0.04$ & & $0.77 \pm 0.08$ \\
+Boston & $0.74 \pm 0.11$ & $0.70 \pm 0.05$ & $0.87 \pm 0.05$ & $0.86 \pm 0.05$ & 0.63 \pm 0.07 & $0.61 \pm 0.09$ \\
 \hline
 \end{tabular}
 \caption{Predictive performance estimates.}
@@ -170,12 +173,12 @@ Boston & $0.74 \pm 0.11$ & $0.70 \pm 0.05$ & $0.88 \pm 0.06$ & $0.87 \pm 0.04$ &
 \end{table}
 
 At the time of writing, SIRUS's predictive performance is comparable to the linear model and XGBoost on the binary classification datasets, that is, Haberman, Titanic, Breast Cancer, and Diabetes.
-The best performance occurs at the Diabetes dataset where both XGBoost and SIRUS outperform the linear model.
+The best performance occurs at the Diabetes dataset where both XGBoost and the SIRUS mdoels outperform the linear model.
 The reason for this could be that negative effects are often nonlinear for fragile systems [@taleb2020statistical].
 For example, it could be that an increase in oral glucose tolerance increases the chance of diabetes exponentially.
 In such cases, the hard cutoff points chosen by tree-based models, such as XGBoost and SIRUS, may fit the data better.
 
-For the multiclass Iris classification and the Boston Housing regression datasets, the performance was worse than the other models.
+For the multiclass Iris classification and the Boston Housing regression datasets, the performance was worse than the other models non-SIRUS models.
 It could be that this is caused by a bug in the implementation or because this is a fundamental issue in the algorithm.
 Further work is needed to find the root cause or workarounds for these low scores.
 One possible solution would be to add SymbolicRegression.jl [@cranmer2023interpretable] as a secondary back end for regression tasks.
@@ -183,7 +186,7 @@ Similar to SIRUS.jl, SymbolicRegression.jl can fit expressions of a pre-defined 
 This achieves performance that is similar to XGBoost [@hanson2023discourse].
 
 In conclusion, interpretability and stability are often required in high-stakes decision making contexts such as personnel or treatment selection.
-In such contexts and when the task is classification, SIRUS obtains a reasonable predictive performance, while retaining model stability and interpretability.
+In such contexts and when the task is classification, SIRUS.jl obtains a reasonable predictive performance, while retaining model stability and interpretability.
 
 # Code Example
 
