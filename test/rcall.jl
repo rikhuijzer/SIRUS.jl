@@ -30,6 +30,8 @@ const MMI = MLJModelInterface
 # @rlibrary sirus
 
 MMI.@mlj_model mutable struct RSirusRegressor <: Deterministic
+    max_depth::Int=2
+    max_rules::Int=10
 end
 
 R"library('sirus')"
@@ -55,11 +57,11 @@ function fit(
             $df,
             $y,
             type="auto",
-            num.rule=10,
+            num.rule=$(model.max_rules),
             p0=NULL,
-            num.rule.max = 10,
+            num.rule.max=$(model.max_rules),
             q=4,
-            max.depth=2,
+            max.depth=$(model.max_depth),
             num.trees=NULL,
             num.threads=1,
             verbose=FALSE,
@@ -101,7 +103,8 @@ e = _evaluate(model, X, y; measure=rsq)
 @test 0.6 < _score(e)
 
 MMI.@mlj_model mutable struct RSirusClassifier <: Probabilistic
-    pool::Union{Nothing,CategoricalPool}=nothing
+    max_depth::Int=2
+    max_rules::Int=10
 end
 
 function fit(
@@ -124,11 +127,11 @@ function fit(
             $df,
             $outcomes,
             type="auto",
-            num.rule=10,
+            num.rule=$(model.max_rules),
             p0=NULL,
-            num.rule.max = 10,
+            num.rule.max =$(model.max_rules),
             q=4,
-            max.depth=2,
+            max.depth=$(model.max_depth),
             num.trees=NULL,
             num.threads=1,
             verbose=FALSE,
@@ -145,7 +148,7 @@ end
 
 y = categorical(rand(_rng(), [0, 1], n))
 
-model = RSirusClassifier(; pool=y.pool)
+model = RSirusClassifier()
 mach = machine(model, X, y, verbosity)
 fit!(mach; verbosity)
 

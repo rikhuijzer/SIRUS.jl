@@ -38,7 +38,7 @@ end
     include("weights.jl")
 end
 
-if v"1.8" < VERSION
+if CAN_RUN_R_SIRUS
     @testset "rcall" begin
         include("rcall.jl")
     end

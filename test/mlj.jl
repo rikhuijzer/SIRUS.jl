@@ -197,6 +197,11 @@ let
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     e = _evaluate!(results, data, StableRulesClassifier, hyper)
     @test 0.60 < _score(e)
+
+    if CAN_RUN_R_SIRUS
+        hyper = (; max_depth=2, max_rules=10)
+        e = _evaluate!(results, data, RSirusClassifier, hyper)
+    end
 end
 
 let
@@ -224,6 +229,11 @@ let
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
     e = _evaluate!(results, data, StableRulesClassifier, hyper)
     @test 0.79 < _score(e)
+
+    if CAN_RUN_R_SIRUS
+        hyper = (; max_depth=2, max_rules=10)
+        e = _evaluate!(results, data, RSirusClassifier, hyper)
+    end
 end
 
 let

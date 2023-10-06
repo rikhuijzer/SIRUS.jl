@@ -2,6 +2,8 @@ import Base
 
 ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
 
+const CAN_RUN_R_SIRUS = v"1.8" < VERSION
+
 using CategoricalArrays:
     CategoricalValue,
     CategoricalVector,
