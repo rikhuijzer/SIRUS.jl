@@ -110,7 +110,7 @@ One model which suffers from a low stability is a decision tree, available via D
 Similarly, linear models can be highly sensitive to correlated data and, in the case of regularized linear models, the choice of hyperparameters.
 The aforementioned RuleFit algorithm also suffers from stability issues due to the unstable combination of tree fitting and rule extraction [@benard2021sirus].
 The SIRUS algorithm solves this problem by stabilizing the trees inside the forest, and the original authors have proven the correctness of this stabilization mathematically [@benard2021sirus].
-In the rest of this paper, we will compare the predictive performance of SIRUS to the performance of decision trees [@sadeghi2022decisiontree], linear models, XGBoost [@chen2016xgboost], and the original (C++/R) SIRUS implementation [@benard2021sirus].
+In the rest of this paper, we will compare the predictive performance of SIRUS.jl to the performance of decision trees [@sadeghi2022decisiontree], linear models, XGBoost [@chen2016xgboost], and the original (C++/R) SIRUS implementation [@benard2021sirus].
 The interpretability and stability are summarized in Table \ref{tab:is}.
 
 \begin{table}[h!]
@@ -118,7 +118,7 @@ The interpretability and stability are summarized in Table \ref{tab:is}.
 \centering
 \begin{tabular}{|l|c|c|c|c|}
 \hline
- & \textbf{Decision} & \textbf{Linear} & \textbf{XGBoost}  & \textbf{SIRUS} \\
+ & \textbf{Decision Tree} & \textbf{Linear Model} & \textbf{XGBoost}  & \textbf{SIRUS} \\
 \hline
 \textbf{Interpretability} & High & High & Medium & High \\
 \textbf{Stability} & Low & Medium & High & High \\
