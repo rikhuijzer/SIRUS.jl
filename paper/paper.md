@@ -40,7 +40,7 @@ Furthermore, interpretable models may allow researchers to learn more from the m
 
 However, the set of interpretable models is often limited to ordinary and generalized regression models, decision trees, RuleFit, naive Bayes classification, and k-nearest neighbors [@molnar2022interpretable].
 For these models, however, predictive performance can be poor for certain tasks.
-Linear models, for instance, may perform poor when features are correlated and can be sensitive to the choice of hyperparameters.
+Linear models, for instance, may perform poorly when features are correlated and can be sensitive to the choice of hyperparameters.
 For decision trees, predictive performance is poor compared to random forests [@james2013introduction].
 RuleFit is not available in Julia and is _unstable_ [@benard2021sirus], meaning sensitive to small changes in data.
 Naive Bayes, available in Julia as NaiveBayes.jl[^2], is often overlooked and can be a suitable solution, but only if the features are independent [@ashari2013performance].
@@ -95,7 +95,7 @@ This shows that the model contains 8 rules where the first rule, for example, ca
 _If the number of detected axillary nodes is lower than 7, then take 0.238, otherwise take 0.046._
 
 This calculation is done for all 8 rules and the score is summed to get a prediction.
-In essence, the first rule says that if there are less than 8 axillary nodes detected, then the patient will most likely survive (`class == 1.0`).
+In essence, the first rule says that if there are less than 8 axillary nodes detected, then the patient is more likely to survive (`class == 1`).
 Put differently, the model states that if there are many axillary nodes detected, then it is, unfortunately, less likely that the patient will survive.
 This model is fully interpretable because the model contains a few dozen rules which can all be interpreted in isolation and together.
 
@@ -116,15 +116,12 @@ The interpretability and stability are summarized in Table \ref{tab:is}.
 \begin{table}[h!]
 \small
 \centering
-\begin{tabular}{|l|c|c|c|c|c|c|}
+\begin{tabular}{|l|c|c|c|c|}
 \hline
- & \textbf{Decision} & \textbf{Linear} & \textbf{XGBoost} & \textbf{XGBoost} & \textbf{Original} & \textbf{SIRUS.jl} \\
- & \textbf{Tree} & \textbf{Model} & & & \textbf{SIRUS} & \\
-& & & \textbf{\scriptsize{max depth: $\mathbb{\infty}$}} & \textbf{\scriptsize{max depth: 2}} & \textbf{\scriptsize{max depth: 2}} & \textbf{\scriptsize{max depth: 2}} \\
-& & & & & \textbf{\scriptsize{max rules: 10}} & \textbf{\scriptsize{max rules: 10}} \\
+ & \textbf{Decision} & \textbf{Linear} & \textbf{XGBoost}  & \textbf{SIRUS} \\
 \hline
-\textbf{Interpretability} & High & High & Medium & Medium & High & High \\
-\textbf{Stability} & Low & Medium & High & High & High & High \\
+\textbf{Interpretability} & High & High & Medium & High \\
+\textbf{Stability} & Low & Medium & High & High \\
 \hline
 \end{tabular}
 \caption{Summary of interpretability and stability for various models.}
@@ -178,7 +175,7 @@ The reason for this could be that negative effects are often nonlinear for fragi
 For example, it could be that an increase in oral glucose tolerance increases the chance of diabetes exponentially.
 In such cases, the hard cutoff points chosen by tree-based models, such as XGBoost and SIRUS, may fit the data better.
 
-For the multiclass Iris classification and the Boston Housing regression datasets, the performance was worse than the other models non-SIRUS models.
+For the multiclass Iris classification and the Boston Housing regression datasets, the performance was worse than the other non-SIRUS models.
 It could be that this is caused by a bug in the implementation or because this is a fundamental issue in the algorithm.
 Further work is needed to find the root cause or workarounds for these low scores.
 One possible solution would be to add SymbolicRegression.jl [@cranmer2023interpretable] as a secondary back end for regression tasks.
