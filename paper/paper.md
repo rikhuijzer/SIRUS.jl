@@ -170,7 +170,7 @@ Boston & $0.74 \pm 0.11$ & $0.70 \pm 0.05$ & $0.87 \pm 0.05$ & $0.86 \pm 0.05$ &
 \end{table}
 
 At the time of writing, SIRUS's predictive performance is comparable to the linear model and XGBoost on the binary classification datasets, that is, Haberman, Titanic, Breast Cancer, and Diabetes.
-The best performance occurs at the Diabetes dataset where both XGBoost and the SIRUS mdoels outperform the linear model.
+The best performance occurs at the Diabetes dataset where both XGBoost and the SIRUS models outperform the linear model.
 The reason for this could be that negative effects are often nonlinear for fragile systems [@taleb2020statistical].
 For example, it could be that an increase in oral glucose tolerance increases the chance of diabetes exponentially.
 In such cases, the hard cutoff points chosen by tree-based models, such as XGBoost and SIRUS, may fit the data better.
