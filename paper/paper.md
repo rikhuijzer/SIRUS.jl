@@ -144,7 +144,7 @@ Pima Indians Diabetes [@smith1988using] binary classification dataset with AUC,
 Iris [@fisher1936use] multiclass classification dataset with accuracy,
 and Boston Housing [@harrison1978hedonic] regression dataset with $\text{R}^2$; see Table \ref{tab:perf}.
 For full details, see [`test/mlj.jl`](https://github.com/rikhuijzer/SIRUS.jl/blob/5c87eda4d0c50e0b78d12d6bd2c4387f5a83f518/test/mlj.jl).
-The performance scores were taken from the [GitHub Actions Job Summary for commit `5c87eda`](https://github.com/rikhuijzer/SIRUS.jl/actions/runs/6429413860/attempts/1#summary-17458424403).
+The performance scores were taken from the [SIRUS.jl test job](https://github.com/rikhuijzer/SIRUS.jl/actions/runs/6429413860/attempts/1#summary-17458424403) that ran following commit `5c873da` using GitHub Actions.
 The result for the Iris dataset for the original SIRUS algorithm is missing because the original algorithm has not implemented multiclass classification.
 
 \begin{table}[h!]
