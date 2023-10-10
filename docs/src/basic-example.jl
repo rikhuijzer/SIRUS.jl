@@ -89,23 +89,10 @@ y = data.survival;
 md"""
 Next, we can load the model that we want to use.
 Since Haberman's outcome column (`survival`) contains 0's and 1's, we use the `StableRulesClassifier`.
-We can make the `StableRulesClassifier` symbol available via MLJ's `@load`:
-```julia
-RulesClassifier = @load StableRulesClassifier pkg="SIRUS"
-```
-or directly via
-```julia
-using SIRUS: StableRulesClassifier
-RulesClassifier = StableRulesClassifier
-```
 """
 
-# ╔═╡ 9a34a577-e69e-4c99-a564-46ab0672168b
-# Don't run this line if you used `@load StableRulesClassifier pkg="SIRUS"`.
-RulesClassifier = StableRulesClassifier;
-
 # ╔═╡ ccce5f3e-e396-4765-bf5f-6f79e905aca8
-model = RulesClassifier(; rng=StableRNG(1), q=4, max_depth=2, max_rules=8);
+model = StableRulesClassifier(; rng=StableRNG(1), q=4, max_depth=2, max_rules=8);
 
 # ╔═╡ 97c9ea2a-2897-472b-b15e-215f40049cf5
 md"""
@@ -200,7 +187,6 @@ evaluate(model, X, y; resampling, measure=auc)
 # ╠═e037d952-e489-41b6-afc9-317a8c17e6c4
 # ╠═2f921f63-5148-4726-9839-c84217f60e0b
 # ╠═a1764625-4b7a-42f3-9e61-3d26122d86da
-# ╠═9a34a577-e69e-4c99-a564-46ab0672168b
 # ╠═ccce5f3e-e396-4765-bf5f-6f79e905aca8
 # ╠═97c9ea2a-2897-472b-b15e-215f40049cf5
 # ╠═b1281f29-61d7-4c43-960c-e516464ea213
