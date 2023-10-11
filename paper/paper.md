@@ -22,7 +22,7 @@ bibliography: paper.bib
 
 # Summary
 
-SIRUS.jl[^1] is an implementation of the original Stable and Interpretable RUle Sets (SIRUS) algorithm in the Julia programming language.
+SIRUS.jl[^1] is an implementation of the original Stable and Interpretable RUle Sets (SIRUS) algorithm in the Julia programming language [@julia].
 The SIRUS algorithm is a fully interpretable version of random forests, that is, it reduces thousands of trees in the forest to a much lower number of interpretable rules (e.g., 10 or 20).
 With our Julia implementation, we aimed to reproduce the original C++ and R implementation in a high-level language to verify the algorithm as well as making the code easier to read.
 We show that the model performs well on classification tasks while retaining interpretability and stability.
