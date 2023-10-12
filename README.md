@@ -11,8 +11,8 @@
     <a href="https://github.com/invenia/BlueStyle">
         <img src="https://img.shields.io/badge/Code%20Style-Blue-4495d1.svg" alt="Code Style Blue">
     </a>
-    <a href="https://zenodo.org/badge/latestdoi/567665496">
-        <img src="https://zenodo.org/badge/567665496.svg" alt="DOI">
+    <a style="border-width:0" href="https://doi.org/10.21105/joss.05786">
+        <img src="https://joss.theoj.org/papers/10.21105/joss.05786/status.svg" alt="DOI badge" >
     </a>
 </p>
 
