@@ -168,9 +168,6 @@ function predict(
     classes = MMI.classes(a_target_element)
     predictions = rcopy(rpredictions)
     augment = ndims(predictions) == 1
-    @show classes
-    @show predictions
-    @show augment
     return UnivariateFinite(classes, predictions; augment)
 end
 

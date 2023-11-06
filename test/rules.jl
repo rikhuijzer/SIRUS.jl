@@ -100,7 +100,6 @@ function equal_output(stage::Symbol)
     A = auc.(P, Ref(y))
     for i in eachindex(A)
         if !(A[i] ≈ A[1])
-            @show i
             return false
         end
     end
