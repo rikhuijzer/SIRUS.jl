@@ -19,12 +19,28 @@ The data inside a `SubClause` can be accessed via
 - `_direction`.
 
 To obtain the reverse, use `_reverse`.
+
+Note:
+this name is not perfect.
+A formally better name would be "predicate atom", but that takes more
+characters and is also not very intuitive.
+Instead, the word `Clause` and `SubClause` seem pretty short and clear.
 """
 struct SubClause
     feature::Int,
     feature_name::String,
     splitval::Float32,
-    direction::Symbol # :L or :R
+    direction::Symbol
+
+    function SubClause(
+            feature::Int,
+            feature_name::AbstractString,
+            splitval::Number,
+            direction::Symbol
+        )
+        @assert direction in (:L, :R)
+        return new(feature, String(feature_name), splitval, direction)
+    end
 end
 
 _feature(s::SubClause) = s.feature
@@ -38,23 +54,27 @@ function _reverse(s::SubClause)
 end
 
 """
-    TreePath(splits::Vector{Split}) -> TreePath
-    TreePath(text::String) -> TreePath
+    Clause
 
-A path of length `d` is defined as consisting of `d` splits.
-See SIRUS paper page 434.
-Typically, `d ≤ 2`.
+A clause denotes a conditional on one or more features.
+Each rule contains a clause with one or more subclauses.
+
+A clause is equivalent to a path in a decision tree.
+For example, the clause `X[i, 1] > 3 & X[i, 2] < 4` can be interpreted as a path
+going through two nodes.
+
+In the original SIRUS paper, a path of length `d` is defined as consisting of `d` splits.
+As discussed above, in practice the number of splits or subclauses `d ≤ 2`.
+
 Note that a path can also be a path to a node; not necessarily a leaf.
-Another term for a treepath is a _condition_.
-For example, `X[i, 1] < 3 & X[i, 2] < 1` is a condition.
 
-Data can be accessed via `_splits`.
+Data can be accessed via `_subclauses`.
 """
-struct TreePath
-    splits::Vector{Split}
+struct Clause
+    subclauses::Vector{SubClause}
 end
 
-_splits(path::TreePath) = path.splits
+_subclauses(c::Clause) = c.subclauses
 
 function TreePath(text::String)
     try
