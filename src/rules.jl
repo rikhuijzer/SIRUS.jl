@@ -7,8 +7,12 @@ Each rule is based on one or more splits.
 
 Data can be accessed via `_feature`, `_value`, `_feature_name`, `_direction`, and `_reverse`.
 """
-struct Split
-    splitpoint::SplitPoint
+struct SubClause
+    # Removed splitpoint
+    # splitpoint::SplitPoint
+    feature::Int,
+    feature_name::String,
+    splitval::Float32,
     direction::Symbol # :L or :R
 end
 

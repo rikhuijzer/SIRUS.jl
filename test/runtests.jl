@@ -44,6 +44,10 @@ if CAN_RUN_R_SIRUS
     end
 end
 
+@testset "extract" begin
+    include("extract.jl")
+end
+
 @testset "mlj" begin
     include("mlj.jl")
 end

@@ -34,6 +34,8 @@ include("ruleshow.jl")
 include("weights.jl")
 export TreePath
 include("dependent.jl")
+include("extract.jl")
+export sum_weights
 
 include("mlj.jl")
 const StableForestClassifier = MLJImplementation.StableForestClassifier
