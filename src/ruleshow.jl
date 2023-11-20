@@ -55,7 +55,7 @@ function _simplify_regression_contents(
     return round(weight * content; digits=3)
 end
 
-"Return a pretty formatted so that it is easy to understand."
+"Return a pretty formatted rule so that it is easy to understand."
 function _pretty_rule(algo::Algorithm, weight, rule::Rule)
     simplify = algo isa Classification ?
         _simplify_binary_probabilities :

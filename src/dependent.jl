@@ -1,15 +1,15 @@
-"Return whether `clause1` implies `clause2`."
-function _implies(clause1::Split, clause2::Split)::Bool
-    if _feature(clause1) == _feature(clause2)
-        if _direction(clause1) == :L
-            if _direction(clause2) == :L
-                return _value(clause1) ≤ _value(clause2)
+"Return whether `a` implies `b`."
+function _implies(a::SubClause, b::SubClause)::Bool
+    if _feature(a) == _feature(b)
+        if _direction(a) == :L
+            if _direction(b) == :L
+                return _value(a) ≤ _value(b)
             else
                 return false
             end
         else
-            if _direction(clause2) == :R
-                return _value(clause1) ≥ _value(clause2)
+            if _direction(b) == :R
+                return _value(a) ≥ _value(b)
             else
                 return false
             end
@@ -22,11 +22,11 @@ end
 """
 Return whether `condition` implies `rule`, that is, whether `A & B => rule`.
 """
-function _implies(condition::Tuple{Split, Split}, rule::Rule)
+function _implies(condition::Tuple{SubClause, SubClause}, rule::Rule)
     A, B = condition
-    splits = _splits(rule)
-    implied = map(splits) do split
-        _implies(A, split) || _implies(B, split)
+    subclauses = _subclauses(rule)
+    implied = map(subclauses) do subclause
+        _implies(A, subclause) || _implies(B, subclause)
     end
     return all(implied)
 end
@@ -77,17 +77,17 @@ the rank increases when adding rules.
 # Example
 
 ```jldoctest
-julia> A = SIRUS.Split(SIRUS.SplitPoint(1, 32000.0f0, "1"), :L);
+julia> A = SIRUS.SubClause(SIRUS.SubClause(1, "1", 32000.0f0, :L);
 
-julia> B = SIRUS.Split(SIRUS.SplitPoint(3, 64.0f0, "3"), :L);
+julia> B = SIRUS.SubClause(SIRUS.SubClause(3, "3", 64.0f0, :L);
 
-julia> r1 = SIRUS.Rule(TreePath(" X[i, 1] < 32000.0 "), [0.061], [0.408]);
+julia> r1 = SIRUS.Rule(Clause(" X[i, 1] < 32000.0 "), [0.061], [0.408]);
 
-julia> r5 = SIRUS.Rule(TreePath(" X[i, 3] < 64.0 "), [0.056], [0.334]);
+julia> r5 = SIRUS.Rule(Clause(" X[i, 3] < 64.0 "), [0.056], [0.334]);
 
-julia> r7 = SIRUS.Rule(TreePath(" X[i, 1] ≥ 32000.0 & X[i, 3] ≥ 64.0 "), [0.517], [0.067]);
+julia> r7 = SIRUS.Rule(Clause(" X[i, 1] ≥ 32000.0 & X[i, 3] ≥ 64.0 "), [0.517], [0.067]);
 
-julia> r12 = SIRUS.Rule(TreePath(" X[i, 1] ≥ 32000.0 & X[i, 3] < 64.0 "), [0.192], [0.102]);
+julia> r12 = SIRUS.Rule(Clause(" X[i, 1] ≥ 32000.0 & X[i, 3] < 64.0 "), [0.192], [0.102]);
 
 julia> SIRUS.rank(SIRUS._feature_space([r1, r5], A, B))
 3
@@ -99,7 +99,7 @@ julia> SIRUS.rank(SIRUS._feature_space([r1, r5, r7, r12], A, B))
 4
 ```
 """
-function _feature_space(rules::AbstractVector{Rule}, A::Split, B::Split)::BitMatrix
+function _feature_space(rules::AbstractVector{Rule}, A::SubClause, B::SubClause)::BitMatrix
     l = length(rules)
     data = BitMatrix(undef, 4, l + 1)
     for i in 1:4
@@ -118,7 +118,8 @@ function _feature_space(rules::AbstractVector{Rule}, A::Split, B::Split)::BitMat
     return data
 end
 
-_left_split(s::Split) = _direction(s) == :L ? s : _reverse(s)
+"Canonicalize a SubClause by ensuring that the direction is left."
+_canonicalize(s::SubClause) = _direction(s) == :L ? s : _reverse(s)
 
 """
 Return a vector of unique left splits for `rules`.
@@ -126,17 +127,17 @@ These splits will be used to form `(A, B)` pairs and generate the feature space.
 For example, the pair `x[i, 1] < 32000` (A) and `x[i, 3] < 64` (B) will be used to generate
 the feature space `A & B`, `A & !B`, `!A & B`, `!A & !B`.
 """
-function _unique_left_splits(rules::Vector{Rule})
-    splits = Split[]
+function _unique_left_subclauses(rules::Vector{Rule})
+    subclauses = SubClause[]
     for rule in rules
-        for split in _splits(rule)
-            left_split = _left_split(split)
-            if !(left_split in splits)
-                push!(splits, left_split)
+        for subclause in _subclauses(rule)
+            canonicalized = _canonicalize(subclause)
+            if !(canonicalized in subclauses)
+                push!(subclauses, canonicalized)
             end
         end
     end
-    return splits
+    return subclauses
 end
 
 """
@@ -163,17 +164,17 @@ Return whether some rule is either related to `A` or `B` or both.
 Here, it is very important to get rid of rules which are about the same feature but different thresholds.
 Otherwise, rules will be wrongly classified as linearly dependent in the next step.
 """
-function _related_rule(rule::Rule, A::Split, B::Split)::Bool
+function _related_rule(rule::Rule, A::SubClause, B::SubClause)::Bool
     @assert _direction(A) == :L
     @assert _direction(B) == :L
-    splits = _splits(rule)
-    if length(splits) == 1
-        split = only(splits)
-        left_split = _left_split(split)
-        return left_split == A || left_split == B
-    elseif length(splits) == 2
-        l1 = _left_split(splits[1])
-        l2 = _left_split(splits[2])
+    subclauses = _subclauses(rule)
+    if length(subclauses) == 1
+        subclause = only(subclauses)
+        left_subclause = _canonicalize(subclause)
+        return left_subclause == A || left_subclause == B
+    elseif length(subclauses) == 2
+        l1 = _canonicalize(subclauses[1])
+        l2 = _canonicalize(subclauses[2])
         return (l1 == A && l2 == B) || (l1 == B && l2 == A)
     else
         @error "Rule $rule has more than two splits; this is not supported."
@@ -187,8 +188,8 @@ That should be a fairly quick way to find subsets that are easy to process.
 """
 function _linearly_dependent(
         rules::AbstractVector{Rule},
-        A::Split,
-        B::Split
+        A::SubClause,
+        B::SubClause
     )::BitArray
     data = _feature_space(rules, A, B)
     l = length(rules)
@@ -230,7 +231,7 @@ removing duplicates.
 function _simplify_single_rules(rules::Vector{Rule})::Vector{Rule}
     out = OrderedSet{Rule}()
     for rule in rules
-        splits = _splits(rule)
+        splits = _subclauses(rule)
         if length(splits) == 1
             left_rule = _left_rule(rule)
             push!(out, left_rule)
@@ -253,7 +254,7 @@ dependent in one related set, but then is removed in another related set.
 """
 function _filter_linearly_dependent(rules::Vector{Rule})::Vector{Rule}
     sorted = _sort_by_gap_size(rules)
-    S = _unique_left_splits(sorted)
+    S = _unique_left_subclauses(sorted)
     pairs = _left_triangular_product(S)
     out = copy(sorted)
     for (A, B) in pairs
