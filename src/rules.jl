@@ -27,9 +27,9 @@ characters and is also not very intuitive.
 Instead, the word `Clause` and `SubClause` seem pretty short and clear.
 """
 struct SubClause
-    feature::Int,
-    feature_name::String,
-    splitval::Float32,
+    feature::Int
+    feature_name::String
+    splitval::Float32
     direction::Symbol
 
     function SubClause(
@@ -412,12 +412,10 @@ end
 Return whether data `row` satisfies `rule`.
 """
 function satisfies(row::AbstractVector, rule::Rule)::Bool
-    constraints = map(rule.path.subclauses) do split
-        splitpoint = split.splitpoint
-        direction = split.direction
-        comparison = direction == :L ? (<) : (≥)
-        feature = splitpoint.feature
-        value = splitpoint.value
+    constraints = map(_subclauses(rules)) do subclause
+        comparison = _direction(subclause) == :L ? (<) : (≥)
+        feature = _feature(subclause)
+        value = _splitval(subclause)
         satisfies_constraint = comparison(row[feature], value)
     end
     return all(constraints)
