@@ -166,8 +166,8 @@ function boston()
     return (X, y)
 end
 
-function _Split(feature::Int, splitval::Float32, direction::Symbol)
-    return S.Split(feature, string(feature), splitval, direction)
+function _SubClause(feature::Int, splitval::Float32, direction::Symbol)
+    return S.SubClause(feature, string(feature), splitval, direction)
 end
 
 nothing

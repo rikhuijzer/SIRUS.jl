@@ -1,5 +1,5 @@
 @testset "binary show" begin
-    r = S.Rule(S.TreePath(" X[i, 1] < 5 "), [0.1, 0.9], [0.2, 0.8])
+    r = S.Rule(S.Clause(" X[i, 1] < 5 "), [0.1, 0.9], [0.2, 0.8])
     classes = [0, 1]
     weights = Float16[1.0]
     algo = SIRUS.Classification()
@@ -12,8 +12,8 @@
 end
 
 @testset "regression show" begin
-    r1 = S.Rule(S.TreePath(" X[i, 1] < 5 "), [0.1], [0.8])
-    r2 = S.Rule(S.TreePath(" X[i, 2] < 3 "), [0.4], [0.6])
+    r1 = S.Rule(S.Clause(" X[i, 1] < 5 "), [0.1], [0.8])
+    r2 = S.Rule(S.Clause(" X[i, 2] < 3 "), [0.4], [0.6])
     weights = Float16[0.6, 0.7]
     algo = SIRUS.Regression()
     classes = []

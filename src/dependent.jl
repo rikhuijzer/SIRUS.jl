@@ -77,17 +77,17 @@ the rank increases when adding rules.
 # Example
 
 ```jldoctest
-julia> A = SIRUS.SubClause(SIRUS.SubClause(1, "1", 32000.0f0, :L);
+julia> A = SIRUS.SubClause(1, "1", 32000.0f0, :L);
 
-julia> B = SIRUS.SubClause(SIRUS.SubClause(3, "3", 64.0f0, :L);
+julia> B = SIRUS.SubClause(3, "3", 64.0f0, :L);
 
-julia> r1 = SIRUS.Rule(Clause(" X[i, 1] < 32000.0 "), [0.061], [0.408]);
+julia> r1 = SIRUS.Rule(SIRUS.Clause(" X[i, 1] < 32000.0 "), [0.061], [0.408]);
 
-julia> r5 = SIRUS.Rule(Clause(" X[i, 3] < 64.0 "), [0.056], [0.334]);
+julia> r5 = SIRUS.Rule(SIRUS.Clause(" X[i, 3] < 64.0 "), [0.056], [0.334]);
 
-julia> r7 = SIRUS.Rule(Clause(" X[i, 1] ≥ 32000.0 & X[i, 3] ≥ 64.0 "), [0.517], [0.067]);
+julia> r7 = SIRUS.Rule(SIRUS.Clause(" X[i, 1] ≥ 32000.0 & X[i, 3] ≥ 64.0 "), [0.517], [0.067]);
 
-julia> r12 = SIRUS.Rule(Clause(" X[i, 1] ≥ 32000.0 & X[i, 3] < 64.0 "), [0.192], [0.102]);
+julia> r12 = SIRUS.Rule(SIRUS.Clause(" X[i, 1] ≥ 32000.0 & X[i, 3] < 64.0 "), [0.192], [0.102]);
 
 julia> SIRUS.rank(SIRUS._feature_space([r1, r5], A, B))
 3
