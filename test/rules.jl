@@ -6,12 +6,12 @@ end
 
 let
     text = " X[i, 1] < 1.0 & X[i, 1] ≥ 4.0 "
-    @test repr(TreePath(text)) == "TreePath(\"$text\")"
+    @test repr(S.Clause(text)) == "Clause(\"$text\")"
 end
 
 let
     text = " X[i, :A] < 1.0 "
-    @test_throws ArgumentError repr(TreePath(text))
+    @test_throws ArgumentError repr(S.Clause(text))
 end
 
 classes = [:a, :b, :c]
@@ -24,7 +24,7 @@ right = S.Node(
             S.ClassificationLeaf([0.0, 0.0, 1.0])
         )
 
-left_rule = S.Rule(S.TreePath(" X[i, 1] < 32000 "), [0.61], [0.408])
+left_rule = S.Rule(S.Clause(" X[i, 1] < 32000 "), [0.61], [0.408])
 
 @testset "exported functions" begin
     @test feature_names(left_rule) == ["1"]
@@ -32,10 +32,10 @@ left_rule = S.Rule(S.TreePath(" X[i, 1] < 32000 "), [0.61], [0.408])
     @test values(left_rule) == [32000]
 end
 
-r1 = S.Rule(S.TreePath(" X[i, 1] < 32000 "), [0.61], [0.408])
-r1b = S.Rule(S.TreePath(" X[i, 1] < 32000 "), [0.61], [0.408])
-r1c = S.Rule(S.TreePath(" X[i, 1] < 32000 "), [0.0], [0.408])
-r5 = S.Rule(S.TreePath(" X[i, 3] < 64 "), [0.56], [0.334])
+r1 = S.Rule(S.Clause(" X[i, 1] < 32000 "), [0.61], [0.408])
+r1b = S.Rule(S.Clause(" X[i, 1] < 32000 "), [0.61], [0.408])
+r1c = S.Rule(S.Clause(" X[i, 1] < 32000 "), [0.0], [0.408])
+r5 = S.Rule(S.Clause(" X[i, 3] < 64 "), [0.56], [0.334])
 
 algo = SIRUS.Classification()
 @test S._mean([[1, 4], [2, 4]]) == [1.5, 4.0]

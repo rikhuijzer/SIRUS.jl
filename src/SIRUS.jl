@@ -31,7 +31,6 @@ include("rules.jl")
 export StableRules, feature_names, directions, satisfies
 include("ruleshow.jl")
 include("weights.jl")
-export TreePath
 include("dependent.jl")
 include("extract.jl")
 export sum_weights

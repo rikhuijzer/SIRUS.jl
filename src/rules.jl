@@ -43,6 +43,13 @@ struct SubClause
     end
 end
 
+function SubClause(
+        sp::SplitPoint,
+        direction::Symbol
+    )::SubClause
+    return SubClause(sp.feature, sp.feature_name, sp.value, direction)
+end
+
 _feature(s::SubClause) = s.feature
 _feature_name(s::SubClause) = s.feature_name
 _splitval(s::SubClause) = s.splitval
@@ -158,7 +165,7 @@ end
 Return a vector split values; one for each subclause in `rule`.
 """
 function Base.values(rule::Rule)::Vector{Float64}
-    return Float64[Float64(_value(s)) for s in _subclauses(rule)]
+    return Float64[Float64(_splitval(s)) for s in _subclauses(rule)]
 end
 
 """
@@ -250,12 +257,12 @@ function Rule(
         node::Union{Node, Leaf},
         subclauses::Vector{SubClause}
     )::Rule
-    path = Clause(subclauses)
+    clause = Clause(subclauses)
     then_output = _then_output!(node, Vector{LeafContent}())
     then = _mean(then_output)
     else_output = _else_output!(node, root, Vector{LeafContent}())
     otherwise = _mean(else_output)
-    return Rule(path, then, otherwise)
+    return Rule(clause, then, otherwise)
 end
 
 function _rules!(
