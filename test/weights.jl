@@ -2,8 +2,8 @@ data = [0.0 2.5
         5.0 5.0
         0.0 0.0]
 
-r1 = S.Rule(S.TreePath(" X[i, 1] < 1 "), [0.1], [0.0])
-r2 = S.Rule(S.TreePath(" X[i, 2] < 2 "), [0.2], [0.0])
+r1 = S.Rule(S.Clause(" X[i, 1] < 1 "), [0.1], [0.0])
+r2 = S.Rule(S.Clause(" X[i, 2] < 2 "), [0.2], [0.0])
 
 binary_feature_data = Float16[1 0;
                               0 0;

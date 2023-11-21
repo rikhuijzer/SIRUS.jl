@@ -7,7 +7,7 @@ function _pretty_feature_name(subclause::SubClause)
     if feature == feature_name
         return feature
     else
-        return string(':', name)::String
+        return string(':', feature_name)::String
     end
 end
 

@@ -26,16 +26,20 @@ the effect on the outcome depends on the data.
 """
 function feature_importance(
         model::StableRules,
-        feature_name::AbstractString
+        feature_name::String
     )
     importance = 0.0
     for (i, rule) in enumerate(model.rules)
-        for clause::Split in rule.path.splits
-            if _feature_name(clause) == feature_name
+        for subclause::SubClause in _subclauses(rule)
+            if _feature_name(subclause)::String == feature_name
                 weight = model.weights[i]
                 importance += _rule_importance(weight, rule)
             end
         end
     end
     return importance
+end
+
+function feature_importance(model::StableRules, feature_name::AbstractString)
+    return feature_importance(model, string(feature_name)::String)
 end
