@@ -195,7 +195,7 @@ function Base.:(==)(a::Rule, b::Rule)
 end
 
 function Base.hash(rule::Rule)
-    hash([rule.path.subclauses, rule.then, rule.otherwise])
+    hash([_subclauses(rule), rule.then, rule.otherwise])
 end
 
 function _rules!(
@@ -301,7 +301,7 @@ function _rules!(
 
     let
         subclause = SubClause(node.splitpoint, :R)
-        new_subclauses = [split; subclauses]
+        new_subclauses = [subclause; subclauses]
         _rules!(node.right, new_subclauses; rules, root)
     end
 
@@ -419,7 +419,7 @@ end
 Return whether data `row` satisfies `rule`.
 """
 function satisfies(row::AbstractVector, rule::Rule)::Bool
-    constraints = map(_subclauses(rules)) do subclause
+    constraints = map(_subclauses(rule)) do subclause
         comparison = _direction(subclause) == :L ? (<) : (≥)
         feature = _feature(subclause)
         value = _splitval(subclause)

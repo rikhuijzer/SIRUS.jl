@@ -57,7 +57,7 @@ forest = mach.fitresult
 rules = S._rules(forest)
 
 @test hash(r1) == hash(r1b)
-@test hash(r1.path) == hash(r1b.path)
+@test hash(r1.clause) == hash(r1b.clause)
 
 @test S._count_unique([1, 1, 1, 2]) == Dict(1 => 3, 2 => 1)
 

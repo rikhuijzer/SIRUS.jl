@@ -3,13 +3,13 @@ function _implies(a::SubClause, b::SubClause)::Bool
     if _feature(a) == _feature(b)
         if _direction(a) == :L
             if _direction(b) == :L
-                return _value(a) ≤ _value(b)
+                return _splitval(a) ≤ _splitval(b)
             else
                 return false
             end
         else
             if _direction(b) == :R
-                return _value(a) ≥ _value(b)
+                return _splitval(a) ≥ _splitval(b)
             else
                 return false
             end
