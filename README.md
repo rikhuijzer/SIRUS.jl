@@ -1,8 +1,6 @@
-<h1 align="center">SIRUS.jl</h1>
+![Visual representation of the algorithm which converts decision trees to rule sets. Created with DALL·E 3 and Photopea](https://sirus.jl.huijzer.xyz/dev/image/sirus-with-text.webp)
 
-<h3 align="center">
-    Interpretable Machine Learning via Rule Extraction
-</h3>
+<h1 align="center">SIRUS.jl</h1>
 
 <p align="center">
     <a href="https://github.com/rikhuijzer/SIRUS.jl/actions?query=workflow%3ACI+branch%3Amain">
@@ -47,11 +45,46 @@ julia> using MLJ, SIRUS
 
 julia> X, y = make_blobs(200, 10; centers=2);
 
+julia> X
+Tables.MatrixTable{Matrix{Float64}} with 200 rows, 10 columns, and schema:
+ :x1   Float64
+ :x2   Float64
+ :x3   Float64
+ :x4   Float64
+ :x5   Float64
+ :x6   Float64
+ :x7   Float64
+ :x8   Float64
+ :x9   Float64
+ :x10  Float64
+
+julia> y
+200-element CategoricalArrays.CategoricalArray{Int64,1,UInt32}:
+ 2
+ 1
+ 1
+ ⋮
+ 2
+ 1
+ 2
+
 julia> model = StableRulesClassifier();
 
 julia> mach = machine(model, X, y);
 
 julia> fit!(mach);
+
+julia> mach.fitresult
+StableRules model with 7 rules:
+ if X[i, :x5] < -1.552594 then 0.129 else 0.0 +
+ if X[i, :x8] < 0.72402614 then 0.117 else 0.0 +
+ if X[i, :x2] < 7.1123967 then 0.123 else 0.0 +
+ if X[i, :x8] < 8.840833 then 0.115 else 0.0 +
+ if X[i, :x9] < 7.985747 then 0.0 else 0.001 +
+ if X[i, :x7] < 6.4651833 then 0.107 else 0.0 +
+ if X[i, :x7] < 2.2220817 then 0.119 else 0.024
+and 2 classes: [1, 2].
+Note: showing only the probability for class 2 since class 1 has probability 1 - p.
 ```
 
 See `?StableRulesClassifier`, `?StableRulesRegressor`, or the [API documentation](https://sirus.jl.huijzer.xyz/dev/api/) for more information about the models and their hyperparameters.
