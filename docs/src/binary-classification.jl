@@ -290,8 +290,8 @@ This makes rule-based highly suitable for many machine learning tasks.
 # ╔═╡ cfd908a0-1ee9-461d-9309-d4ffe738ba8e
 # hideall
 function _threshold(rule)
-	sp = only(rule.path.splits).splitpoint
-	return sp.value
+	subclause = only(SIRUS._subclauses(rule))
+	return subclause.splitval
 end;
 
 # ╔═╡ e7f396dc-38a7-40f7-9e5b-6fbea9d61789
@@ -309,7 +309,7 @@ end;
 # hideall
 function _rule_index(model::SIRUS.StableRules, feature_name::String)
 	for (i, rule) in enumerate(model.rules)
-		if only(rule.path.splits).splitpoint.feature_name == feature_name
+		if only(SIRUS._subclauses(rule)).feature_name::String == feature_name
 			return i
 		end
 	end
@@ -412,7 +412,7 @@ end
 md"""
 The interpretation of the fitted model is as follows.
 The model has learned $(length(fitresult.rules)) rules for this dataset.
-For making a prediction for some value at row `i`, the model will first look at $(string(fitresult.rules[1].path)[11:end-3]).
+For making a prediction for some value at row `i`, the model will first look at $(string(fitresult.rules[1].clause)[11:end-3]).
 If the current value satisfies this rule, then the number after `then` is chosen and otherwise the number after `else`.
 The `then` or `else` outcome is chosen for all the rules and, finally, the outcomes are summed to obtain the final prediction.
 """
@@ -493,7 +493,7 @@ function _odds_plot(e::PerformanceEvaluation)
 	feature_names = String[]
 	for fitresult in fitresults
 		for rule in fitresult.rules
-			name = only(rule.path.splits).splitpoint.feature_name
+			name = only(SIRUS._subclauses(rule)).feature_name
 			push!(feature_names, name)
 		end
 	end
@@ -525,7 +525,7 @@ function _odds_plot(e::PerformanceEvaluation)
 			subresult = Tuple{SIRUS.Rule,Float64}[]
 			zipped = zip(fitresult.rules, fitresult.weights)
 			for (rule, weight) in zipped
-				feat_name = only(rule.path.splits).splitpoint.feature_name
+				feat_name = only(SIRUS._subclauses(rule)).feature_name
 				if feat_name == feature_name	
 					push!(subresult, (rule, weight))
 				end
