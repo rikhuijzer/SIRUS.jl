@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.27
+# v0.19.32
 
 using Markdown
 using InteractiveUtils
@@ -89,14 +89,6 @@ y = data.survival;
 md"""
 Next, we can load the model that we want to use.
 Since Haberman's outcome column (`survival`) contains 0's and 1's, we use the `StableRulesClassifier`.
-We can make the `StableRulesClassifier` symbol available via MLJ's `@load`:
-```julia
-StableRulesClassifier = @load StableRulesClassifier pkg="SIRUS"
-```
-or directly via
-```julia
-using SIRUS: StableRulesClassifier
-```
 """
 
 # ╔═╡ ccce5f3e-e396-4765-bf5f-6f79e905aca8

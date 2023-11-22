@@ -2,6 +2,8 @@ import Base
 
 ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
 
+const CAN_RUN_R_SIRUS = v"1.8" < VERSION
+
 using CategoricalArrays:
     CategoricalValue,
     CategoricalVector,
@@ -27,8 +29,6 @@ using MLJBase:
     CV,
     MLJBase,
     PerformanceEvaluation,
-    accuracy,
-    auc,
     evaluate,
     mode,
     fit!,
@@ -36,7 +36,6 @@ using MLJBase:
     make_blobs,
     make_moons,
     make_regression,
-    rsq,
     predict
 using MLJDecisionTreeInterface: DecisionTreeClassifier, DecisionTreeRegressor
 using MLJLinearModels: LogisticClassifier, LinearRegressor, MultinomialClassifier
@@ -44,6 +43,10 @@ using MLJTestInterface: MLJTestInterface
 using MLJXGBoostInterface: XGBoostClassifier, XGBoostRegressor
 using Random: shuffle, seed!
 using StableRNGs: StableRNG
+using StatisticalMeasures:
+    accuracy,
+    auc,
+    rsq
 using SIRUS
 using Statistics: mean, var
 using Tables: Tables
@@ -51,6 +54,16 @@ using Test
 
 const S = SIRUS
 _rng(seed::Int=1) = StableRNG(seed)
+
+function _score(e::PerformanceEvaluation)
+    return round(only(e.measurement); sigdigits=2)
+end
+
+function _evaluate(model, X, y; nfolds::Number=10, measure=auc)
+    resampling = CV(; nfolds, shuffle=true, rng=_rng())
+    acceleration = MLJBase.CPUThreads()
+    evaluate(model, X, y; acceleration, verbosity=0, resampling, measure)
+end
 
 if !haskey(ENV, "REGISTERED_CANCER")
     name = "Cancer"
@@ -153,8 +166,8 @@ function boston()
     return (X, y)
 end
 
-function _Split(feature::Int, splitval::Float32, direction::Symbol)
-    return S.Split(feature, string(feature), splitval, direction)
+function _SubClause(feature::Int, splitval::Float32, direction::Symbol)
+    return S.SubClause(feature, string(feature), splitval, direction)
 end
 
 nothing
