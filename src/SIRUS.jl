@@ -32,6 +32,8 @@ export StableRules, feature_names, directions, satisfies
 include("ruleshow.jl")
 include("weights.jl")
 include("dependent.jl")
+include("extract.jl")
+export feature_importance
 
 include("mlj.jl")
 const StableForestClassifier = MLJImplementation.StableForestClassifier
