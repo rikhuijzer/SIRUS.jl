@@ -1,50 +1,97 @@
 """
-    Split(splitpoint::SplitPoint, direction::Symbol) -> Split
-    Split(feature::Int, name::String, splitval::Float32, direction::Symbol) -> Split
+    SubClause
 
-A split in a tree.
-Each rule is based on one or more splits.
+A subclause denotes a conditional on one feature.
+Each rule contains a clause with one or more subclauses.
+For example, the rule `if X[i, 1] > 3 & X[i, 2] < 4, then ...` contains two subclauses.
 
-Data can be accessed via `_feature`, `_value`, `_feature_name`, `_direction`, and `_reverse`.
+A subclause is equivalent to a split in a decision tree.
+In other words, each rule is based on one or more subclauses.
+In pratice, a rule is based on at most two subclauses (has at most two subclauses).
+The reason for this is that rules with more than two subclauses will not end up
+in the final model, as is discussed in the original SIRUS paper.
+
+The data inside a `SubClause` can be accessed via
+
+- `_feature`,
+- `_feature_name`,
+- `_splitval`, and
+- `_direction`.
+
+To obtain the reverse, use `_reverse`.
+
+Note:
+this name is not perfect.
+A formally better name would be "predicate atom", but that takes more
+characters and is also not very intuitive.
+Instead, the word `Clause` and `SubClause` seem pretty short and clear.
 """
-struct Split
-    splitpoint::SplitPoint
-    direction::Symbol # :L or :R
+struct SubClause
+    feature::Int
+    feature_name::String
+    splitval::Float32
+    direction::Symbol
+
+    function SubClause(
+            feature::Int,
+            feature_name::AbstractString,
+            splitval::Number,
+            direction::Symbol
+        )
+        @assert direction in (:L, :R)
+        return new(feature, String(feature_name), splitval, direction)
+    end
 end
 
-function Split(feature::Int, name::String, splitval::Float32, direction::Symbol)
-    return Split(SplitPoint(feature, splitval, name), direction)
+function SubClause(
+        sp::SplitPoint,
+        direction::Symbol
+    )::SubClause
+    return SubClause(sp.feature, sp.feature_name, sp.value, direction)
 end
 
-_feature(split::Split) = _feature(split.splitpoint)
-_value(split::Split) = _value(split.splitpoint)
-_feature_name(split::Split) = _feature_name(split.splitpoint)
-_direction(split::Split) = split.direction
-_reverse(split::Split) = Split(split.splitpoint, split.direction == :L ? :R : :L)
+_feature(s::SubClause) = s.feature
+_feature_name(s::SubClause) = s.feature_name
+_splitval(s::SubClause) = s.splitval
+_direction(s::SubClause) = s.direction
+
+function _reverse(s::SubClause)
+    direction = s.direction == :L ? :R : :L
+    return SubClause(s.feature, s.feature_name, s.splitval, direction)
+end
+
+function Base.:(==)(a::SubClause, b::SubClause)
+    return a.feature == b.feature && a.feature_name == b.feature_name &&
+        a.splitval == b.splitval && a.direction == b.direction
+end
 
 """
-    TreePath(splits::Vector{Split}) -> TreePath
-    TreePath(text::String) -> TreePath
+    Clause
 
-A path of length `d` is defined as consisting of `d` splits.
-See SIRUS paper page 434.
-Typically, `d ≤ 2`.
+A clause denotes a conditional on one or more features.
+Each rule contains a clause with one or more subclauses.
+
+A clause is equivalent to a path in a decision tree.
+For example, the clause `X[i, 1] > 3 & X[i, 2] < 4` can be interpreted as a path
+going through two nodes.
+
+In the original SIRUS paper, a path of length `d` is defined as consisting of `d` subclauses.
+As discussed above, in practice the number of subclauses or subclauses `d ≤ 2`.
+
 Note that a path can also be a path to a node; not necessarily a leaf.
-Another term for a treepath is a _condition_.
-For example, `X[i, 1] < 3 & X[i, 2] < 1` is a condition.
 
-Data can be accessed via `_splits`.
+Data can be accessed via `_subclauses`.
 """
-struct TreePath
-    splits::Vector{Split}
+struct Clause
+    subclauses::Vector{SubClause}
 end
 
-_splits(path::TreePath) = path.splits
+_subclauses(c::Clause) = c.subclauses
 
-function TreePath(text::String)
+function Clause(text::String)
     try
         comparisons = split(strip(text), '&')
-        splits = map(comparisons) do c
+        subclauses = map(comparisons) do c
             direction = contains(c, '<') ? :L : :R
             feature_text = c[6:findfirst(']', c) - 1]
             if startswith(feature_text, ':')
@@ -58,9 +105,9 @@ function TreePath(text::String)
                 parse(Float32, c[start:end])
             end
             feature_name = string(feature)::String
-            Split(feature, feature_name, splitval, direction)
+            SubClause(feature, feature_name, splitval, direction)
         end
-        return TreePath(splits)
+        return Clause(subclauses)
     catch e
         if e isa ArgumentError
             rethrow(e)
@@ -69,22 +116,30 @@ function TreePath(text::String)
             Couldn't parse \"$text\"
 
               Is the syntax correct? Valid examples are:
-              - TreePath(" X[i, 1] < 1.0 ")
-              - TreePath(" X[i, 1] < 1.0 & X[i, 1] ≥ 4.0 ")
+              - Clause(" X[i, 1] < 1.0 ")
+              - Clause(" X[i, 1] < 1.0 & X[i, 1] ≥ 4.0 ")
 
             """
         @error msg exception=(e, catch_backtrace())
     end
 end
 
+function Base.hash(clause::Clause)
+    return hash(clause.subclauses)
+end
+
+function Base.:(==)(a::Clause, b::Clause)
+    return all(a.subclauses .== b.subclauses)
+end
+
 struct Rule
-    path::TreePath
+    clause::Clause
     then::LeafContent
     # Cannot use `else` since it is a reserved keyword
     otherwise::LeafContent
 end
 
-_splits(rule::Rule) = rule.path.splits
+_subclauses(rule::Rule) = rule.clause.subclauses
 
 """
     feature_names(rule::Rule) -> Vector{String}
@@ -92,7 +147,7 @@ _splits(rule::Rule) = rule.path.splits
 Return a vector of feature names; one for each clause in `rule`.
 """
 function feature_names(rule::Rule)::Vector{String}
-    return String[String(_feature_name(s))::String for s in _splits(rule)]
+    return String[String(_feature_name(s))::String for s in _subclauses(rule)]
 end
 
 """
@@ -101,43 +156,51 @@ end
 Return a vector of split directions; one for each clause in `rule`.
 """
 function directions(rule::Rule)::Vector{Symbol}
-    return Symbol[_direction(s) for s in _splits(rule)]
+    return Symbol[_direction(s) for s in _subclauses(rule)]
 end
 
 """
     values(rule::Rule) -> Vector{Float64}
 
-Return a vector split values; one for each clause in `rule`.
+Return a vector split values; one for each subclause in `rule`.
 """
 function Base.values(rule::Rule)::Vector{Float64}
-    return Float64[Float64(_value(s)) for s in _splits(rule)]
+    return Float64[Float64(_splitval(s)) for s in _subclauses(rule)]
 end
 
 """
     _reverse(rule::Rule) -> Rule
 
 Return a reversed version of the `rule`.
-Assumes that the rule has only one split (clause) since two splits
+Assumes that the rule has only one split (clause) since two subclauses
 cannot be reversed.
 """
 function _reverse(rule::Rule)::Rule
-    splits = _splits(rule)
-    @assert length(splits) == 1
-    split = splits[1]
-    path = TreePath([_reverse(split)])
-    return Rule(path, rule.otherwise, rule.then)
+    subclauses = _subclauses(rule)
+    @assert length(subclauses) == 1
+    subclause = subclauses[1]
+    clause = Clause([_reverse(subclause)])
+    return Rule(clause, rule.otherwise, rule.then)
 end
 
 function _left_rule(rule::Rule)::Rule
-    splits = _splits(rule)
-    @assert length(splits) == 1
-    split = splits[1]
+    subclauses = _subclauses(rule)
+    @assert length(subclauses) == 1
+    split = subclauses[1]
     return _direction(split) == :L ? rule : _reverse(rule)
+end
+
+function Base.:(==)(a::Rule, b::Rule)
+    return a.clause == b.clause && a.then == b.then && a.otherwise == b.otherwise
+end
+
+function Base.hash(rule::Rule)
+    hash([_subclauses(rule), rule.then, rule.otherwise])
 end
 
 function _rules!(
         leaf::Leaf,
-        splits::Vector{Split},
+        subclauses::Vector{SubClause},
         rules::Vector{Rule}
     )::Vector{Rule}
     return push!(rules, rule)
@@ -192,23 +255,23 @@ end
 function Rule(
         root::Node,
         node::Union{Node, Leaf},
-        splits::Vector{Split}
+        subclauses::Vector{SubClause}
     )::Rule
-    path = TreePath(splits)
+    clause = Clause(subclauses)
     then_output = _then_output!(node, Vector{LeafContent}())
     then = _mean(then_output)
     else_output = _else_output!(node, root, Vector{LeafContent}())
     otherwise = _mean(else_output)
-    return Rule(path, then, otherwise)
+    return Rule(clause, then, otherwise)
 end
 
 function _rules!(
         leaf::Leaf,
-        splits::Vector{Split};
+        subclauses::Vector{SubClause};
         rules::Vector{Rule},
         root::Node
     )::Vector{Rule}
-    rule = Rule(root, leaf, splits)
+    rule = Rule(root, leaf, subclauses)
     push!(rules, rule)
 end
 
@@ -221,25 +284,25 @@ Note that the rules are also created for internal nodes as can be seen from supp
 """
 function _rules!(
         node::Node,
-        splits::Vector{Split}=Split[];
+        subclauses::Vector{SubClause}=SubClause[];
         rules::Vector{Rule}=Rule[],
         root::Node=node
     )::Vector{Rule}
-    if !isempty(splits)
-        rule = Rule(root, node, splits)
+    if !isempty(subclauses)
+        rule = Rule(root, node, subclauses)
         push!(rules, rule)
     end
 
     let
-        split = Split(node.splitpoint, :L)
-        _splits = [split; splits]
-        _rules!(node.left, _splits; rules, root)
+        subclause = SubClause(node.splitpoint, :L)
+        new_subclauses = [subclause; subclauses]
+        _rules!(node.left, new_subclauses; rules, root)
     end
 
     let
-        split = Split(node.splitpoint, :R)
-        _splits = [split; splits]
-        _rules!(node.right, _splits; rules, root)
+        subclause = SubClause(node.splitpoint, :R)
+        new_subclauses = [subclause; subclauses]
+        _rules!(node.right, new_subclauses; rules, root)
     end
 
     return rules
@@ -254,30 +317,6 @@ function _rules(forest::StableForest)::Vector{Rule}
         end
     end
     return rules
-end
-
-function Base.hash(path::TreePath)
-    return hash(path.splits)
-end
-
-function Base.:(==)(a::SplitPoint, b::SplitPoint)
-    return a.feature == b.feature && a.value ≈ b.value
-end
-
-function Base.:(==)(a::Split, b::Split)
-    return a.direction == b.direction && a.splitpoint == b.splitpoint
-end
-
-function Base.:(==)(a::TreePath, b::TreePath)
-    return all(a.splits .== b.splits)
-end
-
-function Base.:(==)(a::Rule, b::Rule)
-    return a.path == b.path && a.then == b.then && a.otherwise == b.otherwise
-end
-
-function Base.hash(rule::Rule)
-    hash([rule.path.splits, rule.then, rule.otherwise])
 end
 
 """
@@ -380,12 +419,10 @@ end
 Return whether data `row` satisfies `rule`.
 """
 function satisfies(row::AbstractVector, rule::Rule)::Bool
-    constraints = map(rule.path.splits) do split
-        splitpoint = split.splitpoint
-        direction = split.direction
-        comparison = direction == :L ? (<) : (≥)
-        feature = splitpoint.feature
-        value = splitpoint.value
+    constraints = map(_subclauses(rule)) do subclause
+        comparison = _direction(subclause) == :L ? (<) : (≥)
+        feature = _feature(subclause)
+        value = _splitval(subclause)
         satisfies_constraint = comparison(row[feature], value)
     end
     return all(constraints)

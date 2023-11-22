@@ -1,29 +1,28 @@
 """
 Return a feature name that can be shown as `[:, 1]` or `[:, :some_var]`.
 """
-function _pretty_feature_name(feature::Int, feature_name::String255)
-    name = String(feature_name)::String
-    s = string(feature)::String
-    if s == name
-        return s
+function _pretty_feature_name(subclause::SubClause)
+    feature = string(_feature(subclause)::Int)::String
+    feature_name = _feature_name(subclause)::String
+    if feature == feature_name
+        return feature
     else
-        return string(':', name)
+        return string(':', feature_name)::String
     end
 end
 
-function _pretty_path(path::TreePath)
-    texts = map(path.splits) do split
-        sp = split.splitpoint
-        comparison = split.direction == :L ? '<' : '≥'
-        val = sp.value
-        feature = _pretty_feature_name(sp.feature, sp.feature_name)
-        text = "X[i, $feature] $comparison $val"
+function _pretty_clause(clause::Clause)
+    texts = map(_subclauses(clause)) do subclause
+        comparison = _direction(subclause) == :L ? '<' : '≥'
+        value = _splitval(subclause)
+        feature_descr = _pretty_feature_name(subclause)
+        text = "X[i, $feature_descr] $comparison $value"
     end
     return join(texts, " & ")
 end
 
-function Base.show(io::IO, path::TreePath)
-    text = string("TreePath(\" ", _pretty_path(path), " \")")::String
+function Base.show(io::IO, clause::Clause)
+    text = string("Clause(\" ", _pretty_clause(clause), " \")")::String
     print(io, text)
 end
 
@@ -56,14 +55,14 @@ function _simplify_regression_contents(
     return round(weight * content; digits=3)
 end
 
-"Return a pretty formatted so that it is easy to understand."
+"Return a pretty formatted rule so that it is easy to understand."
 function _pretty_rule(algo::Algorithm, weight, rule::Rule)
     simplify = algo isa Classification ?
         _simplify_binary_probabilities :
         _simplify_regression_contents
     then = simplify(weight, rule.then)
     otherwise = simplify(weight, rule.otherwise)
-    condition = _pretty_path(rule.path)
+    condition = _pretty_clause(rule.clause)
     return "if $condition then $then else $otherwise"
 end
 

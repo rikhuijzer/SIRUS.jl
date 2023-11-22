@@ -15,7 +15,6 @@ using OrderedCollections: OrderedSet
 using Statistics: mean, median
 using Tables: Tables, matrix
 
-export feature_names, directions, satisfies
 
 include("helpers.jl")
 using .Helpers: colnames, nfeatures, view_feature
@@ -29,10 +28,9 @@ export StableForest
 include("classification.jl")
 include("regression.jl")
 include("rules.jl")
-export StableRules
+export StableRules, feature_names, directions, satisfies
 include("ruleshow.jl")
 include("weights.jl")
-export TreePath
 include("dependent.jl")
 
 include("mlj.jl")

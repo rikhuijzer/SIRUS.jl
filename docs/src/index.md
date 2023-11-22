@@ -1,5 +1,9 @@
 # SIRUS
 
+![
+Pretty visual representation of the algorithm via an image that was generated via DALL·E
+](./../image/sirus-with-text.webp)
+
 This package is a pure Julia implementation of the **S**table and **I**nterpretable **RU**le **S**ets (SIRUS) algorithm.
 The algorithm was originally created by Clément Bénard, Gérard Biau, Sébastien Da Veiga, and Erwan Scornet (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html)).
 `SIRUS.jl` has implemented both classification and regression.

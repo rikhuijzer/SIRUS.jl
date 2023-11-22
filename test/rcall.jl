@@ -2,6 +2,8 @@
 # This file defines the MLJ wrappers around R sirus and tests them.
 # Actual comparisons against other models are done in test/mlj.jl.
 #
+# Assumes sirus is installed in R `install.packages("sirus")`.
+#
 
 import MLJModelInterface:
     MLJModelInterface,
