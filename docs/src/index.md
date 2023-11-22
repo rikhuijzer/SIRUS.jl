@@ -1,4 +1,4 @@
-# SIRUS
+# SIRUS.jl
 
 ![
 Pretty visual representation of the algorithm via an image that was generated via DALL·E
