@@ -359,6 +359,10 @@ function _count_unique(V::AbstractVector{T}) where T
     return counts
 end
 
+# TODO IS THE PROBLEM HERE?
+# MAYBE THE PROBLEM IS THAT ONLY THE UNIQUE RULE CLAUSES SHOULD BE CHECKED
+# NOT THE THEN/OTHERWISE.
+
 """
 Return a vector of unique values in `V` sorted by frequency.
 """
@@ -383,9 +387,9 @@ function _process_rules(
         rules::Vector{Rule},
         max_rules::Int
     )::Vector{Rule}
-    simplified = _simplify_single_rules(rules)
-    sorted = _sort_by_frequency(simplified)
-    filtered = _filter_linearly_dependent(sorted)
+    simplified = _simplify_single_rules(rules)::Vector{Rule}
+    sorted = _sort_by_frequency(simplified)::Vector{Rule}
+    filtered = _filter_linearly_dependent(sorted)::Vector{Rule}
     return first(filtered, max_rules)
 end
 
