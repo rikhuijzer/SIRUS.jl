@@ -20,12 +20,14 @@ end
 Estimate the importance of the given `feature_name`.
 The aim is to satisfy the following property:
 
-> Given two features X and Y, if X has more effect on the outcome, then
-> feature_importance(model, X) > feature_importance(model, Y).
+> Given two features A and B, if A has more effect on the outcome, then
+> feature_importance(model, A) > feature_importance(model, B).
 
 !!! note
-    This function provides only an importance _estimate_ because
-    the effect on the outcome depends on the data.
+    This function provides only an importance _estimate_ because the effect on
+    the outcome depends on the data, and because it doesn't take into account
+    that a feature can have a lower effect if it is in a clause together with
+    another subclause.
 """
 function feature_importance(
         model::StableRules,
