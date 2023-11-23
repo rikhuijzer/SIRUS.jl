@@ -349,10 +349,12 @@ function _remove_zero_weights(rules::Vector{Rule}, weights::Vector{Float16})
     return filtered_rules, filtered_weights
 end
 
-function _count_unique(V::AbstractVector{T}) where T
+# This was counting rules first but maybe we should do clauses?
+# With full rules, we don't even have duplicates on Haberman!
+function _count_unique_clauses(V::Vector{Rule})
     U = unique(V)
     l = length(U)
-    counts = Dict{T,Int}(zip(U, zeros(l)))
+    counts = Dict{Rule,Int}(zip(U, zeros(l)))
     for v in V
         counts[v] += 1
     end
@@ -364,10 +366,13 @@ end
 # NOT THE THEN/OTHERWISE.
 
 """
-Return a vector of unique values in `V` sorted by frequency.
+Return a vector of unique clauses in `V` sorted by frequency.
 """
-function _sort_by_frequency(V::AbstractVector{T}) where T
-    counts = _count_unique(V)::Dict{T, Int}
+function _sort_rules_by_frequency(V::Vector{Rule})
+    counts = _count_unique_clauses(V)::Dict{Rule, Int}
+    if !any(k -> counts[k] != 1, keys(counts))
+        @warn "None of the rules occured more than once"
+    end
     alg = Helpers.STABLE_SORT_ALG
     sorted = sort(collect(counts); alg, by=last, rev=true)
     return first.(sorted)
@@ -388,7 +393,7 @@ function _process_rules(
         max_rules::Int
     )::Vector{Rule}
     simplified = _simplify_single_rules(rules)::Vector{Rule}
-    sorted = _sort_by_frequency(simplified)::Vector{Rule}
+    sorted = _sort_rules_by_frequency(simplified)::Vector{Rule}
     filtered = _filter_linearly_dependent(sorted)::Vector{Rule}
     return first(filtered, max_rules)
 end

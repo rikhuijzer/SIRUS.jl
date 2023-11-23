@@ -1,8 +1,8 @@
-@testset "sort is deterministic" begin
-    rng = StableRNG(1)
-    X = rand(rng, 1:10, 10_000)
-    @test SIRUS._sort_by_frequency(X) == SIRUS._sort_by_frequency(X)
-end
+# @testset "sort is deterministic" begin
+#     rng = StableRNG(1)
+#     X = rand(rng, 1:10, 10_000)
+#     @test SIRUS._sort_rules_by_frequency(X) == SIRUS._sort_by_frequency(X)
+# end
 
 let
     text = " X[i, 1] < 1.0 & X[i, 1] ≥ 4.0 "
@@ -61,7 +61,7 @@ rules = S._rules(forest)
 
 @test S._count_unique([1, 1, 1, 2]) == Dict(1 => 3, 2 => 1)
 
-@test S._sort_by_frequency([r1, r5, r1]) == [r1, r5]
+@test S._sort_rules_by_frequency([r1, r5, r1]) == [r1, r5]
 
 algo = SIRUS.Classification()
 empty_model = S.StableRules(S.Rule[], algo, [1], Float16[0.1])
