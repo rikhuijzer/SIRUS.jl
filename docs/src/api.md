@@ -18,4 +18,5 @@ values(::SIRUS.Rule)
 satisfies
 Cutpoints
 cutpoints
+feature_importance
 ```
