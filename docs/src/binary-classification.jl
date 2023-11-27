@@ -215,7 +215,7 @@ Therefore, it makes more sense to truncate the rules to somewhere in the range 5
 `max_depth` specifies how many levels the trees have.
 For larger datasets, `max_depth=2` makes the most sense since it can find more complex patterns in the data.
 For smaller datasets, `max_depth=1` makes more sense since it reduces the chance of overfitting.
-It also simplifies the rules because with `max_depth=1`, the rule will contain only one conditional (for example, "if A then ...") versus two conditionals (for example, "if A & B then ...").
+It also simplifies the rules because with `max_depth=1`, the rule will contain only one subclause (for example, "if A then ...") versus two subclauses (for example, "if A & B then ...").
 In some cases, model accuracy can be improved by increasing `n_trees`.
 The higher this number, the more trees are fitted and, hence, the higher the chance that the right rules are extracted from the trees.
 """
@@ -232,8 +232,8 @@ Since we know that the model performs well on the cross-validations, we can fit 
 md"""
 ## Visualization
 
-Since our rules are relatively simple with only a binary outcome and only one clause in each rule, the following figure is a way to visualize the obtained rules per fold.
-For multiple clauses, I would not know how to visualize the rules.
+Since our rules are relatively simple with only a binary outcome and only one subclause in each rule, the following figure is a way to visualize the obtained rules per fold.
+For multiple subclauses, I would not know how to visualize the rules.
 Also, this plot is probably not perfect; let me know if you have suggestions.
 
 This figure shows the model uncertainty by visualizing the obtained models for different cross-validation folds.

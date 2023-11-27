@@ -225,24 +225,6 @@ function _sort_by_gap_size(rules::Vector{Rule})
 end
 
 """
-Simplify the rules that contain a single split by only retaining rules that point left and
-removing duplicates.
-"""
-function _simplify_single_rules(rules::Vector{Rule})::Vector{Rule}
-    out = OrderedSet{Rule}()
-    for rule in rules
-        splits = _subclauses(rule)
-        if length(splits) == 1
-            left_rule = _left_rule(rule)
-            push!(out, left_rule)
-        else
-            push!(out, rule)
-        end
-    end
-    return collect(out)
-end
-
-"""
 Return a vector of rules that are not linearly dependent on any other rule.
 
 This is done by considering each pair of splits.

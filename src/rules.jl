@@ -139,6 +139,7 @@ struct Rule
     otherwise::LeafContent
 end
 
+_clause(rule::Rule) = rule.clause
 _subclauses(rule::Rule) = rule.clause.subclauses
 
 """
@@ -336,6 +337,46 @@ function _isempty_error(::StableRules)
     throw(AssertionError("The rule model contains no rules"))
 end
 
+"""
+Simplify the rules that contain a single split by only retaining rules that point left and
+removing duplicates.
+"""
+function _simplify_single_rules(rules::Vector{Rule})::Vector{Rule}
+    out = OrderedSet{Rule}()
+    for rule in rules
+        subclauses = _subclauses(rule)
+        if length(subclauses) == 1
+            left_rule = _left_rule(rule)
+            push!(out, left_rule)
+        else
+            push!(out, rule)
+        end
+    end
+    return collect(out)
+end
+
+"""
+Apply _rule selection_ and _rule set post-treatment_
+(Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a)).
+
+We have a slight modification here:
+we do not sort first, select some p0 first, and then remove linearly dependent
+rules because our linearly dependent filter is quick enough to handle all rules.
+This means we don't need to sort at all.
+
+For the sorting, note that the paper talks about sorting by frequency of the
+**path** (clause) and not the rule, that is, clause with then and otherwise
+probabalities.
+"""
+function _process_rules(
+        rules::Vector{Rule},
+        max_rules::Int
+    )::Vector{Rule}
+    simplified = _simplify_single_rules(rules)::Vector{Rule}
+    filtered = _filter_linearly_dependent(simplified)::Vector{Rule}
+    return first(filtered, max_rules)
+end
+
 function _remove_zero_weights(rules::Vector{Rule}, weights::Vector{Float16})
     filtered_rules = Rule[]
     filtered_weights = Float16[]
@@ -347,46 +388,6 @@ function _remove_zero_weights(rules::Vector{Rule}, weights::Vector{Float16})
         end
     end
     return filtered_rules, filtered_weights
-end
-
-function _count_unique(V::AbstractVector{T}) where T
-    U = unique(V)
-    l = length(U)
-    counts = Dict{T,Int}(zip(U, zeros(l)))
-    for v in V
-        counts[v] += 1
-    end
-    return counts
-end
-
-"""
-Return a vector of unique values in `V` sorted by frequency.
-"""
-function _sort_by_frequency(V::AbstractVector{T}) where T
-    counts = _count_unique(V)::Dict{T, Int}
-    alg = Helpers.STABLE_SORT_ALG
-    sorted = sort(collect(counts); alg, by=last, rev=true)
-    return first.(sorted)
-end
-
-"""
-Apply _rule selection_ and _rule set post-treatment_
-(Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a)).
-
-Rule selection, here, denotes sorting the set by frequency.
-Next, linearly dependent rules are removed from the set.
-To ensure the size of the final set is equal to `max_rules` in most cases, we ignore the
-p0 parameter and instead pass all rules directly to the linearly dependent filter.
-This is possible because the filter for linear dependencies is quite fast.
-"""
-function _process_rules(
-        rules::Vector{Rule},
-        max_rules::Int
-    )::Vector{Rule}
-    simplified = _simplify_single_rules(rules)
-    sorted = _sort_by_frequency(simplified)
-    filtered = _filter_linearly_dependent(sorted)
-    return first(filtered, max_rules)
 end
 
 function StableRules(
