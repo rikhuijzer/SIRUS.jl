@@ -82,7 +82,7 @@ generated = map(i -> generate_rules(), 1:10)
 """
 Return whether the score for the model is roughly equal to check whether RNG is used correctly.
 Checking the scores is easier than the raw models since those seem to differ slightly (probably
-due to mutli-threading, which can change the order).
+due to multi-threading, which can change the order).
 """
 function equal_output(stage::Symbol)
     V = getproperty.(generated, stage)

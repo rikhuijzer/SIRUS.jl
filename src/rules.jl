@@ -7,7 +7,7 @@ For example, the rule `if X[i, 1] > 3 & X[i, 2] < 4, then ...` contains two subc
 
 A subclause is equivalent to a split in a decision tree.
 In other words, each rule is based on one or more subclauses.
-In pratice, a rule is based on at most two subclauses (has at most two subclauses).
+In pratise, a rule is based on at most two subclauses (has at most two subclauses).
 The reason for this is that rules with more than two subclauses will not end up
 in the final model, as is discussed in the original SIRUS paper.
 

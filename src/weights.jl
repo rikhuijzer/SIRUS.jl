@@ -41,7 +41,7 @@ For example, the data for fitting could have the following variables:
 |--------|--------|--------|---------|
 | ...... | ...... | ...... | ....... |
 
-The regression then finds a coeffient for each rule which is based on how much
+The regression then finds a coefficient for each rule which is based on how much
 each rule is associated with the outcome. I don't know why this makes sense,
 but based on benchmarks it does.
 

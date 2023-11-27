@@ -242,7 +242,7 @@ A point on the left means that a lower value for the data is related to higher o
 The subfigure on the right shows the thresholds used by the rules in the cross-validation folds via the vertical lines.
 In the background, the histograms show the data.
 
-For example, for the `nodes`, it can be seen that all rules (fitted in the different cross-validation folds) base their decision on whether the `nodes` are below, roughly, 5. 
+For example, for the `nodes`, it can be seen that all rules (fitted in the different cross-validation folds) base their decision on whether the `nodes` are below, roughly, 5.
 Next, the left side indicates in which direction this effect works.
 More specifically, the individuals who had less than 5 nodes are more likely to survive, according to the model. 
 The sizes of the dots indicate the weight that the rule has, so a bigger dot means that a rule plays a larger role in the final outcome. 
@@ -251,7 +251,7 @@ These dots are sized in such a way that a doubling in weight means a doubling in
 
 # ╔═╡ ab5423cd-c8a9-488e-9bb0-bb41e583c2fa
 md"""
-What this plot shows is that the `nodes` feature is on average chosen as the feature with the most predictive power because the `nodes` feature is shown as the first feature and the tickness of the dots is the biggest.
+What this plot shows is that the `nodes` feature is on average chosen as the feature with the most predictive power because the `nodes` feature is shown as the first feature and the thickness of the dots is the biggest.
 Furthermore, there is agreement on the effect of the `nodes` and `age` features.
 In both cases, a lower number is associated with survival.
 This is as expected because the model essentially implies that people where fewer cancerous axillary nodes are detected and who are younger are more likely to survive.
@@ -281,8 +281,8 @@ With the rule-based model, we can say exactly at which number of `nodes` and at 
 md"""
 ## Conclusion
 
-Compared to decision trees, the rule-based classifier is more stable, more accurate and similarly easy to interpet.
-Compared to the random forest, the rule-based classifier is only slightly less accurate, but much easier to interpet.
+Compared to decision trees, the rule-based classifier is more stable, more accurate and similarly easy to interpret.
+Compared to the random forest, the rule-based classifier is only slightly less accurate, but much easier to interpret.
 Due to the interpretability, it is likely easier to verify the model and therefore the rule-based classifier will be more accurate in real-world settings.
 This makes rule-based highly suitable for many machine learning tasks.
 """
