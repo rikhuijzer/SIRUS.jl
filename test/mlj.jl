@@ -336,7 +336,6 @@ preds = predict(rulesmach)
 # @test 0.95 < rsq(preds, y)
 
 let
-    hyper = (;)
     data = "boston"
     measure = rsq
     hyper = (; rng=_rng())

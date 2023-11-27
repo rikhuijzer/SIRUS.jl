@@ -148,7 +148,7 @@ function diabetes()
 end
 
 """
-Return the Boston Housing Dataset after changing the outcome to binary.
+Return the Boston Housing Dataset.
 """
 function boston()
     data = BostonHousing()
@@ -159,10 +159,7 @@ function boston()
     end
     # Median value of owner-occupied homes in 1000's of dollars.
     target = :MEDV
-    m = mean(df[:, target]) # 22.5 thousand dollars.
-    # y = categorical([value < m ? 0 : 1 for value in df[:, target]])
-    y = df[:, target]
-    X = MLJBase.table(MLJBase.matrix(df[:, Not(target)]))
+    y, X = MLJBase.unpack(df, ==(target))
     return (X, y)
 end
 
