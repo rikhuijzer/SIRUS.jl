@@ -9,6 +9,8 @@ extend-ignore-re = [
 Tesselation = "Tesselation"
 tesselation = "tesselation"
 Missings = "Missings"
+rcall = "rcall"
+CACH = "CACH"
 
 [type.gitignore]
 extend-glob = [".gitignore"]

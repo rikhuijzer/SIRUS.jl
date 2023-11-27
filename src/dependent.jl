@@ -69,7 +69,7 @@ and one zeroes column:
 |  !A &&  B  |   1  |  0 |  1 |  0 |  1  |
 |  !A && !B  |   1  |  0 |  0 |  1 |  0  |
 
-In other words, the matrix represents which rules are implied by each syntetic datapoint
+In other words, the matrix represents which rules are implied by each synthetic datapoint
 (conditions in the rows).
 Next, this can be used to determine which rules are linearly dependent by checking whether
 the rank increases when adding rules.
