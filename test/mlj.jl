@@ -368,6 +368,19 @@ let
     end
 end
 
+# Used in combination with entr for debugging.
+function evaluate_regression()
+    measure = rsq
+    hyper = (; rng=_rng(), max_depth=2, max_rules=10)
+    # Boston is an overanalyzed dataset.
+    er = _evaluate!(results, "boston", StableRulesRegressor, hyper; measure)
+    show(stdout, MIME("text/plain"), er)
+    println()
+    println("fold[1]: " * repr(er.fitted_params_per_fold[1].fitresult) * "\n")
+    println("fold[2]: " * repr(er.fitted_params_per_fold[2].fitresult))
+    return er
+end
+
 emr = let
     measure = rsq
     data = "make_regression"
