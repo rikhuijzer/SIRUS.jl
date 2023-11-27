@@ -93,7 +93,12 @@ function Clause(text::String)
         comparisons = split(strip(text), '&')
         subclauses = map(comparisons) do c
             direction = contains(c, '<') ? :L : :R
-            feature_text = c[6:findfirst(']', c) - 1]
+            feature_text_end = findfirst(']', c)
+            if isnothing(feature_text_end)
+                msg = "Couldn't find feature number such as `X[i, 3]` in `$text`"
+                throw(ArgumentError(msg))
+            end
+            feature_text = c[6:feature_text_end - 1]
             if startswith(feature_text, ':')
                 msg = "Can only parse feature numbers such as `X[i, 3]`, " *
                     "but got `X[i, $feature_text]`"
@@ -101,7 +106,9 @@ function Clause(text::String)
             end
             feature = parse(Int, feature_text)
             splitval = let
-                start = direction == :L ? findfirst('<', c) + 1 : findfirst('≥', c) + 3
+                start = direction == :L ?
+                    findfirst('<', c)::Int + 1 :
+                    findfirst('≥', c)::Int + 3
                 parse(Float32, c[start:end])
             end
             feature_name = string(feature)::String
@@ -199,14 +206,6 @@ function Base.hash(rule::Rule)
     hash([_subclauses(rule), rule.then, rule.otherwise])
 end
 
-function _rules!(
-        leaf::Leaf,
-        subclauses::Vector{SubClause},
-        rules::Vector{Rule}
-    )::Vector{Rule}
-    return push!(rules, rule)
-end
-
 function _then_output!(
         leaf::Leaf,
         contents::Vector{LeafContent}
@@ -284,7 +283,7 @@ In the paper, for a random free Θ, the list of extracted paths is defined as T(
 Note that the rules are also created for internal nodes as can be seen from supplement Table 3.
 """
 function _rules!(
-        node::Node,
+        node::Union{Node, Leaf},
         subclauses::Vector{SubClause}=SubClause[];
         rules::Vector{Rule}=Rule[],
         root::Node=node

@@ -127,7 +127,7 @@ These splits will be used to form `(A, B)` pairs and generate the feature space.
 For example, the pair `x[i, 1] < 32000` (A) and `x[i, 3] < 64` (B) will be used to generate
 the feature space `A & B`, `A & !B`, `!A & B`, `!A & !B`.
 """
-function _unique_left_subclauses(rules::Vector{Rule})
+function _unique_left_subclauses(rules::Vector{Rule})::Vector{SubClause}
     subclauses = SubClause[]
     for rule in rules
         for subclause in _subclauses(rule)
@@ -219,7 +219,7 @@ Return the vector rule sorted by decreasing gap size.
 This allows the linearly dependent filter to remove the rules further down the list since
 they have a smaller gap.
 """
-function _sort_by_gap_size(rules::Vector{Rule})
+function _sort_by_gap_size(rules::Vector{Rule})::Vector{Rule}
     alg = Helpers.STABLE_SORT_ALG
     return sort(rules; alg, by=_gap_size, rev=true)
 end
@@ -235,10 +235,10 @@ If we don't do this, we might remove some rule `r` that causes another rule to b
 dependent in one related set, but then is removed in another related set.
 """
 function _filter_linearly_dependent(rules::Vector{Rule})::Vector{Rule}
-    sorted = _sort_by_gap_size(rules)
-    S = _unique_left_subclauses(sorted)
-    pairs = _left_triangular_product(S)
-    out = copy(sorted)
+    sorted = _sort_by_gap_size(rules)::Vector{Rule}
+    S = _unique_left_subclauses(sorted)::Vector{SubClause}
+    pairs = _left_triangular_product(S)::Vector{Tuple{SubClause, SubClause}}
+    out = copy(sorted)::Vector{Rule}
     for (A, B) in pairs
         indexes = filter(i -> _related_rule(out[i], A, B), 1:length(out))
         subset = view(out, indexes)
