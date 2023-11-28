@@ -7,22 +7,25 @@ Pretty visual representation of the algorithm via an image that was generated vi
 This package is a pure Julia implementation of the **S**table and **I**nterpretable **RU**le **S**ets (SIRUS) algorithm.
 The algorithm was originally created by Clément Bénard, Gérard Biau, Sébastien Da Veiga, and Erwan Scornet (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html)).
 `SIRUS.jl` has implemented both classification and regression.
-Performance is generally the best on binary classification tasks.
+Performance is generally the best on classification tasks; especially when tuning the `max_depth`, `max_rules`, and `lambda` hyperparameters.
 
 For R users, the original version of the SIRUS algorithm is available via [CRAN](https://cran.r-project.org/web/packages/sirus/index.html).
 The source code is available under the GPL-3 license at <https://gitlab.com/drti/sirus>.
-Compared to the R version, this Julia implementation is more easy to inspect than the original R and C++ implementation.
+Compared to the R version, this Julia implementation implements multi-class classification and is more easy to inspect than the original R and C++ implementation.
+The original algorithm is implemented in about 10k lines of C++ and 2k lines of R code, whereas the Julia implementation is about 2k lines of pure Julia code.
 Furthermore, this implementation is integrated with the `MLJ.jl` machine learning ecosystem.
 With this, multiple benchmarks are executed and checked with every test run.
 The results are listed in the GitHub Actions summary.
 
 The algorithm is based on random forests.
 Random forests perform generally very well; especially on datsets with a relatively high number of features compared to the number of datapoints (Biau & Scornet, [2016](https://doi.org/10.1007/s11749-016-0481-7)).
-However, random forests are hard to interpret because of the large number of, sometimes large, trees.
+However, random forests are hard to interpret because of the typically thousands of trees in the random forest.
 Interpretability methods such as SHAP alleviate this problem slightly, but still do not fully explain predictions.
 Put differently, it is not possible to reproduce predictions on the feature importances that SHAP reports.
-SIRUS solved this by converting the large number of trees to interpretable rules.
-These rules fully explain the predictions while remaining easy to interpret.
+Also, interpretability methods convert the complex model to a simplified representation.
+This causes the simplified representation to be different from the complex model and may therefore hide biases and issues related to safety and reliability.
+SIRUS solves this by simplifying the complex model and then using the simplified model for predictions.
+This ensures that the same model is used for interpretation and prediction.
 
 ## Where to Start?
 

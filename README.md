@@ -87,6 +87,7 @@ and 2 classes: [1, 2].
 Note: showing only the probability for class 2 since class 1 has probability 1 - p.
 ```
 
+This is a basic example, in most cases you want to tune the `max_depth`, `max_rules`, and `lambda` hyperparameters.
 See `?StableRulesClassifier`, `?StableRulesRegressor`, or the [API documentation](https://sirus.jl.huijzer.xyz/dev/api/) for more information about the models and their hyperparameters.
 A full guide through binary classification can be found in the [Simple Binary Classification](https://sirus.jl.huijzer.xyz/dev/binary-classification/) example.
 

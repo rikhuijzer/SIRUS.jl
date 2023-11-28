@@ -58,12 +58,6 @@ function _score(e::PerformanceEvaluation)
     return round(only(e.measurement); sigdigits=2)
 end
 
-function _evaluate(model, X, y; nfolds::Number=10, measure=auc)
-    resampling = CV(; nfolds, shuffle=true, rng=_rng())
-    acceleration = MLJBase.CPUThreads()
-    evaluate(model, X, y; acceleration, verbosity=0, resampling, measure)
-end
-
 if !haskey(ENV, "REGISTERED_CANCER")
     name = "Cancer"
     message = "Wisconsin Diagnostic Breast Cancer (WDBC) dataset"
@@ -203,7 +197,7 @@ datasets = Dict{String,Tuple}(
     end,
     "iris" => let
         iris = Iris()
-        X = MLJBase.table(MLJBase.matrix(iris.features))
+        X = iris.features
         y = [x == "Iris-setosa" ? 1 : x == "Iris-versicolor" ? 2 : 3 for x in iris.targets.class]
         (X, categorical(y))
      end,
@@ -236,17 +230,30 @@ _filter_rng(hyper::NamedTuple) = Base.structdiff(hyper, (; rng=:foo))
 _pretty_name(modeltype) = last(split(string(modeltype), '.'))
 _hyper2str(hyper::NamedTuple) = hyper == (;) ? "(;)" : string(hyper)::String
 
+function _evaluate(
+        model,
+        X,
+        y;
+        nfolds::Number=10,
+        measure=auc,
+        acceleration=MLJBase.CPUThreads()
+    )
+    resampling = CV(; nfolds, shuffle=true, rng=_rng())
+    evaluate(model, X, y; acceleration, verbosity=0, resampling, measure)
+end
+
 function _evaluate!(
         results::DataFrame,
         dataset::String,
         modeltype::DataType,
         hyperparameters::NamedTuple=(; );
-        measure=auc
+        measure=auc,
+        acceleration=MLJBase.CPUThreads()
     )
     X, y = datasets[dataset]
     nfolds = 10
     model = modeltype(; hyperparameters...)
-    e = _evaluate(model, X, y; nfolds, measure)
+    e = _evaluate(model, X, y; nfolds, measure, acceleration)
     score = _with_trailing_zero(_score(e))
     se = let
         val = round(only(MLJBase._standard_errors(e)); digits=2)

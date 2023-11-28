@@ -69,6 +69,7 @@ end
 
 let
     data = "haberman"
+    @info "Evaluating $data"
     hyper = (; rng=_rng())
     _evaluate!(results, data, DecisionTreeClassifier)
 
@@ -76,10 +77,11 @@ let
     _evaluate!(results, data, LogisticClassifier, hyper)
 
     hyper = (;)
-    e = _evaluate!(results, data, XGBoostClassifier, hyper)
+    acceleration = MLJBase.CPU1()
+    e = _evaluate!(results, data, XGBoostClassifier, hyper; acceleration)
 
     hyper = (; max_depth=2)
-    e = _evaluate!(results, data, XGBoostClassifier, hyper)
+    e = _evaluate!(results, data, XGBoostClassifier, hyper; acceleration)
 
     hyper = (; rng=_rng(), max_depth=2)
     e = _evaluate!(results, data, StableForestClassifier, hyper)
@@ -97,12 +99,13 @@ let
 
     if get(ENV, "CAN_RUN_R_SIRUS", "false") == "true"
         hyper = (; max_depth=2, max_rules=10)
-        e = _evaluate!(results, data, RSirusClassifier, hyper)
+        e = _evaluate!(results, data, RSirusClassifier, hyper; acceleration)
     end
 end
 
 let
     data = "titanic"
+    @info "Evaluating $data"
     hyper = (; rng=_rng())
     e = _evaluate!(results, data, DecisionTreeClassifier, hyper)
 
@@ -110,10 +113,11 @@ let
     e = _evaluate!(results, data, LogisticClassifier, hyper)
 
     hyper = (;)
-    e = _evaluate!(results, data, XGBoostClassifier, hyper)
+    acceleration = MLJBase.CPU1()
+    e = _evaluate!(results, data, XGBoostClassifier, hyper; acceleration)
 
     hyper = (; max_depth=2)
-    e = _evaluate!(results, data, XGBoostClassifier, hyper)
+    e = _evaluate!(results, data, XGBoostClassifier, hyper; acceleration)
 
     hyper = (; rng=_rng(), max_depth=2)
     e = _evaluate!(results, data, StableForestClassifier, hyper)
@@ -129,12 +133,13 @@ let
 
     if get(ENV, "CAN_RUN_R_SIRUS", "false") == "true"
         hyper = (; max_depth=2, max_rules=10)
-        e = _evaluate!(results, data, RSirusClassifier, hyper)
+        e = _evaluate!(results, data, RSirusClassifier, hyper; acceleration)
     end
 end
 
 let
     data = "cancer"
+    @info "Evaluating $data"
     measure = auc
 
     hyper = (; rng=_rng())
@@ -144,10 +149,11 @@ let
     e = _evaluate!(results, data, MultinomialClassifier, hyper; measure)
 
     hyper = (;)
-    e = _evaluate!(results, data, XGBoostClassifier, hyper; measure)
+    acceleration = MLJBase.CPU1()
+    e = _evaluate!(results, data, XGBoostClassifier, hyper; measure, acceleration)
 
     hyper = (; max_depth=2)
-    e = _evaluate!(results, data, XGBoostClassifier, hyper; measure)
+    e = _evaluate!(results, data, XGBoostClassifier, hyper; measure, acceleration)
 
     hyper = (; rng=_rng(), max_depth=2)
     e = _evaluate!(results, data, StableForestClassifier, hyper; measure)
@@ -160,12 +166,13 @@ let
 
     if get(ENV, "CAN_RUN_R_SIRUS", "false") == "true"
         hyper = (; max_depth=2, max_rules=10)
-        e = _evaluate!(results, data, RSirusClassifier, hyper; measure)
+        e = _evaluate!(results, data, RSirusClassifier, hyper; measure, acceleration)
     end
 end
 
 let
     data = "diabetes"
+    @info "Evaluating $data"
     hyper = (; rng=_rng())
     e = _evaluate!(results, data, DecisionTreeClassifier, hyper)
 
@@ -173,10 +180,11 @@ let
     e = _evaluate!(results, data, LogisticClassifier, hyper)
 
     hyper = (;)
-    e = _evaluate!(results, data, XGBoostClassifier, hyper)
+    acceleration = MLJBase.CPU1()
+    e = _evaluate!(results, data, XGBoostClassifier, hyper; acceleration)
 
     hyper = (; max_depth=2)
-    e = _evaluate!(results, data, XGBoostClassifier, hyper)
+    e = _evaluate!(results, data, XGBoostClassifier, hyper; acceleration)
 
     hyper = (; rng=_rng(), max_depth=2)
     e = _evaluate!(results, data, StableForestClassifier, hyper)
@@ -189,12 +197,13 @@ let
 
     if get(ENV, "CAN_RUN_R_SIRUS", "false") == "true"
         hyper = (; max_depth=2, max_rules=10)
-        e = _evaluate!(results, data, RSirusClassifier, hyper)
+        e = _evaluate!(results, data, RSirusClassifier, hyper; acceleration)
     end
 end
 
 let
     data = "iris"
+    @info "Evaluating $data"
     measure = accuracy
 
     hyper = (; rng=_rng())
@@ -204,19 +213,21 @@ let
     e = _evaluate!(results, data, MultinomialClassifier, hyper; measure)
 
     hyper = (;)
-    e = _evaluate!(results, data, XGBoostClassifier, hyper; measure)
+    acceleration = MLJBase.CPU1()
+    e = _evaluate!(results, data, XGBoostClassifier, hyper; measure, acceleration)
 
     hyper = (; max_depth=2)
-    e = _evaluate!(results, data, XGBoostClassifier, hyper; measure)
+    e = _evaluate!(results, data, XGBoostClassifier, hyper; measure, acceleration)
 
     hyper = (; rng=_rng(), max_depth=2)
     e = _evaluate!(results, data, StableForestClassifier, hyper; measure)
     @test 0.90 < _score(e)
 
-    hyper = (; rng=_rng(), max_depth=2, max_rules=30)
+    lambda = 0.01
+    hyper = (; rng=_rng(), max_depth=2, max_rules=30, lambda)
     e = _evaluate!(results, data, StableRulesClassifier, hyper; measure)
 
-    hyper = (; rng=_rng(), max_depth=2, max_rules=10)
+    hyper = (; rng=_rng(), max_depth=2, max_rules=10, lambda)
     e = _evaluate!(results, data, StableRulesClassifier, hyper; measure)
     @test 0.62 < _score(e)
 
@@ -234,6 +245,7 @@ preds = predict(rulesmach)
 
 let
     data = "boston"
+    @info "Evaluating $data"
     measure = rsq
     hyper = (; rng=_rng())
     elgbm = _evaluate!(results, data, DecisionTreeRegressor, hyper; measure)
@@ -242,10 +254,11 @@ let
     _evaluate!(results, data, LinearRegressor, hyper; measure)
 
     hyper = (;)
-    e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
+    acceleration = MLJBase.CPU1()
+    e = _evaluate!(results, data, XGBoostRegressor, hyper; measure, acceleration)
 
     hyper = (; max_depth=2)
-    ex = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
+    ex = _evaluate!(results, data, XGBoostRegressor, hyper; measure, acceleration)
 
     hyper = (; max_depth=2, rng=_rng())
     ef = _evaluate!(results, data, StableForestRegressor, hyper; measure)
@@ -253,21 +266,22 @@ let
     @test 0.62 < _score(ex)
 
     hyper = (; rng=_rng(), max_depth=2, max_rules=30)
-    er = _evaluate!(results, data, StableRulesRegressor, hyper; measure=rsq)
+    er = _evaluate!(results, data, StableRulesRegressor, hyper; measure)
 
     hyper = (; rng=_rng(), max_depth=2, max_rules=10)
-    er = _evaluate!(results, data, StableRulesRegressor, hyper; measure=rsq)
+    er = _evaluate!(results, data, StableRulesRegressor, hyper; measure)
     @test 0.55 < _score(er)
 
     if get(ENV, "CAN_RUN_R_SIRUS", "false") == "true"
         hyper = (; max_depth=2, max_rules=10)
-        _evaluate!(results, data, RSirusRegressor, hyper; measure=rsq)
+        _evaluate!(results, data, RSirusRegressor, hyper; measure, acceleration)
     end
 end
 
 emr = let
     measure = rsq
     data = "make_regression"
+    @info "Evaluating $data"
     hyper = (; rng=_rng())
     _evaluate!(results, data, DecisionTreeRegressor, hyper; measure)
 
@@ -275,24 +289,31 @@ emr = let
     e = _evaluate!(results, data, LinearRegressor, hyper; measure)
 
     hyper = (;)
-    e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
+    acceleration = MLJBase.CPU1()
+    e = _evaluate!(results, data, XGBoostRegressor, hyper; measure, acceleration)
 
     hyper = (; max_depth=2)
-    e = _evaluate!(results, data, XGBoostRegressor, hyper; measure)
+    e = _evaluate!(results, data, XGBoostRegressor, hyper; measure, acceleration)
 
     hyper = (; max_depth=2, rng=_rng())
     _evaluate!(results, data, StableForestRegressor, hyper; measure)
 
-    hyper = (; rng=_rng(), max_depth=2, max_rules=30)
+    # With ridge regression, a high lambda makes all coefficients very small.
+    # This makes sense for the regression task since the rule-based algorithm
+    # cannot fit a straight line well. In other words, many small rules have
+    # to be fitted and work together.
+    lambda = 100
+    q = 20
+    hyper = (; rng=_rng(), max_depth=2, max_rules=30, lambda, q)
     _evaluate!(results, data, StableRulesRegressor, hyper; measure)
 
-    hyper = (; rng=_rng(), max_depth=2, max_rules=10)
+    hyper = (; rng=_rng(), max_depth=2, max_rules=10, lambda, q)
     er = _evaluate!(results, data, StableRulesRegressor, hyper; measure)
     @test 0.50 < _score(er)
 
     if get(ENV, "CAN_RUN_R_SIRUS", "false") == "true"
         hyper = (; max_depth=2, max_rules=10)
-        _evaluate!(results, data, RSirusRegressor, hyper; measure=rsq)
+        _evaluate!(results, data, RSirusRegressor, hyper; measure, acceleration)
     end
 end
 

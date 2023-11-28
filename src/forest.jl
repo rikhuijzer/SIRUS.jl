@@ -378,7 +378,7 @@ function _predict(forest::StableForest, row::AbstractVector)
     if forest.algo isa Classification
         return _median(predictions)
     else
-        m = median(predictions)
+        m = mean(predictions)
         @assert m isa Number
         return m
     end

@@ -310,6 +310,8 @@ const RULES_HYPERPARAMETERS_SECTION = """
 - `lambda::Float64=$LAMBDA_DEFAULT`:
     The weights of the final rules are determined via a regularized regression over each rule as a binary feature.
     This hyperparameter specifies the strength of the ridge (L2) regularizer.
+    SIRUS is very sensitive to the choice of this hyperparameter.
+    Ensure that you try the full range from 10^-4 to 10^4 (e.g., 0.001, 0.01, ..., 100).
 """
 
 const OPERATIONS_SECTION = """
