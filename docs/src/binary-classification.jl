@@ -42,7 +42,8 @@ TableOfContents()
 md"""
 # Advanced Example: Binary Classification
 
-This page will provide an overview of the algorithm and describe how it works and how it can be used.
+This page will provide an overview of the algorithm and describe how it works and
+how it can be used.
 To do this, let's start by briefly describing random forests.
 """
 
@@ -50,36 +51,46 @@ To do this, let's start by briefly describing random forests.
 md"""
 ## Random forests
 
-Random forests are known to produce accurate predictions especially in settings where the number of features `p` is close to or higher than the number of observations `n` (Biau & Scornet, [2016](https://doi.org/10.1007/s11749-016-0481-7)).
-Let's start by explaining the building blocks of random forests: decision trees.
-As an example, we take Haberman's Survival Data Set (see the _Appendix_ below for more code details):
+Random forests are known to produce accurate predictions especially in settings
+where the number of features `p` is close to or higher than the number of
+observations `n` ([Biau & Scornet, 2016](https://doi.org/10.1007/s11749-016-0481-7)).
+Let's start by explaining the building blocks of random forests: **decision trees**.
+As an example, we take Haberman's Survival Data Set
+(see the _Appendix_ below for more code details):
 """
 
 # ╔═╡ 4c8dd68d-b193-4846-8d93-ab33512c3fa2
 md"""
 This dataset contains observations from a study with patients who had breast cancer.
-The `survival` column contains a `0` if a patient has died within 5 years and `1` if the patient has survived for at least 5 years.
-The aim is to predict survival based on the `age`, the `year` in which the operation was conducted and the number of detected axillary `nodes`.
+The `survival` column contains a `0` if a patient has died within 5 years and `1`
+if the patient has survived for at least 5 years.
+The aim is to predict survival based on the `age`,
+the `year` in which the operation was conducted and the number of detected axillary `nodes`.
 """
 
 # ╔═╡ f75aa57f-6e84-4f7e-88e4-11a00cb9ad2b
 md"""
-Via [`MLJ.jl`](https://github.com/alan-turing-institute/MLJ.jl), we can fit multiple decision trees on this dataset:
+Via [`MLJ.jl`](https://github.com/alan-turing-institute/MLJ.jl),
+we can fit multiple decision trees on this dataset:
 """
 
 # ╔═╡ e5a45b1a-d761-4279-834b-216df2a1dbb5
 md"""
 This has fitted various trees to various subsets of the dataset via cross-validation.
-Here, I've set `max_depth=2` to simplify the fitted trees which makes the tree more easily explainable.
-Also, for our small dataset, this forces the model to remain simple so it likely reduces overfitting.
+Here, I've set `max_depth=2` to simplify the fitted trees which makes the tree
+more easily explainable.
+Also, for our small dataset, this forces the model to remain simple so it likely
+reduces overfitting.
 Let's look at the first tree:
 """
 
 # ╔═╡ d38f8814-c7b8-4911-9c63-d99b646b4486
 md"""
-What this shows is that the first tree decided that the `nodes` feature is the most helpful in deciding who will survive for 5 more years.
+What this shows is that the first tree decided that the `nodes` feature is the most
+helpful in deciding who will survive for 5 more years.
 Next, if the `nodes` feature is below 2.5, then `age` will be selected on.
-If `age < 79.5`, then the model will predict the second class and if `age ≥ 79.5` it will predict the first class.
+If `age < 79.5`, then the model will predict the second class and if `age ≥ 79.5`
+it will predict the first class.
 Similarly for `age < 43.5`.
 Now, let's see what happens for a slight change in the data.
 In other words, let's see how the fitted model for the second split looks:
@@ -88,32 +99,48 @@ In other words, let's see how the fitted model for the second split looks:
 # ╔═╡ 5318414e-5c87-4be0-bcd0-b6efd4eee5b9
 md"""
 This shows that the features and the values for the splitpoints are not the same for both trees.
-This is called stability.
-Or in this case, a decision tree is considered to be unstable.
-This instability is problematic in situations where real-world decisions are based on the outcome of the model.
-Imagine using this model for the selecting which students are allowed to enter some university.
-If the model is updated every year with the data from the last year, then the selection criteria would vary wildly per year.
+This is called **stability**.
+Or in this case, a decision tree is considered to be _unstable_.
+This instability is problematic in situations where real-world decisions are based
+on the outcome of the model.
+Imagine using this model for the selecting which students are allowed to enter
+some university.
+If the model is updated every year with the data from the last year,
+then the selection criteria would vary wildly per year.
 This instability also causes accuracy to fluctuate wildly.
-Intuitively, this makes sense: if the model changes wildly for small data changes, then model accuracy also changes wildly.
+Intuitively, this makes sense: if the model changes wildly for small data changes,
+then model accuracy also changes wildly.
 This intuitively also implies that the model is more likely to overfit.
 This is why random forests were introduced.
-Basically, random forests fit a large number of trees and average their predictions to come to a more accurate prediction.
-The individual trees are obtained by restricting the observations and the features that the trees are allowed to use.
-For the restriction on the observations, the trees are only allowed to see `partial_sampling * n` observations.
-In practise, `partial_sampling` is often 0.7.
-The restriction on the features is defined in such a way that it guarantees that not every tree will take the same split at the root of the tree.
-This makes the trees less correlated (James et al., [2021](https://doi.org/10.1007/978-1-0716-1418-1); Section 8.2.2) and, hence, more accurate.
+Basically, random forests fit a large number of trees and average their predictions
+to come to a more accurate prediction.
+The individual trees are obtained by restricting the observations and the features
+that the trees are allowed to use.
+For the restriction on the observations, the trees are only allowed to see
+`partial_sampling * n` observations.
+In practise, `partial_sampling` is often `0.7`.
+The restriction on the features is defined in such a way that it guarantees
+that not every tree will take the same split at the root of the tree.
+This makes the trees less correlated
+([James et al., 2021](https://doi.org/10.1007/978-1-0716-1418-1); Section 8.2.2)
+and, hence, more accurate.
 
 Unfortunately, these random forests are hard to interpret.
-To interpret the model, individuals would need to interpret hundreds to thousands of trees containing multiple levels.
-Alternatively, methods have been created to visualize these uninterpretable models (for example, see Molnar ([2022](https://christophm.github.io/interpretable-ml-book/)); Chapters 6, 7 and 8).
+To interpret the model, individuals would need to interpret hundreds to thousands
+of trees containing multiple levels.
+Alternatively, methods have been created to visualize these uninterpretable models
+(for example, see [Molnar (2022)](https://christophm.github.io/interpretable-ml-book/);
+Chapters 6, 7 and 8).
 The most promising one of these methods are Shapley values and SHAP.
 These methods show which features have the highest influence on the prediction.
-See my blog post on [Random forests and Shapley values](https://huijzer.xyz/posts/shapley/) for more information.
-Knowing which features have the highest influence is nice, but they do not state exactly what feature is used and at what cutoff.
+See my blog post on [Random forests and Shapley values](https://huijzer.xyz/posts/shapley/)
+for more information.
+Knowing which features have the highest influence is nice,
+but they do not state exactly what feature is used and at what cutoff.
 Again, this is not good enough for selecting students into universities.
 For example, what if the government decides to ask for details about the selection?
-The only answer that you can give is that some features are used for selection more than others and that they are on average used in a certain direction.
+The only answer that you can give is that some features are used for selection more
+than others and that they are on average used in a certain direction.
 If the government asks for biases in the model, then these are impossible to report.
 In practice, the decision is still a black-box.
 SIRUS solves this by extracting easily interpretable rules from the random forests.
@@ -125,20 +152,25 @@ md"""
 
 Rule-based models promise much greater interpretability than random forests.
 Instead of returning a large number of trees, rule-based models return a set of rules.
-Each rule can be interpreted on its own and the final model aggregates these rules by summing the prediction of each rules.
+Each rule can be interpreted on its own and the final model aggregates these rules
+by summing the prediction of each rules.
 For example, one rule can be:
 
-> if `nodes < 4.5` then chance of survival is 0.6 and if `nodes ≥ 4.5` then chance of survival is 0.4.
+> if `nodes < 4.5` then chance of survival is `0.6` and if `nodes ≥ 4.5` then
+> chance of survival is `0.4`.
 
 Note that these rules can be extracted quite easily from the decision trees.
 For splits on the second level of the tree, the rule could look like:
 
-> if `nodes < 4.5` and `age < 38.5` then chance of survival is 0.8 and otherwise the chance of survival is 0.4.
+> if `nodes < 4.5` and `age < 38.5` then chance of survival is `0.8` and
+> otherwise the chance of survival is `0.4`.
 
 When applying this extracting of rules to a random forest, there will be thousands of rules.
-Next, via some heuristic, the most important rules can be localized and these rules then result in the final model.
-See, for example, RuleFit (Friedman & Popescu, [2008](https://www.jstor.org/stable/30245114)).
-The problem with this approach is that they are fitted on the unstable decision trees that were shown above.
+Next, via some heuristic, the most important rules can be localized and these rules
+then result in the final model.
+See, for example, RuleFit ([Friedman & Popescu, 2008](https://www.jstor.org/stable/30245114)).
+The problem with this approach is that they are fitted on the unstable decision
+trees that were shown above.
 As an example, on time the tree splits on `age < 43.5` and another time on `age < 44.5`.
 """
 
@@ -146,16 +178,22 @@ As an example, on time the tree splits on `age < 43.5` and another time on `age 
 md"""
 ## Tree stabilization
 
-In the papers which introduce SIRUS, Bénard et al. ([2021a](https://doi.org/10.1214/20-EJS1792), [2021b](https://proceedings.mlr.press/v130/benard21a.html)) proof that their algorithm is stable and that the other algorithms are not.
-They achieve their stability by restricting the location at which the splitpoints can be chosen.
+In the papers which introduce SIRUS, Bénard et al. ([2021a](https://doi.org/10.1214/20-EJS1792),
+[2021b](https://proceedings.mlr.press/v130/benard21a.html)) proof that their algorithm
+is stable and that the other algorithms are not.
+They achieve their stability by restricting the location at which the splitpoints
+can be chosen.
 To see how this works, let's look at the `age` feature on its own.
 """
 
 # ╔═╡ 0d121fa3-fbfa-44e5-904b-64a1622ec91b
 md"""
-The default random forest algorithm is allowed to choose any location inside this feature to split on.
-To avoid having to figure out locations by itself, the algorithm will choose on of the datapoints as a split location.
-So, for example, the following split indicated by the red vertical line would be a valid choice:
+The default random forest algorithm is allowed to choose any location inside this
+feature to split on.
+To avoid having to figure out locations by itself,
+the algorithm will choose on of the datapoints as a split location.
+So, for example, the following split indicated by the red vertical line
+would be a valid choice:
 """
 
 # ╔═╡ 896e00dc-2ce9-4a9f-acc1-519aec21dd83
@@ -166,9 +204,10 @@ Say, we take the following subset of length `0.7 * length(nodes)`:
 
 # ╔═╡ ee12350a-627b-4a11-99cb-38c496977d18
 md"""
-Now, the algorithm would choose a different location and, hence, introduce instability.
-To solve this, Bénard et al. decided to limit the splitpoints that the algorithm can use to split to data to a pre-defined set of points.
-For each feature, they find `q` empirical quantiles where `q` is typically 10.
+Now, the algorithm would choose a different location and, hence, introduce _instability_.
+To solve this, Bénard et al. decided to limit the splitpoints that the algorithm
+can use to split to data to a pre-defined set of points.
+For each feature, they find `q` empirical quantiles where `q` is typically `10`.
 Let's overlay these quantiles on top of the `age` feature:
 """
 
@@ -180,7 +219,9 @@ Next, let's see where the cutpoints are when we take the same random subset as a
 # ╔═╡ 01b08d44-4b9b-42e2-bb20-f34cb9b407f3
 md"""
 As can be seen, many cutpoints are at the same location as before.
-Furthermore, compared to the unrestricted range, the chance that two different trees who see a different random subset of the data will select the same cutpoint has increased dramatically.
+Furthermore, compared to the unrestricted range,
+the chance that two different trees who see a different random subset of
+the data will select the same cutpoint has increased dramatically.
 
 The benefit of this is that it is now quite easy to extract the most important rules.
 Rule extraction consists of simplifying them a bit and ordering them by frequency of occurrence.
@@ -204,20 +245,31 @@ See the Appendix for more details about these results.
 
 # ╔═╡ 4a4ab7ef-659e-4048-ab16-94ad4cb4328a
 md"""
-As can be seen, the score of the stabilized random forest (`StableForestClassifier`) is comparable to the gradient boosted Evo Trees (`EvoTreesClassifier`), but both are not interpretable since that requires interpreting thousands of trees.
-With the rule-based classifier (`StableRulesClassifier`), a small amount of predictive performance can be traded for high interpretability.
-Note that the rule-based classifier may actually be more accurate in practice because verifying and debugging the model is much easier.
+As can be seen, the score of the stabili`ed random forest (`StableForestClassifier`) is
+comparable to the gradient boosted Evo Trees (`EvoTreesClassifier`),
+but both are not interpretable since that requires interpreting thousands of trees.
+With the rule-based classifier (`StableRulesClassifier`),
+a small amount of predictive performance can be traded for high interpretability.
+Note that the rule-based classifier may actually be more accurate in practice
+because verifying and debugging the model is much easier.
 
 Regarding the hyperparameters, tuning `max_rules` and `max_depth` has the most effect.
 `max_rules` specifies the number of rules to which the random forest is simplified.
-Setting to a high number such as 999 makes the predictive performance similar to that of a random forest, but also makes the interpretability as bad as a random forest.
-Therefore, it makes more sense to truncate the rules to somewhere in the range 5 to 40 to obtain accurate models with high interpretability.
+Setting to a high number such as 999 makes the predictive performance similar to
+that of a random forest, but also makes the interpretability as bad as a random forest.
+Therefore, it makes more sense to truncate the rules to somewhere in the range
+`5` to `40` to obtain accurate models with high interpretability.
 `max_depth` specifies how many levels the trees have.
-For larger datasets, `max_depth=2` makes the most sense since it can find more complex patterns in the data.
-For smaller datasets, `max_depth=1` makes more sense since it reduces the chance of overfitting.
-It also simplifies the rules because with `max_depth=1`, the rule will contain only one subclause (for example, "if A then ...") versus two subclauses (for example, "if A & B then ...").
+For larger datasets,
+`max_depth=2` makes the most sense since it can find more complex patterns in the data.
+For smaller datasets,
+`max_depth=1` makes more sense since it reduces the chance of overfitting.
+It also simplifies the rules because with `max_depth=1`,
+the rule will contain only one subclause (for example, "if A then ...")
+versus two subclauses (for example, "if A & B then ...").
 In some cases, model accuracy can be improved by increasing `n_trees`.
-The higher this number, the more trees are fitted and, hence, the higher the chance that the right rules are extracted from the trees.
+The higher this number, the more trees are fitted and, hence,
+the higher the chance that the right rules are extracted from the trees.
 """
 
 # ╔═╡ 16de5518-2a16-40ef-87a5-d2acd514d294
@@ -225,37 +277,55 @@ md"""
 ## Interpretation
 
 Finally, let's interpret the rules that the model has learned.
-Since we know that the model performs well on the cross-validations, we can fit our preferred model on the complete dataset:
+Since we know that the model performs well on the cross-validations,
+we can fit our preferred model on the complete dataset:
 """
 
 # ╔═╡ 3c415a26-803e-4f35-866f-2e582c6c1c45
 md"""
-## Visualization
+## Visuali`ation
 
-Since our rules are relatively simple with only a binary outcome and only one subclause in each rule, the following figure is a way to visualize the obtained rules per fold.
+Since our rules are relatively simple with only a binary outcome and only one
+subclause in each rule, the following figure is a way to visualize the obtained
+rules per fold.
 For multiple subclauses, I would not know how to visualize the rules.
 Also, this plot is probably not perfect; let me know if you have suggestions.
 
-This figure shows the model uncertainty by visualizing the obtained models for different cross-validation folds.
+This figure shows the model uncertainty by visualizing the obtained models for
+different cross-validation folds.
 The subfigure on the left shows how the fitted rules affect the outcome.
-A point on the left means that a lower value for the data is related to higher outcome (i.e., a higher chance of survival in this dataset) whereas a point on the right is means that a higher value for the data is related to a higher outcome. 
-The subfigure on the right shows the thresholds used by the rules in the cross-validation folds via the vertical lines.
+A point on the left means that a lower value for the data is related to
+higher outcome (i.e., a higher chance of survival in this dataset) whereas
+a point on the right is means that a higher value for the data is related to
+a higher outcome. 
+The subfigure on the right shows the thresholds used by the rules in the cross-validation
+folds via the vertical lines.
 In the background, the histograms show the data.
 
-For example, for the `nodes`, it can be seen that all rules (fitted in the different cross-validation folds) base their decision on whether the `nodes` are below, roughly, 5.
+For example, for the `nodes`, it can be seen that all rules
+(fitted in the different cross-validation folds) base their decision on whether
+the `nodes` are below, roughly, `5`.
 Next, the left side indicates in which direction this effect works.
-More specifically, the individuals who had less than 5 nodes are more likely to survive, according to the model. 
-The sizes of the dots indicate the weight that the rule has, so a bigger dot means that a rule plays a larger role in the final outcome. 
-These dots are sized in such a way that a doubling in weight means a doubling in surface size.
+More specifically, the individuals who had less than `5` nodes are more likely to survive,
+according to the model. 
+The sizes of the dots indicate the weight that the rule has, so a bigger dot
+means that a rule plays a larger role in the final outcome. 
+These dots are sized in such a way that a doubling in weight means a doubling
+in surface size.
 """
 
 # ╔═╡ ab5423cd-c8a9-488e-9bb0-bb41e583c2fa
 md"""
-What this plot shows is that the `nodes` feature is on average chosen as the feature with the most predictive power because the `nodes` feature is shown as the first feature and the thickness of the dots is the biggest.
+What this plot shows is that the `nodes` feature is on average chosen as the
+feature with the most predictive power because the `nodes` feature is shown
+as the first feature and the thickness of the dots is the biggest.
 Furthermore, there is agreement on the effect of the `nodes` and `age` features.
 In both cases, a lower number is associated with survival.
-This is as expected because the model essentially implies that people where fewer cancerous axillary nodes are detected and who are younger are more likely to survive.
-The `year` in which the operation was conducted might not have a serious effect on the survivability and the model shoes this by a high variability on the direction of that feature.
+This is as expected because the model essentially implies that people where
+fewer cancerous axillary nodes are detected and who are younger are more likely to survive.
+The `year` in which the operation was conducted might not have a serious effect
+on the survivability and the model shoes this by a high variability on the
+direction of that feature.
 """
 
 # ╔═╡ f2fee9a8-7f6f-4213-9046-2f1a8f14a7e6
@@ -264,26 +334,38 @@ md"""
 
 As shown in the previous sections, the model satisfies two things:
 
-1. It shows a good predictive performance in the model evaluations. The performance is slightly lower than more complex models, but this tradeoff can be worth it because the rule-based model is interpretable.
-2. The fitted model makes theoretical sense. As shown in the visualization, the `nodes` and `age` features are the most important for prediction and both features are used in the expected way.
+1. It shows a good predictive performance in the model evaluations.
+   The performance is slightly lower than more complex models,
+   but this tradeoff can be worth it because the rule-based model is interpretable.
+2. The fitted model makes theoretical sense. As shown in the visualization,
+   the `nodes` and `age` features are the most important for prediction
+   and both features are used in the expected way.
 
-Since the model shows good performance and makes theoretical sense, we can be reasonably sure that the model will generalize to new data in a similar context.
-Next, the model can be applied by fitting it on the full dataset and brining it to a real-world setting.
+Since the model shows good performance and makes theoretical sense,
+we can be reasonably sure that the model will generalize to new data in a similar context.
+Next, the model can be applied by fitting it on the full dataset and bringing it
+to a real-world setting.
 
-Note that unlike the random forests and gradient boosted trees, each decision that the model makes can be fully explained.
+Note that unlike the random forests and gradient boosted trees,
+each decision that the model makes can be fully explained.
 All rules can be read stand-alone and interpreted.
 For example, when trying to interpret a random forest, it will only report feature importances.
 For the Haberman dataset, we would know more than `nodes` is negatively associated and `age` too.
-With the rule-based model, we can say exactly at which number of `nodes` and at which `age` the model decides to split the data between likely to survive or not survive.
+With the rule-based model, we can say exactly at which number of `nodes`
+and at which `age` the model decides to split the data between likely to
+survive or not survive.
 """
 
 # ╔═╡ e6b880e9-e263-4818-81e9-bb4105e5c2c1
 md"""
 ## Conclusion
 
-Compared to decision trees, the rule-based classifier is more stable, more accurate and similarly easy to interpret.
-Compared to the random forest, the rule-based classifier is only slightly less accurate, but much easier to interpret.
-Due to the interpretability, it is likely easier to verify the model and therefore the rule-based classifier will be more accurate in real-world settings.
+Compared to decision trees, the rule-based classifier is more stable,
+more accurate and similarly easy to interpret.
+Compared to the random forest, the rule-based classifier is only slightly less accurate,
+but much easier to interpret.
+Due to the interpretability, it is likely easier to verify the model
+and therefore the rule-based classifier will be more accurate in real-world settings.
 This makes rule-based highly suitable for many machine learning tasks.
 """
 

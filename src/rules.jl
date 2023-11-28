@@ -356,7 +356,7 @@ end
 
 """
 Apply _rule selection_ and _rule set post-treatment_
-(Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a)).
+([Bénard et al., 2021](http://proceedings.mlr.press/v130/benard21a)).
 
 We have a slight modification here:
 we do not sort first, select some p0 first, and then remove linearly dependent

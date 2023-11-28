@@ -339,7 +339,9 @@ The fields of `fitted_params(mach)` are:
 """
 $(MMI.doc_header(StableForestClassifier))
 
-`StableForestClassifier` implements the random forest classifier with a stabilized forest structure (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html)).
+`StableForestClassifier` implements the random forest classifier with a
+stabilized forest structure
+([Bénard et al., 2021](http://proceedings.mlr.press/v130/benard21a.html)).
 This stabilization increases stability when extracting rules.
 The impact on the predictive accuracy compared to standard random forests should be relatively small.
 
@@ -377,7 +379,8 @@ StableRulesClassifier
 """
 $(MMI.doc_header(StableForestRegressor))
 
-`StableForestRegressor` implements the random forest regressor with a stabilized forest structure (Bénard et al., [2021](http://proceedings.mlr.press/v130/benard21a.html)).
+`StableForestRegressor` implements the random forest regressor with a
+stabilized forest structure ([Bénard et al., 2021](http://proceedings.mlr.press/v130/benard21a.html)).
 
 $TRAINING_DATA_SECTION
 

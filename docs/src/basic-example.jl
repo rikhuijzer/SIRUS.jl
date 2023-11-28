@@ -33,7 +33,8 @@ end
 md"""
 # Basic Example
 
-This page shows a basic example for using SIRUS.jl on a dataset via the Machine Learning Julia (MLJ.jl) interface.
+This page shows a basic example for using SIRUS.jl on a dataset via the
+Machine Learning Julia (MLJ.jl) interface.
 For more details on what SIRUS is and how it works, see the
 [Advanced Example](/dev/binary-classification).
 """
@@ -45,7 +46,8 @@ TableOfContents()
 # ╔═╡ 0b4f89c4-ccb0-4cc9-b7bb-3f630ba2398c
 md"""
 To show the algorithm, we'll use Haberman's survival dataset.
-We load it via `DataDeps.jl` so that we can use a checksum for verification and to cache the dataset.
+We load it via `DataDeps.jl` so that we can use a checksum for verification
+and to cache the dataset.
 """
 
 # ╔═╡ 75550619-b310-4c66-9371-93656f78765c
@@ -88,15 +90,30 @@ y = data.survival;
 # ╔═╡ a1764625-4b7a-42f3-9e61-3d26122d86da
 md"""
 Next, we can load the model that we want to use.
-Since Haberman's outcome column (`survival`) contains 0's and 1's, we use the `StableRulesClassifier`.
+Since Haberman's outcome column (`survival`) contains `0`'s and `1`'s,
+we use the `StableRulesClassifier`.
 
 Here, the hyperparameters were manually tuned for this dataset.
 On this dataset:
 
-- The number of split points `q` was lowered to 4. This means that the random forest can choose from only 4 locations to split the data. With such a low number, the accuracy typically goes down, but the rules become more interpretable.
-- The max tree depth `max_depth` was set to 2. This is the highest that SIRUS can go, as is discussed in the original paper. The reason is that rules for greater tree depths do almost certainly not end up in the final rule set, so it's computationally cheaper to not determine them in the first place.
-- The `lambda` parameter was set to 1. This parameter is used with a ridge regression to determine the weights in the final rule set. SIRUS is very sensitive to the choice of this hyperparameter. Ensure that you try the full range from 10^-4 to 10^4 (e.g., 0.001, 0.01, ..., 100).
-- The max number of rules `max_rules` was set to 8. Typically, the model becomes more accurate with more rules, but less interpretable. When the model becomes less accurate with more rules, then ensure that you have set the right `lambda`.
+- The number of split points `q` was lowered to `4`.
+  This means that the random forest can choose from only 4 locations to split the data.
+  With such a low number, the accuracy typically goes down,
+  but the rules become more interpretable.
+- The max tree depth `max_depth` was set to `2`.
+  This is the highest that SIRUS can go,
+  as is discussed in the [original paper](http://proceedings.mlr.press/v130/benard21a.html).
+  The reason is that rules for greater tree depths do almost certainly not end up
+  in the final rule set, so it's computationally cheaper to not determine them in the first place.
+- The `lambda` parameter was set to `1`.
+  This parameter is used with a ridge regression to determine the weights in the final rule set.
+  SIRUS is very sensitive to the choice of this hyperparameter.
+  Ensure that you try the full range from $10^{-4}$ to $10^4$
+  (e.g., `0.001`, `0.01`, ..., `100`).
+- The max number of rules `max_rules` was set to `8`.
+  Typically, the model becomes more accurate with more rules, but less interpretable.
+  When the model becomes less accurate with more rules,
+  then ensure that you have set the right `lambda`.
 """
 
 # ╔═╡ ccce5f3e-e396-4765-bf5f-6f79e905aca8
@@ -130,11 +147,14 @@ mach.fitresult
 
 # ╔═╡ 89b12064-5d46-436c-b697-0a4dc527d586
 md"""
-This shows that the model contains $(length(mach.fitresult.rules)) rules where the first rule, for example, can be interpreted as
+This shows that the model contains $(length(mach.fitresult.rules)) rules where the first rule,
+for example, can be interpreted as:
 
-_If the number of detected axillary nodes is lower than 7, then take 0.238 and otherwise take 0.046._
+> _If the number of detected axillary nodes is lower than 7,
+> then take 0.238 and otherwise take 0.046._
 
-This calculation is done for all $(length(mach.fitresult.rules)) rules and the score is summed to get a prediction.
+This calculation is done for all $(length(mach.fitresult.rules)) rules and the score
+is summed to get a prediction.
 """
 
 # ╔═╡ 13ad02dd-c557-4599-8502-f85d20234ed0
@@ -148,7 +168,7 @@ predictions = predict(mach, X)
 # ╔═╡ 58711147-9f89-465a-9e21-ab1d64e03c2d
 md"""
 To get the underlying predictions out of these objects, use `pdf`.
-For example, to get the prediction for the class 0 for the first datapoint, use:
+For example, to get the prediction for the class `0` for the first datapoint, use:
 """
 
 # ╔═╡ ed969c5c-6f58-4b8c-825b-fcf04da74036
@@ -156,7 +176,8 @@ pdf(predictions[1], 0)
 
 # ╔═╡ 1ca8a8b1-0623-47d7-8900-41056e0b21ee
 md"""
-See <https://alan-turing-institute.github.io/MLJ.jl/dev/getting_started/#Fit-and-predict> for more information.
+See [`MLJ.jl` documentation on `fit` and `predict`](https://alan-turing-institute.github.io/MLJ.jl/dev/getting_started/#Fit-and-predict)
+for more information.
 """
 
 # ╔═╡ ece3f092-368e-41af-994a-e814f2267f48
@@ -164,7 +185,8 @@ md"""
 ## Model Evaluation via Cross-Validation
 
 Let's define our Cross-Validation (CV) strategy with 10 folds.
-Also, we enable shuffling to make it more likely that our model sees cases from both `survival` classes:
+Also, we enable shuffling to make it more likely that our model sees cases from
+both `survival` classes:
 """
 
 # ╔═╡ dfc6f708-3d26-4102-92c6-33cee32e438c
@@ -172,9 +194,12 @@ resampling = CV(; rng=StableRNG(1), nfolds=10, shuffle=true);
 
 # ╔═╡ d2905680-552d-4a9a-b3f1-7dd27cbf703f
 md"""
-We use the Area Under the Curve (AUC) measure since that measure is appropriate for binary classification tasks.
+We use the Area Under the Curve (AUC) measure since that measure is appropriate
+for binary classification tasks.
 More specifically, the measure gives the area under the receiver operating characteristic curve.
-For this measure, a score of 0.5 means that our model is as good (or bad, actually) as random guessing, and a score of 0.0 means predicting all cases wrong and 1.0 means predicting all cases correctly.
+For this measure, a score of 0.5 means that our model is as good (or bad, actually)
+as random guessing, and a score of 0.0 means predicting all cases wrong and 1.0
+means predicting all cases correctly.
 """
 
 # ╔═╡ b8c6c9e0-679e-41d5-80c0-ffd65e652489
