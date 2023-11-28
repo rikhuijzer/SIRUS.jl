@@ -101,7 +101,8 @@ function predict(
 end
 
 predict(mach, X)
-e = _evaluate(model, X, y; measure=rsq)
+# Multi-threaded evaluation will crash.
+e = _evaluate(model, X, y; measure=rsq, acceleration=MLJBase.CPU1())
 @test 0.6 < _score(e)
 
 MMI.@mlj_model mutable struct RSirusClassifier <: Probabilistic
@@ -175,9 +176,9 @@ end
 
 predict(mach, X)
 
-e = _evaluate(model, X, y; measure=auc)
+e = _evaluate(model, X, y; measure=auc, acceleration=MLJBase.CPU1())
 @test 0.5 < _score(e)
 
 # Looks like sirus does not support multiclass classification.
 # y = categorical(rand(_rng(), [0, 1, 2], n))
-# _evaluate(model, X, y; measure=accuracy)
+# _evaluate(model, X, y; measure=accuracy, acceleration=nothing)

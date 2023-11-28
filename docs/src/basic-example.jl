@@ -89,10 +89,18 @@ y = data.survival;
 md"""
 Next, we can load the model that we want to use.
 Since Haberman's outcome column (`survival`) contains 0's and 1's, we use the `StableRulesClassifier`.
+
+Here, the hyperparameters were manually tuned for this dataset.
+On this dataset:
+
+- The number of split points `q` was lowered to 4. This means that the random forest can choose from only 4 locations to split the data. With such a low number, the accuracy typically goes down, but the rules become more interpretable.
+- The max tree depth `max_depth` was set to 2. This is the highest that SIRUS can go, as is discussed in the original paper. The reason is that rules for greater tree depths do almost certainly not end up in the final rule set, so it's computationally cheaper to not determine them in the first place.
+- The `lambda` parameter was set to 1. This parameter is used with a ridge regression to determine the weights in the final rule set. SIRUS is very sensitive to the choice of this hyperparameter. Ensure that you try the full range from 10^-4 to 10^4 (e.g., 0.001, 0.01, ..., 100).
+- The max number of rules `max_rules` was set to 8. Typically, the model becomes more accurate with more rules, but less interpretable. When the model becomes less accurate with more rules, then ensure that you have set the right `lambda`.
 """
 
 # ╔═╡ ccce5f3e-e396-4765-bf5f-6f79e905aca8
-model = StableRulesClassifier(; rng=StableRNG(1), q=4, max_depth=2, max_rules=8);
+model = StableRulesClassifier(; rng=StableRNG(1), q=4, max_depth=2, lambda=1, max_rules=8);
 
 # ╔═╡ 97c9ea2a-2897-472b-b15e-215f40049cf5
 md"""

@@ -1,8 +1,7 @@
 import Base
 
 ENV["DATADEPS_ALWAYS_ACCEPT"] = "true"
-
-const CAN_RUN_R_SIRUS = v"1.8" < VERSION
+ENV["CAN_RUN_R_SIRUS"] = v"1.8" < VERSION
 
 using CategoricalArrays:
     CategoricalValue,
@@ -57,12 +56,6 @@ _rng(seed::Int=1) = StableRNG(seed)
 
 function _score(e::PerformanceEvaluation)
     return round(only(e.measurement); sigdigits=2)
-end
-
-function _evaluate(model, X, y; nfolds::Number=10, measure=auc)
-    resampling = CV(; nfolds, shuffle=true, rng=_rng())
-    acceleration = MLJBase.CPUThreads()
-    evaluate(model, X, y; acceleration, verbosity=0, resampling, measure)
 end
 
 if !haskey(ENV, "REGISTERED_CANCER")
@@ -165,6 +158,122 @@ end
 
 function _SubClause(feature::Int, splitval::Float32, direction::Symbol)
     return S.SubClause(feature, string(feature), splitval, direction)
+end
+
+datasets = Dict{String,Tuple}(
+    "blobs" => let
+        n = 200
+        p = 40
+        make_blobs(n, p; centers=2, rng=_rng(), shuffle=true)
+    end,
+    "titanic" => let
+        titanic = Titanic()
+        df = titanic.features
+        F = [:Pclass, :Sex, :Age, :SibSp, :Parch, :Fare, :Embarked]
+        sub = select(df, F...)
+        sub[!, :y] = categorical(titanic.targets[:, 1])
+        sub[!, :Sex] = ifelse.(sub.Sex .== "male", 1, 0)
+        dropmissing!(sub)
+        embarked2int(x) = x == "S" ? 1 : x == "C" ? 2 : 3
+        sub[!, :Embarked] = embarked2int.(sub.Embarked)
+        X = MLJBase.table(MLJBase.matrix(sub[:, Not(:y)]))
+        (X, sub.y)
+    end,
+    "cancer" => let
+        df = cancer()
+        X = MLJBase.table(MLJBase.matrix(df[:, Not(:Diagnosis)]))
+        (X, df.Diagnosis)
+    end,
+    "diabetes" => let
+        df = diabetes()
+        X = MLJBase.table(MLJBase.matrix(df[:, Not(:Outcome)]))
+        (X, df.Outcome)
+    end,
+    "haberman" => let
+        df = haberman()
+        X = MLJBase.table(MLJBase.matrix(df[:, Not(:survival)]))
+        y = categorical(df.survival)
+        (X, y)
+    end,
+    "iris" => let
+        iris = Iris()
+        X = iris.features
+        y = [x == "Iris-setosa" ? 1 : x == "Iris-versicolor" ? 2 : 3 for x in iris.targets.class]
+        (X, categorical(y))
+     end,
+    "boston" => boston(),
+    "make_regression" => let
+        make_regression(600, 3; noise=0.0, sparse=0.0, outliers=0.0, rng=_rng())
+     end
+)
+
+results = DataFrame(;
+        Dataset=String[],
+        Model=String[],
+        Hyperparameters=String[],
+        measure=String[],
+        score=String[],
+        se=String[],
+        nfolds=Int[]
+    )
+
+function _with_trailing_zero(score::Real)::String
+    text = string(score)::String
+    if length(text) == 3
+        return text * '0'
+    else
+        return text
+    end
+end
+
+_filter_rng(hyper::NamedTuple) = Base.structdiff(hyper, (; rng=:foo))
+_pretty_name(modeltype) = last(split(string(modeltype), '.'))
+_hyper2str(hyper::NamedTuple) = hyper == (;) ? "(;)" : string(hyper)::String
+
+function _evaluate(
+        model,
+        X,
+        y;
+        nfolds::Number=10,
+        measure=auc,
+        acceleration=MLJBase.CPUThreads()
+    )
+    resampling = CV(; nfolds, shuffle=true, rng=_rng())
+    evaluate(model, X, y; acceleration, verbosity=0, resampling, measure)
+end
+
+function _evaluate!(
+        results::DataFrame,
+        dataset::String,
+        modeltype::DataType,
+        hyperparameters::NamedTuple=(; );
+        measure=auc,
+        acceleration=MLJBase.CPUThreads()
+    )
+    X, y = datasets[dataset]
+    nfolds = 10
+    model = modeltype(; hyperparameters...)
+    e = _evaluate(model, X, y; nfolds, measure, acceleration)
+    score = _with_trailing_zero(_score(e))
+    se = let
+        val = round(only(MLJBase._standard_errors(e)); digits=2)
+        _with_trailing_zero(val)
+    end
+    measure::String = measure == auc ? "auc" :
+        measure == accuracy ? "accuracy" :
+        measure == rsq ? "R²" :
+        error("Cannot prettify measure $measure")
+    row = (;
+        Dataset=dataset,
+        Model=_pretty_name(modeltype),
+        Hyperparameters=_hyper2str(_filter_rng(hyperparameters)),
+        measure,
+        score,
+        se,
+        nfolds
+    )
+    push!(results, row)
+    return e
 end
 
 nothing
