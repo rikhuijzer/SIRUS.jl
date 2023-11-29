@@ -192,8 +192,8 @@ For example, the stabilization could result in the rules ``\text{if } x_1 < 3 \t
 Secondly, by pruning rules which are a linear combination of other rules.
 
 The first step requires setting a hyperparameter ``p_0`` in the original algorithm.
-This hyperparameter specifies a threshold which is then used to remove rules with a occurrence frequency below ``p_0``.
 The implementation in this Julia package ignores this step because it is superseded by the second step and because it is quite difficult to pick the right ``p_0``.
+This hyperparameter specifies a threshold which is then used to remove rules with an occurrence frequency below ``p_0``.
 In other words, this step is ignored because it seems like a premature optimization (but I'm happy to be proven wrong of course).
 
 The second step is more important and more involved.
