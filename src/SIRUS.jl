@@ -30,8 +30,10 @@ include("regression.jl")
 include("rules.jl")
 export StableRules, feature_names, directions, satisfies
 include("ruleshow.jl")
-include("weights.jl")
 include("dependent.jl")
+include("weights.jl")
+include("extract.jl")
+export feature_importance, feature_importances
 
 include("mlj.jl")
 const StableForestClassifier = MLJImplementation.StableForestClassifier
