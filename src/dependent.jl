@@ -218,7 +218,7 @@ Via an example, they specify that the gap size is the difference between the
 then and otherwise (else) probabilities.
 
 A smaller gap size implies a smaller CART-splitting criterion, which implies a
-smaller occurence frequency.
+smaller occurrence frequency.
 """
 function gap_size(rule::Rule)
     @assert length(rule.then) == length(rule.otherwise)

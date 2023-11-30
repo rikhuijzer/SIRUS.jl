@@ -23,7 +23,7 @@ ordered by importance:
 This is based on the [`gap_size`](@ref) function. The gap size is the
 difference between the then and otherwise (else) probabilities. A smaller gap
 size implies a smaller CART-splitting criterion, which implies a smaller
-occurence frequency (see the appendix at
+occurrence frequency (see the appendix at
 <https://proceedings.mlr.press/v130/benard21a.html> for an example).
 
 !!! note
