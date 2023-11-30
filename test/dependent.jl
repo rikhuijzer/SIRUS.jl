@@ -26,10 +26,10 @@ r15 = S.Rule(S.Clause(" X[i, 1] ≥ 32000 & X[i, 4] < 12 "), [0.192], [0.096])
 r16 = S.Rule(S.Clause(" X[i, 2] ≥ 8000 & X[i, 4] ≥ 12 "), [0.586], [0.076])
 r17 = S.Rule(S.Clause(" X[i, 2] ≥ 8000 & X[i, 4] < 12 "), [0.236], [0.094])
 
-@test S._gap_size(r1) == 0.408 - 0.061
-@test S._gap_size(r3) == 0.386 - 0.062
-@test S._gap_size(r3) < S._gap_size(r1)
-@test S._gap_size(r12) < S._gap_size(r1)
+@test gap_size(r1) == 0.408 - 0.061
+@test gap_size(r3) == 0.386 - 0.062
+@test gap_size(r3) < gap_size(r1)
+@test gap_size(r12) < gap_size(r1)
 
 @test S._sort_by_gap_size([r3, r12, r1]) == [r1, r3, r12]
 @test S._filter_linearly_dependent([r1, r2, r3, r5]) == [r1, r3, r5]

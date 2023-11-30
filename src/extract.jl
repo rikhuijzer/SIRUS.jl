@@ -1,16 +1,10 @@
 
 "Estimate the importance of a rule."
 function _rule_importance(weight::Number, rule::Rule)
-    # TODO: THIS SHOULD USE THE GAP SIZE FUNCTION.
     importance = 0.0
-    thens = rule.then::Vector{Float64}
-    otherwises = rule.otherwise::Vector{Float64}
-    @assert length(thens) == length(otherwises)
-    n_classes = length(thens)
-    for (then, otherwise) in zip(thens, otherwises)
-        importance += weight * abs(then - otherwise)
-    end
-    return importance / n_classes
+    gap = gap_size(rule)
+    n_classes = length(rule.then)
+    return (weight * gap) / n_classes
 end
 
 """
@@ -25,6 +19,12 @@ ordered by importance:
 
 > Given two features A and B, if A has more effect on the outcome, then
 > feature_importance(model, A) > feature_importance(model, B).
+
+This is based on the [`gap_size`](@ref) function. The gap size is the
+difference between the then and otherwise (else) probabilities. A smaller gap
+size implies a smaller CART-splitting criterion, which implies a smaller
+occurence frequency (see the appendix at
+<https://proceedings.mlr.press/v130/benard21a.html> for an example).
 
 !!! note
     This function provides only an importance _estimate_ because the effect on

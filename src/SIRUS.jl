@@ -31,6 +31,7 @@ include("rules.jl")
 export StableRules, feature_names, directions, satisfies
 include("ruleshow.jl")
 include("dependent.jl")
+export gap_size
 include("weights.jl")
 include("extract.jl")
 export feature_importance, feature_importances

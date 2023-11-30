@@ -208,7 +208,19 @@ function _linearly_dependent(
     return dependent
 end
 
-function _gap_size(rule::Rule)
+"""
+    gap_size(rule::Rule)
+
+Return the gap size for a rule.
+The gap size is used by Bénard et al. in the appendix of their PMLR paper
+(<https://proceedings.mlr.press/v130/benard21a.html>).
+Via an example, they specify that the gap size is the difference between the
+then and otherwise (else) probabilities.
+
+A smaller gap size implies a smaller CART-splitting criterion, which implies a
+smaller occurence frequency.
+"""
+function gap_size(rule::Rule)
     @assert length(rule.then) == length(rule.otherwise)
     gap_size_per_class = abs.(rule.then .- rule.otherwise)
     sum(gap_size_per_class)
@@ -221,7 +233,7 @@ they have a smaller gap.
 """
 function _sort_by_gap_size(rules::Vector{Rule})::Vector{Rule}
     alg = Helpers.STABLE_SORT_ALG
-    return sort(rules; alg, by=_gap_size, rev=true)
+    return sort(rules; alg, by=gap_size, rev=true)
 end
 
 """
