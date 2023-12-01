@@ -37,7 +37,7 @@ include("ruleshow.jl")
 include("dependent.jl")
 export gap_size
 include("weights.jl")
-include("extract.jl")
+include("importance.jl")
 export feature_importance, feature_importances
 
 include("mlj.jl")

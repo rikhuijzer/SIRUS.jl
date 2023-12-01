@@ -36,8 +36,8 @@ end
     include("weights.jl")
 end
 
-@testset "extract" begin
-    include("extract.jl")
+@testset "importance" begin
+    include("importance.jl")
 end
 
 if get(ENV, "CAN_RUN_R_SIRUS", "false")::String == "true"
