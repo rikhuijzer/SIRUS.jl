@@ -15,7 +15,6 @@ StableForestRegressor
 SubClause
 Clause
 Rule
-Cutpoints
 ```
 
 ## SIRUS Methods
@@ -36,8 +35,8 @@ feature_importances
 then
 otherwise
 gap_size
-satisfies
 cutpoints
+satisfies
 unpack_rule
 unpack_model
 unpack_models

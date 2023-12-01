@@ -6,8 +6,6 @@ using ..Helpers:
     view_feature
 
 """
-    Cutpoints
-
 A type that represents a vector of possible cutpoints, that is, empirical
 quantiles.
 """
@@ -41,7 +39,11 @@ function _empirical_quantile(V::AbstractVector, quantile::Real)
     return Float32(sorted[index])
 end
 
-"Return a vector of `q` cutpoints taken from the empirical distribution from data `V`."
+"""
+    cutpoints(V::AbstractVector, q::Int)
+
+Return a vector of `q` cutpoints taken from the empirical distribution from data `V`."
+"""
 function cutpoints(V::AbstractVector, q::Int)
     @assert 2 ≤ q
     # Taking 2 extra to avoid getting minimum(V) and maximum(V) becoming cutpoints.

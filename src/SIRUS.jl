@@ -21,7 +21,7 @@ using .Helpers: colnames, nfeatures, view_feature
 
 include("empiricalquantiles.jl")
 using .EmpiricalQuantiles: Cutpoints, cutpoints
-export Cutpoints, cutpoints
+export cutpoints
 
 include("forest.jl")
 export StableForest
