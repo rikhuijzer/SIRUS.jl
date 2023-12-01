@@ -5,7 +5,10 @@ using ..Helpers:
     nfeatures,
     view_feature
 
-"Set of possible cutpoints, that is, empirical quantiles."
+"""
+A type that represents a vector of possible cutpoints, that is, empirical
+quantiles.
+"""
 const Cutpoints = Vector{Float32}
 
 """
@@ -36,7 +39,11 @@ function _empirical_quantile(V::AbstractVector, quantile::Real)
     return Float32(sorted[index])
 end
 
-"Return a vector of `q` cutpoints taken from the empirical distribution from data `V`."
+"""
+    cutpoints(V::AbstractVector, q::Int)
+
+Return a vector of `q` cutpoints taken from the empirical distribution from data `V`."
+"""
 function cutpoints(V::AbstractVector, q::Int)
     @assert 2 ≤ q
     # Taking 2 extra to avoid getting minimum(V) and maximum(V) becoming cutpoints.
@@ -47,9 +54,11 @@ function cutpoints(V::AbstractVector, q::Int)
 end
 
 """
+    cutpoints(X, q::Int)
+
 Return a vector of vectors containing
-- one inner vector for each feature in the dataset and
-- inner vectors containing the unique cutpoints, that is, `length(V[i])` ≤ `q` for all i in V.
+- one inner vector for each feature in the dataset `X` and
+- inner vectors containing `q` unique cutpoints, that is, `length(V[i])` ≤ `q` for all i in V.
 
 Using unique here to avoid checking splits twice.
 """

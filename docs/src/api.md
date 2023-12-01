@@ -1,6 +1,6 @@
 # API
 
-## Types
+## MLJ Interface Types
 
 ```@docs
 StableRulesClassifier
@@ -9,13 +9,35 @@ StableForestClassifier
 StableForestRegressor
 ```
 
-## Methods
+## SIRUS Types
 
 ```@docs
+SubClause
+Clause
+Rule
+```
+
+## SIRUS Methods
+
+```@docs
+feature
+features
+feature_name
 feature_names
+splitval
+splitvals
+clause
+subclauses
+direction
 directions
-values(::SIRUS.Rule)
-satisfies
-Cutpoints
+feature_importance
+feature_importances
+then
+otherwise
+gap_size
 cutpoints
+satisfies
+unpack_rule
+unpack_model
+unpack_models
 ```

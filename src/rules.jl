@@ -1,5 +1,10 @@
 """
-    SubClause
+    SubClause(
+        feature::Int,
+        feature_name::AbstractString,
+        splitval::Number,
+        direction::Symbol
+    )
 
 A subclause denotes a conditional on one feature.
 Each rule contains a clause with one or more subclauses.
@@ -13,18 +18,16 @@ in the final model, as is discussed in the original SIRUS paper.
 
 The data inside a `SubClause` can be accessed via
 
-- `_feature`,
-- `_feature_name`,
-- `_splitval`, and
-- `_direction`.
-
-To obtain the reverse, use `_reverse`.
+- [`feature(::SubClause)`](@ref),
+- [`feature_name(::SubClause)`](@ref),
+- [`splitval(::SubClause)`](@ref), and
+- [`direction(::SubClause)`](@ref).
 
 Note:
 this name is not perfect.
 A formally better name would be "predicate atom", but that takes more
 characters and is also not very intuitive.
-Instead, the word `Clause` and `SubClause` seem pretty short and clear.
+Instead, the word `Clause` and `SubClause` seemed pretty short and clear.
 """
 struct SubClause
     feature::Int
@@ -50,10 +53,35 @@ function SubClause(
     return SubClause(sp.feature, sp.feature_name, sp.value, direction)
 end
 
-_feature(s::SubClause) = s.feature
-_feature_name(s::SubClause) = s.feature_name
-_splitval(s::SubClause) = s.splitval
-_direction(s::SubClause) = s.direction
+"""
+    feature(s::SubClause) -> Int
+
+Return the feature number for a subclause.
+"""
+feature(s::SubClause)::Int = s.feature
+
+"""
+    feature_name(s::SubClause) -> String
+
+Return the feature name for a subclause.
+"""
+feature_name(s::SubClause)::String = s.feature_name
+
+"""
+    splitval(s::SubClause)
+
+Return the split value for a subclause.
+The function currently returns a `Float32` but this might change in the future.
+"""
+splitval(s::SubClause) = s.splitval
+
+"""
+    direction(s::SubClause) -> Symbol
+
+Return the direction of the comparison for a subclause.
+Can be either `:L` or `:R`, which is equivalent to `<` or `≥` respectively.
+"""
+direction(s::SubClause)::Symbol = s.direction
 
 function _reverse(s::SubClause)
     direction = s.direction == :L ? :R : :L
@@ -66,7 +94,7 @@ function Base.:(==)(a::SubClause, b::SubClause)
 end
 
 """
-    Clause
+    Clause(subclauses::Vector{SubClause})
 
 A clause denotes a conditional on one or more features.
 Each rule contains a clause with one or more subclauses.
@@ -80,13 +108,27 @@ As discussed above, in practice the number of subclauses or subclauses `d ≤ 2`
 
 Note that a path can also be a path to a node; not necessarily a leaf.
 
-Data can be accessed via `_subclauses`.
+Data can be accessed via [`subclauses`](@ref).
+
+Clauses can be constructed from a textual representation:
+
+### Example
+
+```jldoctest
+julia> Clause(" X[i, 1] < 32000 ")
+Clause(" X[i, 1] < 32000.0 ")
+```
 """
 struct Clause
     subclauses::Vector{SubClause}
 end
 
-_subclauses(c::Clause) = c.subclauses
+"""
+    subclauses(c::Clause) -> Vector{SubClause}
+
+Return the subclauses for a clause.
+"""
+subclauses(c::Clause) = c.subclauses
 
 function Clause(text::String)
     try
@@ -139,6 +181,38 @@ function Base.:(==)(a::Clause, b::Clause)
     return all(a.subclauses .== b.subclauses)
 end
 
+"""
+    Rule(clause::Clause, then::LeafContent, otherwise::LeafContent)
+
+A rule is a clause with a then and otherwise probability. For example, the rule
+`if X[i, 1] > 3 & X[i, 2] < 4, then 0.1 else 0.2` is a rule with two
+subclauses. The name `otherwise` is used internally instead of `else` since
+`else` is a reserved keyword.
+
+Data can be accessed via
+
+- [`clause(::Rule)`](@ref),
+- [`subclauses(::Rule)`](@ref),
+- [`then(::Rule)`](@ref),
+- [`otherwise(::Rule)`](@ref),
+- [`feature(::Rule)`](@ref),
+- [`features(::Rule)`](@ref),
+- [`feature_name(::Rule)`](@ref),
+- [`feature_names(::Rule)`](@ref),
+- [`splitval(::Rule)`](@ref),
+- [`splitvals(::Rule)`](@ref),
+- [`direction(::Rule)`](@ref), and
+- [`directions(::Rule)`](@ref).
+
+Rules can be constructed from a textual representation:
+
+### Example
+
+```jldoctest
+julia> Rule(Clause(" X[i, 1] < 32000 "), [0.1], [0.4])
+Rule(Clause(" X[i, 1] < 32000.0 "), [0.1], [0.4])
+```
+"""
 struct Rule
     clause::Clause
     then::LeafContent
@@ -146,8 +220,64 @@ struct Rule
     otherwise::LeafContent
 end
 
-_clause(rule::Rule) = rule.clause
-_subclauses(rule::Rule) = rule.clause.subclauses
+"""
+    clause(rule::Rule) -> Clause
+
+Return the clause for a rule.
+The clause is a path in a decision tree after the conversion to rules.
+A clause consists of one or more subclauses.
+"""
+clause(rule::Rule) = rule.clause
+
+"""
+    then(rule::Rule)
+
+Return the then probabilities for a rule. The return type is a vector of
+probabilities; the exact element type may change over time.
+"""
+then(rule::Rule) = rule.then
+
+"""
+    otherwise(rule::Rule)
+
+Return the otherwise probabilities for a rule. The return type is a vector of
+probabilities; the exact element type may change over time.
+"""
+otherwise(rule::Rule) = rule.otherwise
+
+"""
+    subclauses(rule::Rule) -> Vector{SubClause}
+
+Return the subclauses for a rule.
+"""
+subclauses(rule::Rule) = rule.clause.subclauses
+
+"""
+    feature(rule::Rule) -> Int
+
+Return the feature number for a rule with one subclause.
+Throws an error if the rule has multiple subclauses.
+Use [`features`](@ref) for rules with multiple subclauses.
+"""
+feature(rule::Rule)::Int = feature(only(subclauses(rule)))
+
+"""
+    features(rule::Rule) -> Vector{Int}
+
+Return a vector of feature numbers; one for each clause in `rule`.
+"""
+function features(rule::Rule)::Vector{Int}
+    return Int[feature(s) for s in subclauses(rule)]
+end
+
+"""
+    feature_name(rule::Rule) -> String
+
+Return the feature name for a rule with one subclause.
+Throws an error if the rule has multiple subclauses.
+Use [`feature_names`](@ref) for rules with multiple subclauses.
+"""
+feature_name(rule::Rule)::String = feature_name(only(subclauses(rule)))
 
 """
     feature_names(rule::Rule) -> Vector{String}
@@ -155,8 +285,33 @@ _subclauses(rule::Rule) = rule.clause.subclauses
 Return a vector of feature names; one for each clause in `rule`.
 """
 function feature_names(rule::Rule)::Vector{String}
-    return String[String(_feature_name(s))::String for s in _subclauses(rule)]
+    return String[feature_name(s)::String for s in subclauses(rule)]
 end
+
+"""
+    splitval(rule::Rule)
+
+Return the splitvalue for a rule with one subclause.
+Throws an error if the rule has multiple subclauses.
+Use [`splitvals`](@ref) for rules with multiple subclauses.
+"""
+splitval(rule::Rule) = splitval(only(subclauses(rule)))
+
+"""
+    splitvals(rule::Rule)
+
+Return the splitvalues for a rule; one for each subclause.
+"""
+splitvals(rule::Rule) = splitval.(subclauses(rule))
+
+"""
+    direction(rule::Rule) -> Symbol
+
+Return the direction for a rule with one subclause.
+Throws an error if the rule has multiple subclauses.
+Use [`directions`](@ref) for rules with multiple subclauses.
+"""
+direction(rule::Rule)::Symbol = direction(only(subclauses(rule)))
 
 """
     directions(rule::Rule) -> Vector{Symbol}
@@ -164,16 +319,7 @@ end
 Return a vector of split directions; one for each clause in `rule`.
 """
 function directions(rule::Rule)::Vector{Symbol}
-    return Symbol[_direction(s) for s in _subclauses(rule)]
-end
-
-"""
-    values(rule::Rule) -> Vector{Float64}
-
-Return a vector split values; one for each subclause in `rule`.
-"""
-function Base.values(rule::Rule)::Vector{Float64}
-    return Float64[Float64(_splitval(s)) for s in _subclauses(rule)]
+    return Symbol[direction(s) for s in subclauses(rule)]
 end
 
 """
@@ -184,18 +330,18 @@ Assumes that the rule has only one split (clause) since two subclauses
 cannot be reversed.
 """
 function _reverse(rule::Rule)::Rule
-    subclauses = _subclauses(rule)
-    @assert length(subclauses) == 1
-    subclause = subclauses[1]
+    S = subclauses(rule)
+    @assert length(S) == 1
+    subclause = S[1]
     clause = Clause([_reverse(subclause)])
     return Rule(clause, rule.otherwise, rule.then)
 end
 
 function _left_rule(rule::Rule)::Rule
-    subclauses = _subclauses(rule)
-    @assert length(subclauses) == 1
-    split = subclauses[1]
-    return _direction(split) == :L ? rule : _reverse(rule)
+    S = subclauses(rule)
+    @assert length(S) == 1
+    s::SubClause = only(S)
+    return direction(s) == :L ? rule : _reverse(rule)
 end
 
 function Base.:(==)(a::Rule, b::Rule)
@@ -203,7 +349,7 @@ function Base.:(==)(a::Rule, b::Rule)
 end
 
 function Base.hash(rule::Rule)
-    hash([_subclauses(rule), rule.then, rule.otherwise])
+    hash([subclauses(rule), rule.then, rule.otherwise])
 end
 
 function _then_output!(
@@ -343,8 +489,7 @@ removing duplicates.
 function _simplify_single_rules(rules::Vector{Rule})::Vector{Rule}
     out = OrderedSet{Rule}()
     for rule in rules
-        subclauses = _subclauses(rule)
-        if length(subclauses) == 1
+        if length(subclauses(rule)) == 1
             left_rule = _left_rule(rule)
             push!(out, left_rule)
         else
@@ -419,11 +564,11 @@ end
 Return whether data `row` satisfies `rule`.
 """
 function satisfies(row::AbstractVector, rule::Rule)::Bool
-    constraints = map(_subclauses(rule)) do subclause
-        comparison = _direction(subclause) == :L ? (<) : (≥)
-        feature = _feature(subclause)
-        value = _splitval(subclause)
-        satisfies_constraint = comparison(row[feature], value)
+    constraints = map(subclauses(rule)) do subclause
+        comparison = direction(subclause) == :L ? (<) : (≥)
+        feat = feature(subclause)
+        value = splitval(subclause)
+        satisfies_constraint = comparison(row[feat], value)
     end
     return all(constraints)
 end
@@ -445,4 +590,95 @@ function _predict(model::StableRules, row::AbstractVector)
         _predict_rule(rule, weight, row)
     end
     return _sum(rule_predictions)
+end
+
+"""
+    unpack_rule(rule::Rule) -> NamedTuple
+
+Unpack a rule into it's components. This is useful for plotting. It returns a
+named tuple with the following fields:
+
+- `feature`
+- `feature_name`
+- `splitval`
+- `direction`
+- `then`
+- `otherwise`
+"""
+function unpack_rule(rule::Rule)::NamedTuple
+    return (;
+        feature=feature(rule),
+        feature_name=feature_name(rule),
+        splitval=splitval(rule),
+        direction=direction(rule),
+        then=then(rule),
+        otherwise=otherwise(rule)
+    )
+end
+
+"""
+    unpack_model(model::StableRules) -> Vector{NamedTuple}
+
+Unpack a model containing only single subclauses (`max_depth=1`) into it's
+components. This is useful for plotting. It returns a vector of named tuples
+with the following fields:
+
+- `weight`
+- `feature`
+- `feature_name`
+- `splitval`
+- `direction`
+- `then`
+- `otherwise`
+
+One row for each rule in the `model`.
+"""
+function unpack_model(model::StableRules)::Vector{NamedTuple}
+    @assert length(model.weights) == length(model.rules)
+    return map(zip(model.weights, model.rules)) do (weight, rule)
+        (;
+            weight=weight,
+            feature=feature(rule),
+            feature_name=feature_name(rule),
+            splitval=splitval(rule),
+            direction=direction(rule),
+            then=then(rule),
+            otherwise=otherwise(rule)
+        )
+    end
+end
+
+"""
+    unpack_models(
+        models::Vector{StableRules},
+        feature_name::String
+    ) -> Vector{NamedTuple}
+
+Unpack a vector of models containing only single subclauses (`max_depth=1`)
+into it's components. This is useful when plotting the rules that the model has
+learned for each feature. It returns a vector of named tuples with the
+following fields for each rule in the `models` that contains `feature_name`:
+
+- `weight`
+- `feature`
+- `feature_name`
+- `splitval`
+- `direction`
+- `then`
+- `otherwise`
+"""
+function unpack_models(
+    models::Vector{<:StableRules},
+    feature_name::String
+)::Vector{NamedTuple}
+    out = NamedTuple[]
+    for model in models
+        unpacked = unpack_model(model)
+        for nt in unpacked
+            if nt.feature_name == feature_name
+                push!(out, nt)
+            end
+        end
+    end
+    return out
 end
