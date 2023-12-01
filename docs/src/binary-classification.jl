@@ -508,7 +508,7 @@ function _odds_plot(models::Vector{<:StableRules}, feat_names::Vector{String})
 		xlims!(axl, -1, 1)
 
 		unpacked_rules = unpack_models(models, feat_name)::Vector{NamedTuple}
-		# Create a dot in the plot for each rule that mentions feature.
+		# Create a dot and line for each rule that mentions the current feature.
 		for unpacked_rule::NamedTuple in unpacked_rules
 			left = probability_for_class_1(unpacked_rule.then)
 			right = probability_for_class_1(unpacked_rule.otherwise)
@@ -517,11 +517,10 @@ function _odds_plot(models::Vector{<:StableRules}, feat_names::Vector{String})
 			# area = πr²
 			markersize = 50 * sqrt(unpacked_rule.weight / π)
 			scatter!(axl, [ratio], [1]; color=:black, markersize)
+
+			vlines!(axr, unpacked_rule.splitval; color=:black, linestyle=:dash)
 		end
 
-		# Create a line in the plot for each rule that mentions feature.
-		splitvalues = [u.splitval for u in unpacked_rules]
-		vlines!(axr, splitvalues; color=:black, linestyle=:dash)
 		# Show a histogram in the background.
 		hist!(axr, data[:, feat_name]; scale_to=1)
 
