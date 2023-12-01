@@ -19,7 +19,7 @@ end
 # and 2 classes: [0, 1].
 # Note: showing only the probability for class 1 since class 0 has probability 1 - p.
 
-@test_throws KeyError feature_importance(model, "x1")
+@test_throws ArgumentError feature_importance(model, "x1")
 
 importance = feature_importance(model, "1")
 # Based on the numbers above.
@@ -28,3 +28,11 @@ expected = w1 * (0.4 - 0.1) + w2 * (0.3 - 0.2)
 
 @test feature_importance([model, model], "1") ≈ expected atol=0.01
 @test only(feature_importances(model, ["1"])).importance ≈ expected atol=0.01
+
+importances = feature_importances([model], ["1", "2"])::Vector{<:NamedTuple}
+@test length(importances) == 2
+@test importances[1].feature_name == "1"
+@test importances[1].importance ≈ expected atol=0.01
+@test importances[2].feature_name == "2"
+
+

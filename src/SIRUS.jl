@@ -28,6 +28,8 @@ export StableForest
 include("classification.jl")
 include("regression.jl")
 include("rules.jl")
+export SubClause, feature, feature_name, splitval, direction
+export Rule, Clause, clause, subclauses, splitvals
 export StableRules, feature_names, directions, satisfies
 include("ruleshow.jl")
 include("dependent.jl")

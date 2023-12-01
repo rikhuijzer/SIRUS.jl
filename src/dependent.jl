@@ -1,15 +1,15 @@
 "Return whether `a` implies `b`."
 function _implies(a::SubClause, b::SubClause)::Bool
-    if _feature(a) == _feature(b)
-        if _direction(a) == :L
-            if _direction(b) == :L
-                return _splitval(a) ≤ _splitval(b)
+    if feature(a) == feature(b)
+        if direction(a) == :L
+            if direction(b) == :L
+                return splitval(a) ≤ splitval(b)
             else
                 return false
             end
         else
-            if _direction(b) == :R
-                return _splitval(a) ≥ _splitval(b)
+            if direction(b) == :R
+                return splitval(a) ≥ splitval(b)
             else
                 return false
             end
@@ -24,8 +24,7 @@ Return whether `condition` implies `rule`, that is, whether `A & B => rule`.
 """
 function _implies(condition::Tuple{SubClause, SubClause}, rule::Rule)
     A, B = condition
-    subclauses = _subclauses(rule)
-    implied = map(subclauses) do subclause
+    implied = map(subclauses(rule)) do subclause
         _implies(A, subclause) || _implies(B, subclause)
     end
     return all(implied)
@@ -77,17 +76,17 @@ the rank increases when adding rules.
 # Example
 
 ```jldoctest
-julia> A = SIRUS.SubClause(1, "1", 32000.0f0, :L);
+julia> A = SubClause(1, "1", 32000.0f0, :L);
 
-julia> B = SIRUS.SubClause(3, "3", 64.0f0, :L);
+julia> B = SubClause(3, "3", 64.0f0, :L);
 
-julia> r1 = SIRUS.Rule(SIRUS.Clause(" X[i, 1] < 32000.0 "), [0.061], [0.408]);
+julia> r1 = Rule(Clause(" X[i, 1] < 32000.0 "), [0.061], [0.408]);
 
-julia> r5 = SIRUS.Rule(SIRUS.Clause(" X[i, 3] < 64.0 "), [0.056], [0.334]);
+julia> r5 = Rule(Clause(" X[i, 3] < 64.0 "), [0.056], [0.334]);
 
-julia> r7 = SIRUS.Rule(SIRUS.Clause(" X[i, 1] ≥ 32000.0 & X[i, 3] ≥ 64.0 "), [0.517], [0.067]);
+julia> r7 = Rule(Clause(" X[i, 1] ≥ 32000.0 & X[i, 3] ≥ 64.0 "), [0.517], [0.067]);
 
-julia> r12 = SIRUS.Rule(SIRUS.Clause(" X[i, 1] ≥ 32000.0 & X[i, 3] < 64.0 "), [0.192], [0.102]);
+julia> r12 = Rule(Clause(" X[i, 1] ≥ 32000.0 & X[i, 3] < 64.0 "), [0.192], [0.102]);
 
 julia> SIRUS.rank(SIRUS._feature_space([r1, r5], A, B))
 3
@@ -119,7 +118,7 @@ function _feature_space(rules::AbstractVector{Rule}, A::SubClause, B::SubClause)
 end
 
 "Canonicalize a SubClause by ensuring that the direction is left."
-_canonicalize(s::SubClause) = _direction(s) == :L ? s : _reverse(s)
+_canonicalize(s::SubClause) = direction(s) == :L ? s : _reverse(s)
 
 """
 Return a vector of unique left splits for `rules`.
@@ -128,16 +127,16 @@ For example, the pair `x[i, 1] < 32000` (A) and `x[i, 3] < 64` (B) will be used 
 the feature space `A & B`, `A & !B`, `!A & B`, `!A & !B`.
 """
 function _unique_left_subclauses(rules::Vector{Rule})::Vector{SubClause}
-    subclauses = SubClause[]
+    S = SubClause[]
     for rule in rules
-        for subclause in _subclauses(rule)
-            canonicalized = _canonicalize(subclause)
-            if !(canonicalized in subclauses)
-                push!(subclauses, canonicalized)
+        for s::SubClause in subclauses(rule)
+            canonicalized = _canonicalize(s)
+            if !(canonicalized in S)
+                push!(S, canonicalized)
             end
         end
     end
-    return subclauses
+    return S
 end
 
 """
@@ -165,16 +164,16 @@ Here, it is very important to get rid of rules which are about the same feature 
 Otherwise, rules will be wrongly classified as linearly dependent in the next step.
 """
 function _related_rule(rule::Rule, A::SubClause, B::SubClause)::Bool
-    @assert _direction(A) == :L
-    @assert _direction(B) == :L
-    subclauses = _subclauses(rule)
-    if length(subclauses) == 1
-        subclause = only(subclauses)
+    @assert direction(A) == :L
+    @assert direction(B) == :L
+    S = subclauses(rule)
+    if length(S) == 1
+        subclause = only(S)
         left_subclause = _canonicalize(subclause)
         return left_subclause == A || left_subclause == B
-    elseif length(subclauses) == 2
-        l1 = _canonicalize(subclauses[1])
-        l2 = _canonicalize(subclauses[2])
+    elseif length(S) == 2
+        l1 = _canonicalize(S[1])
+        l2 = _canonicalize(S[2])
         return (l1 == A && l2 == B) || (l1 == B && l2 == A)
     else
         @error "Rule $rule has more than two splits; this is not supported."

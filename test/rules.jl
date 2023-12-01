@@ -23,7 +23,7 @@ left_rule = S.Rule(S.Clause(" X[i, 1] < 32000 "), [0.61], [0.408])
 @testset "exported functions" begin
     @test feature_names(left_rule) == ["1"]
     @test directions(left_rule) == [:L]
-    @test values(left_rule) == [32000]
+    @test splitvals(left_rule) == [32000]
 end
 
 r1 = S.Rule(S.Clause(" X[i, 1] < 32000 "), [0.61], [0.408])

@@ -2,19 +2,19 @@
 Return a feature name that can be shown as `[:, 1]` or `[:, :some_var]`.
 """
 function _pretty_feature_name(subclause::SubClause)
-    feature = string(_feature(subclause)::Int)::String
-    feature_name = _feature_name(subclause)::String
-    if feature == feature_name
-        return feature
+    feat = string(feature(subclause)::Int)::String
+    feat_name = feature_name(subclause)::String
+    if feat == feat_name
+        return feat
     else
-        return string(':', feature_name)::String
+        return string(':', feat_name)::String
     end
 end
 
 function _pretty_clause(clause::Clause)
-    texts = map(_subclauses(clause)) do subclause
-        comparison = _direction(subclause) == :L ? '<' : '≥'
-        value = _splitval(subclause)
+    texts = map(subclauses(clause)) do subclause
+        comparison = direction(subclause) == :L ? '<' : '≥'
+        value = splitval(subclause)
         feature_descr = _pretty_feature_name(subclause)
         text = "X[i, $feature_descr] $comparison $value"
     end

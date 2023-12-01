@@ -28,19 +28,17 @@ occurrence frequency (see the appendix at
 
 !!! note
     This function provides only an importance _estimate_ because the effect on
-    the outcome depends on the data, and because it doesn't take into account
-    that a feature can have a lower effect if it is in a clause together with
-    another subclause.
+    the outcome depends on the data.
 """
 function feature_importance(
         model::StableRules,
-        feature_name::String
+        feat_name::String
     )
     importance = 0.0
     found_feature = false
     for (i, rule) in enumerate(model.rules)
-        for subclause::SubClause in _subclauses(rule)
-            if _feature_name(subclause)::String == feature_name
+        for subclause::SubClause in subclauses(rule)
+            if feature_name(subclause)::String == feat_name
                 found_feature = true
                 weight = model.weights[i]
                 importance += _rule_importance(weight, rule)
@@ -48,7 +46,7 @@ function feature_importance(
         end
     end
     if !found_feature
-        throw(KeyError("Feature `$feature_name` not found in the model."))
+        throw(ArgumentError("Feature `$feature_name` not found in the model."))
     end
     return importance
 end
@@ -81,7 +79,7 @@ end
 Return the feature names and importances, sorted by feature importance in descending order.
 """
 function feature_importances(
-        models::Union{StableRules, Vector{StableRules}},
+        models::Union{StableRules, Vector{<:StableRules}},
         feature_names::Vector{String}
     )::Vector{NamedTuple{(:feature_name, :importance), Tuple{String, Float64}}}
     @assert length(unique(feature_names)) == length(feature_names)
@@ -94,8 +92,10 @@ function feature_importances(
 end
 
 function feature_importances(
-        models::Union{StableRules, Vector{StableRules}},
+        models::Union{StableRules, Vector{<:StableRules}},
         feature_names
     )::Vector{NamedTuple{(:feature_name, :importance), Tuple{String, Float64}}}
     return feature_importances(models, string.(feature_names))
 end
+
+
