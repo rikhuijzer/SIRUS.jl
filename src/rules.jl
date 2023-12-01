@@ -633,7 +633,7 @@ with the following fields:
 
 One row for each rule in the `model`.
 """
-function unpack_model(model::StableRules)
+function unpack_model(model::StableRules)::Vector{NamedTuple}
     @assert length(model.weights) == length(model.rules)
     return map(zip(model.weights, model.rules)) do (weight, rule)
         (;
@@ -646,4 +646,39 @@ function unpack_model(model::StableRules)
             otherwise=otherwise(rule)
         )
     end
+end
+
+"""
+    unpack_models(
+        models::Vector{StableRules},
+        feature_name::String
+    ) -> Vector{NamedTuple}
+
+Unpack a vector of models containing only single subclauses (`max_depth=1`)
+into it's components. This is useful when plotting the rules that the model has
+learned for each feature. It returns a vector of named tuples with the
+following fields for each rule in the `models` that contains `feature_name`:
+
+- `weight`
+- `feature`
+- `feature_name`
+- `splitval`
+- `direction`
+- `then`
+- `otherwise`
+"""
+function unpack_models(
+    models::Vector{<:StableRules},
+    feature_name::String
+)::Vector{NamedTuple}
+    out = NamedTuple[]
+    for model in models
+        unpacked = unpack_model(model)
+        for nt in unpacked
+            if nt.feature_name == feature_name
+                push!(out, nt)
+            end
+        end
+    end
+    return out
 end

@@ -236,7 +236,7 @@ Since we know that the model performs well on the cross-validations, we can fit 
 md"""
 ## Plot
 
-Since our rules are relatively simple with only a binary outcome and only one subclause in each rule, the following figure is a way to visualize the obtained rules per fold.
+Since our rules are relatively simple with only a binary outcome and only one subclause in each rule (because of `max_depth=1`), the following figure is a way to visualize the obtained rules per fold.
 For multiple subclauses, I would not know how to visualize the rules.
 Also, this plot is probably not perfect; let me know if you have suggestions.
 
@@ -486,6 +486,54 @@ end
 # hideall
 _plot_cutpoints(nodes)
 
+# ╔═╡ a64dae3c-3b97-4076-98f4-3c9a0e5c0621
+function _odds_plot(models::Vector{<:StableRules}, feat_names::Vector{String})
+	w, h = (1000, 300)
+	fig = Figure(; size=(w, h))
+	grid = fig[1, 1:2] = GridLayout()
+
+	@assert feat_names == sort(unique(feat_names))
+
+	probability_for_class_1(probs::Vector) = last(probs)::Float64
+	# Gets the feature importances in order of importance.
+	importances = feature_importances(models, feat_names)
+
+	# Create a row in the plot for each feature.
+	for (i, importance) in enumerate(importances)
+		feat_name, _ = importance
+		yticks = (1:1, [feat_name])
+		axl = Axis(grid[i, 1:3]; yticks)
+		axr = Axis(grid[i, 4:5])
+		vlines!(axl, [0]; color=:gray, linestyle=:dash)
+		xlims!(axl, -1, 1)
+
+		unpacked_rules = unpack_models(models, feat_name)::Vector{NamedTuple}
+		# Create a dot in the plot for each rule that mentions feature.
+		for unpacked_rule::NamedTuple in unpacked_rules
+			left = probability_for_class_1(unpacked_rule.then)
+			right = probability_for_class_1(unpacked_rule.otherwise)
+			value = unpacked_rule.splitval
+			ratio = log(right / left)
+			# area = πr²
+			markersize = 50 * sqrt(unpacked_rule.weight / π)
+			scatter!(axl, [ratio], [1]; color=:black, markersize)
+		end
+
+		# Create a line in the plot for each rule that mentions feature.
+		splitvalues = [u.splitval for u in unpacked_rules]
+		vlines!(axr, splitvalues; color=:black, linestyle=:dash)
+		# Show a histogram in the background.
+		hist!(axr, data[:, feat_name]; scale_to=1)
+
+		hidexdecorations!(axl)
+		hideydecorations!(axr)
+		hidexdecorations!(axr; ticks=false, ticklabels=false)
+	end
+
+	rowgap!(grid, 5) # hide
+	return fig
+end;
+
 # ╔═╡ 4dcd564a-5b2f-4eae-87d6-c2973b828282
 _filter_rng(hyper::NamedTuple) = Base.structdiff(hyper, (; rng=:foo));
 
@@ -566,96 +614,15 @@ e4 = let
 	_evaluate(model, hyperparameters, X, y)
 end;
 
+# ╔═╡ 923affb5-b4ca-4b50-baa5-af29204d2081
+let
+	models = getproperty.(e4.e.fitted_params_per_fold, :fitresult)
+	_odds_plot(models, sort(names(X)))
+end
+
 # ╔═╡ 7fad8dd5-c0a9-4c45-9663-d40a464bca77
 # hideall
 fitresults = getproperty.(e4.e.fitted_params_per_fold, :fitresult);
-
-# ╔═╡ a64dae3c-3b97-4076-98f4-3c9a0e5c0621
-function _odds_plot(e::PerformanceEvaluation, feat_names::Vector{String})
-	w, h = (1000, 300)
-	fig = Figure(; size=(w, h))
-	grid = fig[1, 1:2] = GridLayout()
-
-	@assert feat_names == sort(unique(feat_names))
-
-	subtitle = "Ratio"
-
-	models = getproperty.(e.fitted_params_per_fold, :fitresult)::Vector{<:StableRules}
-
-	max_height = maximum(maximum.(getproperty.(fitresults, :weights)))
-
-	importances = feature_importances(models, feat_names)
-	l = length(feat_names)
-
-	for (i, feat_name) in enumerate(feat_names)
-		yticks = (1:1, [feat_name])
-		ax = i == l ? 
-			Axis(grid[i, 1:3]; yticks, xlabel="Ratio") : 
-			Axis(grid[i, 1:3]; yticks)
-		vlines!(ax, [0]; color=:gray, linestyle=:dash)
-		xlims!(ax, -1, 1)
-		ylabel = feat_name
-
-		nested_rules_weights = map(fitresults) do fitresult
-			subresult = Tuple{SIRUS.Rule,Float64}[]
-			zipped = zip(fitresult.rules, fitresult.weights)
-			for (rule, weight) in zipped
-				name = feature_name(rule)
-				if name::String == feat_name::String
-					push!(subresult, (rule, weight))
-				end
-			end
-			subresult
-		end
-		rules_weights = Tuple{SIRUS.Rule,Float64}[]
-		for nested in nested_rules_weights
-			isnothing(nested) && continue
-			for rule_weight in nested
-				push!(rules_weights, rule_weight)
-			end
-		end
-		rw::Vector{Tuple{SIRUS.Rule,Float64}} = 
-			filter(!isnothing, rules_weights)
-		thresholds = splitval.(first.(rw))
-		t_mean = round(mean(thresholds); digits=1)
-		t_std = round(std(thresholds); digits=1)
-		
-		for (rule, weight) in rw
-			left = last(then(rule))::Float64
-			right = last(otherwise(rule))::Float64
-			t::Float64 = splitval(rule)
-			ratio = log((right) / (left))
-			# area = πr²
-			markersize = 50 * sqrt(weight / π)
-			scatter!(ax, [ratio], [1]; color=:black, markersize)
-		end
-		hideydecorations!(ax; ticklabels=false)
-
-		axr = i == l ?
-			Axis(grid[i, 4:5]; xlabel="Location") :
-			Axis(grid[i, 4:5])
-		D = data[:, feat_name]
-		hist!(axr, D; scale_to=1)
-		vlines!(axr, thresholds; color=:black, linestyle=:dash)
-
-		if i < l
-			hidexdecorations!(ax)
-		else
-			hidexdecorations!(ax; ticks=false, ticklabels=false)
-		end
-	
-		hideydecorations!(axr)
-		hidexdecorations!(axr; ticks=false, ticklabels=false)
-	end
-
-	rowgap!(grid, 5)
-	colgap!(grid, 50)
-	return fig
-end;
-
-# ╔═╡ 923affb5-b4ca-4b50-baa5-af29204d2081
-# hideall
-_odds_plot(e4.e, sort(names(X)))
 
 # ╔═╡ 5d875f9d-a0aa-47b0-8a75-75bb280fa1ba
 # ╠═╡ show_logs = false
