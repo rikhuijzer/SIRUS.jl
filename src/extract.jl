@@ -73,19 +73,19 @@ end
 """
     feature_importances(
         models::Union{StableRules, Vector{StableRules}}
-        feature_names
+        feat_names::Vector{String}
     )::Vector{NamedTuple{(:feature_name, :importance), Tuple{String, Float64}}}
 
 Return the feature names and importances, sorted by feature importance in descending order.
 """
 function feature_importances(
         models::Union{StableRules, Vector{<:StableRules}},
-        feature_names::Vector{String}
+        feat_names::Vector{String}
     )::Vector{NamedTuple{(:feature_name, :importance), Tuple{String, Float64}}}
-    @assert length(unique(feature_names)) == length(feature_names)
-    importances = map(feature_names) do feature_name
-        importance = feature_importance(models, feature_name)
-        (; feature_name, importance)
+    @assert length(unique(feat_names)) == length(feat_names)
+    importances = map(feat_names) do feat_name
+        importance = feature_importance(models, feat_name)
+        (; feature_name=feat_name, importance)
     end
     alg = Helpers.STABLE_SORT_ALG
     return sort(importances; alg, by=last, rev=true)

@@ -578,18 +578,14 @@ function _odds_plot(e::PerformanceEvaluation, feat_names::Vector{String})
 
 	@assert feat_names == sort(unique(feat_names))
 
-	names = sort(unique(feature_names))
 	subtitle = "Ratio"
-	
+
+	models = getproperty.(e.fitted_params_per_fold, :fitresult)::Vector{<:StableRules}
+
 	max_height = maximum(maximum.(getproperty.(fitresults, :weights)))
 
-	importances = _sum_weights.(Ref(fitresults), feat_names)
+	importances = feature_importances(models, feat_names)
 
-	matching_rules = DataFrame(; feat_names, importance=importances)
-	sort!(matching_rules, :importance; rev=true)
-	names = matching_rules.feat_names
-	l = length(feat_names)
-	
 	for (i, feat_name) in enumerate(feat_names)
 		yticks = (1:1, [feat_name])
 		ax = i == l ? 
