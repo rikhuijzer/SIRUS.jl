@@ -18,7 +18,7 @@ The aim is to satisfy the following property, so that the features can be
 ordered by importance:
 
 > Given two features A and B, if A has more effect on the outcome, then
-> feature_importance(model, A) > feature_importance(model, B).
+> `feature_importance(model, A) > feature_importance(model, B)`.
 
 This is based on the [`gap_size`](@ref) function. The gap size is the
 difference between the then and otherwise (else) probabilities. A smaller gap
