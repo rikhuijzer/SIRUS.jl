@@ -35,4 +35,21 @@ importances = feature_importances([model], ["1", "2"])::Vector{<:NamedTuple}
 @test importances[1].importance ≈ expected atol=0.01
 @test importances[2].feature_name == "2"
 
+@test unpack_rule(r1) == (;
+        feature=1,
+        feature_name="1",
+        splitval=32000.0,
+        direction=:L,
+        then=[0.1],
+        otherwise=[0.4]
+    )
 
+@test unpack_model(model)[1] == (;
+        weight=Float16(w1),
+        feature=1,
+        feature_name="1",
+        splitval=32000.0,
+        direction=:L,
+        then=[0.1],
+        otherwise=[0.4]
+    )

@@ -591,3 +591,59 @@ function _predict(model::StableRules, row::AbstractVector)
     end
     return _sum(rule_predictions)
 end
+
+"""
+    unpack_rule(rule::Rule) -> NamedTuple
+
+Unpack a rule into it's components. This is useful for plotting. It returns a
+named tuple with the following fields:
+
+- `feature`
+- `feature_name`
+- `splitval`
+- `direction`
+- `then`
+- `otherwise`
+"""
+function unpack_rule(rule::Rule)::NamedTuple
+    return (;
+        feature=feature(rule),
+        feature_name=feature_name(rule),
+        splitval=splitval(rule),
+        direction=direction(rule),
+        then=then(rule),
+        otherwise=otherwise(rule)
+    )
+end
+
+"""
+    unpack_model(model::StableRules) -> Vector{NamedTuple}
+
+Unpack a model containing only single subclauses (`max_depth=1`) into it's
+components. This is useful for plotting. It returns a vector of named tuples
+with the following fields:
+
+- `weight`
+- `feature`
+- `feature_name`
+- `splitval`
+- `direction`
+- `then`
+- `otherwise`
+
+One row for each rule in the `model`.
+"""
+function unpack_model(model::StableRules)
+    @assert length(model.weights) == length(model.rules)
+    return map(zip(model.weights, model.rules)) do (weight, rule)
+        (;
+            weight=weight,
+            feature=feature(rule),
+            feature_name=feature_name(rule),
+            splitval=splitval(rule),
+            direction=direction(rule),
+            then=then(rule),
+            otherwise=otherwise(rule)
+        )
+    end
+end

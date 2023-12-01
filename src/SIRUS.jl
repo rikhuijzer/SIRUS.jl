@@ -32,6 +32,7 @@ export SubClause, feature, feature_name, splitval, direction
 export Rule, Clause, clause, then, otherwise, subclauses
 export features, feature_names, splitvals, directions
 export StableRules, satisfies
+export unpack_rule, unpack_model
 include("ruleshow.jl")
 include("dependent.jl")
 export gap_size

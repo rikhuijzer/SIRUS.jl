@@ -585,6 +585,7 @@ function _odds_plot(e::PerformanceEvaluation, feat_names::Vector{String})
 	max_height = maximum(maximum.(getproperty.(fitresults, :weights)))
 
 	importances = feature_importances(models, feat_names)
+	l = length(feat_names)
 
 	for (i, feat_name) in enumerate(feat_names)
 		yticks = (1:1, [feat_name])
@@ -599,7 +600,7 @@ function _odds_plot(e::PerformanceEvaluation, feat_names::Vector{String})
 			subresult = Tuple{SIRUS.Rule,Float64}[]
 			zipped = zip(fitresult.rules, fitresult.weights)
 			for (rule, weight) in zipped
-				name = only(SIRUS._subclauses(rule)).feature_name
+				name = feature_name(rule)
 				if name::String == feat_name::String
 					push!(subresult, (rule, weight))
 				end
@@ -615,14 +616,14 @@ function _odds_plot(e::PerformanceEvaluation, feat_names::Vector{String})
 		end
 		rw::Vector{Tuple{SIRUS.Rule,Float64}} = 
 			filter(!isnothing, rules_weights)
-		thresholds = _threshold.(first.(rw))
+		thresholds = splitval.(first.(rw))
 		t_mean = round(mean(thresholds); digits=1)
 		t_std = round(std(thresholds); digits=1)
 		
 		for (rule, weight) in rw
-			left = last(rule.then)::Float64
-			right = last(rule.otherwise)::Float64
-			t::Float64 = _threshold(rule)
+			left = last(then(rule))::Float64
+			right = last(otherwise(rule))::Float64
+			t::Float64 = splitval(rule)
 			ratio = log((right) / (left))
 			# area = πr²
 			markersize = 50 * sqrt(weight / π)

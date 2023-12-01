@@ -97,5 +97,3 @@ function feature_importances(
     )::Vector{NamedTuple{(:feature_name, :importance), Tuple{String, Float64}}}
     return feature_importances(models, string.(feature_names))
 end
-
-
