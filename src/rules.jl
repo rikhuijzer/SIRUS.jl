@@ -18,12 +18,10 @@ in the final model, as is discussed in the original SIRUS paper.
 
 The data inside a `SubClause` can be accessed via
 
-- `feature -> Int`,
-- `feature_name -> String`,
-- `splitval`, and
-- `direction -> Symbol`.
-
-To obtain the reverse, use `_reverse`.
+- [`feature(::SubClause)`](@ref),
+- [`feature_name(::SubClause)`](@ref),
+- [`splitval(::SubClause)`](@ref), and
+- [`direction(::SubClause)`](@ref).
 
 Note:
 this name is not perfect.
@@ -96,7 +94,7 @@ function Base.:(==)(a::SubClause, b::SubClause)
 end
 
 """
-    Clause
+    Clause(subclauses::Vector{SubClause})
 
 A clause denotes a conditional on one or more features.
 Each rule contains a clause with one or more subclauses.
@@ -110,7 +108,7 @@ As discussed above, in practice the number of subclauses or subclauses `d ≤ 2`
 
 Note that a path can also be a path to a node; not necessarily a leaf.
 
-Data can be accessed via `subclauses`.
+Data can be accessed via [`subclauses`](@ref).
 
 Clauses can be constructed from a textual representation:
 
@@ -191,6 +189,21 @@ A rule is a clause with a then and otherwise probability. For example, the rule
 subclauses. The name `otherwise` is used internally instead of `else` since
 `else` is a reserved keyword.
 
+Data can be accessed via
+
+- [`clause(::Rule)`](@ref),
+- [`subclauses(::Rule)`](@ref),
+- [`then(::Rule)`](@ref),
+- [`otherwise(::Rule)`](@ref),
+- [`feature(::Rule)`](@ref),
+- [`features(::Rule)`](@ref),
+- [`feature_name(::Rule)`](@ref),
+- [`feature_names(::Rule)`](@ref),
+- [`splitval(::Rule)`](@ref),
+- [`splitvals(::Rule)`](@ref),
+- [`direction(::Rule)`](@ref), and
+- [`directions(::Rule)`](@ref).
+
 Rules can be constructed from a textual representation:
 
 ### Example
@@ -217,6 +230,22 @@ A clause consists of one or more subclauses.
 clause(rule::Rule) = rule.clause
 
 """
+    then(rule::Rule)
+
+Return the then probabilities for a rule. The return type is a vector of
+probabilities; the exact element type may change over time.
+"""
+then(rule::Rule) = rule.then
+
+"""
+    otherwise(rule::Rule)
+
+Return the otherwise probabilities for a rule. The return type is a vector of
+probabilities; the exact element type may change over time.
+"""
+otherwise(rule::Rule) = rule.otherwise
+
+"""
     subclauses(rule::Rule) -> Vector{SubClause}
 
 Return the subclauses for a rule.
@@ -224,10 +253,47 @@ Return the subclauses for a rule.
 subclauses(rule::Rule) = rule.clause.subclauses
 
 """
+    feature(rule::Rule) -> Int
+
+Return the feature number for a rule with one subclause.
+Throws an error if the rule has multiple subclauses.
+Use [`features`](@ref) for rules with multiple subclauses.
+"""
+feature(rule::Rule)::Int = feature(only(subclauses(rule)))
+
+"""
+    features(rule::Rule) -> Vector{Int}
+
+Return a vector of feature numbers; one for each clause in `rule`.
+"""
+function features(rule::Rule)::Vector{Int}
+    return Int[feature(s) for s in subclauses(rule)]
+end
+
+"""
+    feature_name(rule::Rule) -> String
+
+Return the feature name for a rule with one subclause.
+Throws an error if the rule has multiple subclauses.
+Use [`feature_names`](@ref) for rules with multiple subclauses.
+"""
+feature_name(rule::Rule)::String = feature_name(only(subclauses(rule)))
+
+"""
+    feature_names(rule::Rule) -> Vector{String}
+
+Return a vector of feature names; one for each clause in `rule`.
+"""
+function feature_names(rule::Rule)::Vector{String}
+    return String[feature_name(s)::String for s in subclauses(rule)]
+end
+
+"""
     splitval(rule::Rule)
 
 Return the splitvalue for a rule with one subclause.
 Throws an error if the rule has multiple subclauses.
+Use [`splitvals`](@ref) for rules with multiple subclauses.
 """
 splitval(rule::Rule) = splitval(only(subclauses(rule)))
 
@@ -239,13 +305,13 @@ Return the splitvalues for a rule; one for each subclause.
 splitvals(rule::Rule) = splitval.(subclauses(rule))
 
 """
-    feature_names(rule::Rule) -> Vector{String}
+    direction(rule::Rule) -> Symbol
 
-Return a vector of feature names; one for each clause in `rule`.
+Return the direction for a rule with one subclause.
+Throws an error if the rule has multiple subclauses.
+Use [`directions`](@ref) for rules with multiple subclauses.
 """
-function feature_names(rule::Rule)::Vector{String}
-    return String[feature_name(s)::String for s in subclauses(rule)]
-end
+direction(rule::Rule)::Symbol = direction(only(subclauses(rule)))
 
 """
     directions(rule::Rule) -> Vector{Symbol}

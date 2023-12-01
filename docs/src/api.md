@@ -1,6 +1,6 @@
 # API
 
-## Types
+## MLJ Interface Types
 
 ```@docs
 StableRulesClassifier
@@ -9,15 +9,20 @@ StableForestClassifier
 StableForestRegressor
 ```
 
-## Methods
+## SIRUS Types
 
 ```@docs
 SubClause
 Clause
-feature_importance
-feature_importances
-gap_size
+Rule
+Cutpoints
+```
+
+## SIRUS Methods
+
+```@docs
 feature
+features
 feature_name
 feature_names
 splitval
@@ -26,7 +31,11 @@ clause
 subclauses
 direction
 directions
+feature_importance
+feature_importances
+then
+otherwise
+gap_size
 satisfies
-Cutpoints
 cutpoints
 ```
