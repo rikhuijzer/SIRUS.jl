@@ -255,11 +255,10 @@ These dots are sized in such a way that a doubling in weight means a doubling in
 
 # ╔═╡ ab5423cd-c8a9-488e-9bb0-bb41e583c2fa
 md"""
-What this plot shows is that the `nodes` feature is on average chosen as the feature with the most predictive power because the `nodes` feature is shown as the first feature and the thickness of the dots is the biggest.
-Furthermore, there is agreement on the effect of the `nodes` and `age` features.
-In both cases, a lower number is associated with survival.
-This is as expected because the model essentially implies that people where fewer cancerous axillary nodes are detected and who are younger are more likely to survive.
-The `year` in which the operation was conducted might not have a serious effect on the survivability and the model shoes this by a high variability on the direction of that feature.
+What this plot shows is that the `nodes` feature scored highest in the `feature_importance` function, which means that `nodes` is estimated as the feature with the most predictive power.
+This makes sense because it says that the fewer auxiliary nodes are detected, the higher the chance of survival.
+Furthermore, a lower `age` seems to also be slightly related to a higher chance of survival, but this effect differs much more between the different train-test splits.
+The `year` in which the operation was conducted appears to not have a serious effect on the survivability and the model shoes this by a high variability on the direction of that feature (left side of image) and the high variability on the split points (right side of image).
 """
 
 # ╔═╡ f2fee9a8-7f6f-4213-9046-2f1a8f14a7e6
@@ -406,7 +405,7 @@ y = data.survival;
 # ╔═╡ c2650040-f398-4a2e-bfe0-ce139c6ca879
 # ╠═╡ show_logs = false
 fitresult = let
-	model = StableRulesClassifier(; q=4, max_depth=2, max_rules=8, rng=_rng())
+	model = StableRulesClassifier(; q=4, max_depth=1, max_rules=8, rng=_rng())
 	mach = machine(model, X, y)
 	fit!(mach)
 	mach.fitresult
