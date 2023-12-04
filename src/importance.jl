@@ -46,7 +46,7 @@ function feature_importance(
         end
     end
     if !found_feature
-        throw(ArgumentError("Feature `$feature_name` not found in the model."))
+        throw(ArgumentError("Feature `$feat_name` not found in the model."))
     end
     return importance
 end
