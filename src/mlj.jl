@@ -302,8 +302,9 @@ const HYPERPARAMETERS_SECTION = """
 
 const RULES_HYPERPARAMETERS_SECTION = """
 - `max_rules::Int=$MAX_RULES_DEFAULT`:
-    This is the most important hyperparameter.
-    In general, the more rules, the more accurate the model.
+    This is the most important hyperparameter after `lambda`.
+    The more rules, the more accurate the model should be.
+    If this is not the case, tune `lambda` first.
     However, more rules will also decrease model interpretability.
     So, it is important to find a good balance here.
     In most cases, 10 to 40 rules should provide reasonable accuracy while remaining interpretable.
@@ -312,6 +313,8 @@ const RULES_HYPERPARAMETERS_SECTION = """
     This hyperparameter specifies the strength of the ridge (L2) regularizer.
     SIRUS is very sensitive to the choice of this hyperparameter.
     Ensure that you try the full range from 10^-4 to 10^4 (e.g., 0.001, 0.01, ..., 100).
+    When trying the range, one good check is to verify that an increase in `max_rules` increases performance.
+    If this is not the case, then try a different value for `lambda`.
 """
 
 const OPERATIONS_SECTION = """
