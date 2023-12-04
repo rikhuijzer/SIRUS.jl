@@ -19,11 +19,6 @@ end
 # and 2 classes: [0, 1].
 # Note: showing only the probability for class 1 since class 0 has probability 1 - p.
 
-let
-    msg = "Feature `x1` not found in the model."
-    @test_throws ArgumentError(msg) feature_importance(model, "x1")
-end
-
 importance = feature_importance(model, "1")
 # Based on the numbers above.
 expected = w1 * (0.4 - 0.1) + w2 * (0.3 - 0.2)

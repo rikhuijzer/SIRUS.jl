@@ -35,18 +35,13 @@ function feature_importance(
         feat_name::String
     )
     importance = 0.0
-    found_feature = false
     for (i, rule) in enumerate(model.rules)
         for subclause::SubClause in subclauses(rule)
             if feature_name(subclause)::String == feat_name
-                found_feature = true
                 weight = model.weights[i]
                 importance += _rule_importance(weight, rule)
             end
         end
-    end
-    if !found_feature
-        throw(ArgumentError("Feature `$feat_name` not found in the model."))
     end
     return importance
 end
