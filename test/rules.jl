@@ -31,6 +31,9 @@ r1b = S.Rule(S.Clause(" X[i, 1] < 32000 "), [0.61], [0.408])
 r1c = S.Rule(S.Clause(" X[i, 1] < 32000 "), [0.0], [0.408])
 r5 = S.Rule(S.Clause(" X[i, 3] < 64 "), [0.56], [0.334])
 
+r1_reversed = S.Rule(S.Clause(" X[i, 1] ≥ 32000 "), [0.408], [0.61])
+@test S._reverse(r1) == r1_reversed
+
 algo = SIRUS.Classification()
 @test S._mean([[1, 4], [2, 4]]) == [1.5, 4.0]
 
