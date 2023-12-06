@@ -257,8 +257,8 @@ These dots are sized in such a way that a doubling in weight means a doubling in
 md"""
 What this plot shows is that the `nodes` feature scored highest in the `feature_importance` function, which means that `nodes` is estimated as the feature with the most predictive power.
 This makes sense because it says that the fewer auxiliary nodes are detected, the higher the chance of survival.
-Furthermore, a lower `age` seems to also be slightly related to a higher chance of survival, but this effect differs much more between the different train-test splits.
-The `year` in which the operation was conducted appears to not have a serious effect on the survivability and the model shoes this by a high variability on the direction of that feature (left side of image) and the high variability on the split points (right side of image).
+Furthermore, a lower `age` seems to also be slightly related to a higher chance of survival, but this effect has a much lower importance (size of bar in leftmost axis) and also differs much more between the different train-test splits (dots in middle axis).
+The `year` in which the operation was conducted appears to not have a serious effect on the survivability and the plot shows this via a small feature importance (leftmost axis), a high variability on the direction of that feature (dots in middle axis) and the high variability on the split points (rightmost axis).
 """
 
 # ╔═╡ f2fee9a8-7f6f-4213-9046-2f1a8f14a7e6
@@ -498,13 +498,19 @@ function _odds_plot(models::Vector{<:StableRules}, feat_names::Vector{String})
 	importances = feature_importances(models, feat_names)
 
 	# Create a row in the plot for each feature.
-	for (i, importance) in enumerate(importances)
-		feat_name, _ = importance
-		yticks = (1:1, [feat_name])
-		axl = Axis(grid[i, 1:3]; yticks)
-		axr = Axis(grid[i, 4:5])
-		vlines!(axl, [0]; color=:gray, linestyle=:dash)
-		xlims!(axl, -1, 1)
+	for (i, name_importance) in enumerate(importances)
+		feat_name, importance = name_importance
+		let
+			yticks = (1:1, [feat_name])
+			ax1 = Axis(grid[i, 1:2]; yticks)
+			barplot!(ax1, [importance]; direction=:x)
+			xlims!(ax1, 0, 1.05 * first(importances).importance)
+			hidexdecorations!(ax1)
+		end
+		ax2 = Axis(grid[i, 3:4])
+		ax3 = Axis(grid[i, 5:6])
+		vlines!(ax2, [0]; color=:gray, linestyle=:dash)
+		xlims!(ax2, -1, 1)
 
 		unpacked_rules = unpack_models(models, feat_name)::Vector{NamedTuple}
 		# Create a dot and line for each rule that mentions the current feature.
@@ -515,17 +521,17 @@ function _odds_plot(models::Vector{<:StableRules}, feat_names::Vector{String})
 			ratio = log(right / left)
 			# area = πr²
 			markersize = 50 * sqrt(unpacked_rule.weight / π)
-			scatter!(axl, [ratio], [1]; color=:black, markersize)
+			scatter!(ax2, [ratio], [1]; color=:black, markersize)
 
-			vlines!(axr, unpacked_rule.splitval; color=:black, linestyle=:dash)
+			vlines!(ax3, unpacked_rule.splitval; color=:black, linestyle=:dash)
 		end
 
 		# Show a histogram in the background.
-		hist!(axr, data[:, feat_name]; scale_to=1)
+		hist!(ax3, data[:, feat_name]; scale_to=1)
 
-		hidexdecorations!(axl)
-		hideydecorations!(axr)
-		hidexdecorations!(axr; ticks=false, ticklabels=false)
+		hidexdecorations!(ax2)
+		hideydecorations!(ax3)
+		hidexdecorations!(ax3; ticks=false, ticklabels=false)
 	end
 
 	rowgap!(grid, 5) # hide
