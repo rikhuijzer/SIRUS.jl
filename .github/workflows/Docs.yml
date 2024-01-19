@@ -13,6 +13,9 @@ env:
 jobs:
   BuildDocs:
     permissions:
+      # Required by julia-actions/cache.
+      actions: write
+      # Required by julia-actions/cache and actions-gh-pages.
       contents: write
     runs-on: ubuntu-latest
     timeout-minutes: 40

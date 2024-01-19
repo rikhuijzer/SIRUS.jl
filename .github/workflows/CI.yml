@@ -16,6 +16,11 @@ env:
 jobs:
   Test:
     name: Test
+    permissions:
+      # Required by julia-actions/cache.
+      actions: write
+      # Required by julia-actions/cache.
+      contents: read
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
