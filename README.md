@@ -91,6 +91,21 @@ This is a basic example, in most cases you want to tune the `max_depth`, `max_ru
 See `?StableRulesClassifier`, `?StableRulesRegressor`, or the [API documentation](https://sirus.jl.huijzer.xyz/dev/api/) for more information about the models and their hyperparameters.
 A full guide through binary classification can be found in the [Simple Binary Classification](https://sirus.jl.huijzer.xyz/dev/binary-classification/) example.
 
+# Citation
+
+```bibtex
+@article{huijzer2023sirus,
+  title={{SIRUS.jl}: Interpretable Machine Learning via Rule Extraction},
+  author={Huijzer, Rik and Blaauw, Frank and den Hartigh, Ruud JR},
+  journal={Journal of Open Source Software},
+  volume={8},
+  number={90},
+  pages={5786},
+  year={2023},
+  doi={10.21105/joss.05786}
+}
+```
+
 # Documentation
 
 Documentation is at [sirus.jl.huijzer.xyz](https://sirus.jl.huijzer.xyz).
