@@ -1,7 +1,7 @@
 "Supertype for random forests modes: classification or regression."
 abstract type Algorithm end
 
-"Supertype for leafs: classification or regression."
+"Supertype for leaves: classification or regression."
 abstract type Leaf end
 
 """
@@ -14,7 +14,7 @@ classification, namely as classification with only one class.
 
 !!! note
     Vectors of one element are not as performant as scalars, but the
-    alternative here is to have two different types of leafs, which
+    alternative here is to have two different types of leaves, which
     results in different types of trees also, which basically
     requires most functions then to become parametric; especially
     in `src/rules.jl`.
