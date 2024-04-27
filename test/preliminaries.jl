@@ -216,7 +216,7 @@ datasets = Dict{String,Tuple}(
         y = categorical(df.survival)
         (X, y)
     end,
-    "heart disease" => let
+    "heart_disease" => let
         y, X = heart_disease()
         (X, y)
     end,

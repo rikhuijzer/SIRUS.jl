@@ -104,7 +104,7 @@ let
 end
 
 let
-    data = "heart disease"
+    data = "heart_disease"
     @info "Evaluating $data"
     hyper = (; rng=_rng())
     _evaluate!(results, data, DecisionTreeClassifier)
