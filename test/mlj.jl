@@ -104,6 +104,40 @@ let
 end
 
 let
+    data = "heart disease"
+    @info "Evaluating $data"
+    hyper = (; rng=_rng())
+    _evaluate!(results, data, DecisionTreeClassifier)
+
+    hyper = (;)
+    _evaluate!(results, data, LogisticClassifier, hyper)
+
+    hyper = (;)
+    acceleration = MLJBase.CPU1()
+    e = _evaluate!(results, data, XGBoostClassifier, hyper; acceleration)
+
+    hyper = (; max_depth=2)
+    e = _evaluate!(results, data, XGBoostClassifier, hyper; acceleration)
+
+    hyper = (; rng=_rng(), max_depth=2)
+    e = _evaluate!(results, data, StableForestClassifier, hyper)
+    @test 0.60 < _score(e)
+
+    hyper = (; rng=_rng(), max_depth=2, max_rules=30)
+    e = _evaluate!(results, data, StableRulesClassifier, hyper)
+    @test 0.60 < _score(e)
+
+    hyper = (; rng=_rng(), max_depth=2, max_rules=10)
+    e = _evaluate!(results, data, StableRulesClassifier, hyper)
+    @test 0.60 < _score(e)
+
+    if get(ENV, "CAN_RUN_R_SIRUS", "false") == "true"
+        hyper = (; max_depth=2, max_rules=10)
+        e = _evaluate!(results, data, RSirusClassifier, hyper; acceleration)
+    end
+end
+
+let
     data = "titanic"
     @info "Evaluating $data"
     hyper = (; rng=_rng())
