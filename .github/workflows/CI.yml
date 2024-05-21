@@ -21,7 +21,7 @@ jobs:
       actions: write
       # Required by julia-actions/cache.
       contents: read
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -29,8 +29,6 @@ jobs:
         version:
           - '1.6'
           - '1'
-        os:
-          - ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
