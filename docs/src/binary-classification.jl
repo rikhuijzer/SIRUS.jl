@@ -190,7 +190,8 @@ function _plot_cutpoints(data::DataFrame; q=10)
 	cps = Float64.(unique(cutpoints(data.nodes, q)))
 	scatter!(ax, data.nodes, fill(1, nrow(data)); color=data.color, marker=data.marker)
 	vlines!(ax, cps; color=:black, linestyle=:dash)
-	ylims!(ax, 0.9, 1.2)
+	xlims!(ax, -1, 48)
+	ylims!(ax, 0.82, 1.2)
 	hideydecorations!(ax)
 	return fig
 end;
@@ -446,6 +447,8 @@ let
 	color = (; colormap=:tab10, colorrange=(1, 10))
 	scatter!(ax, processed.nodes, fill(1, l); color=processed.color, marker=processed.marker)
 	hideydecorations!(ax)
+	xlims!(ax, -1, 48)
+	ylims!(ax, 0.82, 1.2)
 	fig
 end
 
@@ -460,7 +463,8 @@ let
 	annotation = string(round(V[index]; digits=2))
 	text!(ax, V[index] + 0.003, 1.08; text=annotation, fontsize=11)
 	hideydecorations!(ax)
-	ylims!(ax, 0.9, 1.2)
+	xlims!(ax, -1, 48)
+	ylims!(ax, 0.82, 1.2)
 	fig
 end
 
@@ -492,7 +496,8 @@ let
 	annotation = string(round(loc; digits=2))
 	text!(ax, loc + 0.003, 1.08; text=annotation, fontsize=11)
 	hideydecorations!(ax)
-	ylims!(ax, 0.9, 1.2)
+	xlims!(ax, -1, 48)
+	ylims!(ax, 0.82, 1.2)
 	fig
 end
 
