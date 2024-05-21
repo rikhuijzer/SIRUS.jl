@@ -19,7 +19,7 @@ StableRNGs = "860ef19b-820b-49d6-a774-d7a799459cd3"
 
 [compat]
 CSV = "0.10"
-CairoMakie = "0.11"
+CairoMakie = "0.12"
 CategoricalArrays = "0.10"
 DataDeps = "0.7"
 DataFrames = "1"
