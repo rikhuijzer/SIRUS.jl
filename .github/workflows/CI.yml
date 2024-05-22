@@ -38,13 +38,13 @@ jobs:
           version: ${{ matrix.config.version }}
       - uses: julia-actions/cache@v2.0.0
         with:
-          cache-name: 'test-${{ matrix.os }}'
+          cache-name: 'test-${{ matrix.config.os }}-${{ matrix.config.version }}'
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
           r-version: '4'
       - run: echo "LD_LIBRARY_PATH=$(R RHOME)/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.config.os == 'ubuntu-latest'
       - run: Rscript -e 'install.packages("sirus")'
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
