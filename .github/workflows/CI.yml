@@ -21,29 +21,30 @@ jobs:
       actions: write
       # Required by julia-actions/cache.
       contents: read
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.config.os }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        version:
-          - '1.6'
-          - '1'
-        os:
-          - ubuntu-latest
+        config:
+          - {os: ubuntu-latest, version: '1.6'}
+          # R crashes on ubuntu-latest with newer versions of Julia.
+          - {os: macos-latest, version: '1'}
 
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
         with:
-          version: ${{ matrix.version }}
+          version: ${{ matrix.config.version }}
       - uses: julia-actions/cache@v2.0.0
+        with:
+          cache-name: 'test-${{ matrix.config.os }}-${{ matrix.config.version }}'
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
           r-version: '4'
       - run: echo "LD_LIBRARY_PATH=$(R RHOME)/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.config.os == 'ubuntu-latest'
       - run: Rscript -e 'install.packages("sirus")'
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
