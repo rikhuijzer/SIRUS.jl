@@ -21,20 +21,21 @@ jobs:
       actions: write
       # Required by julia-actions/cache.
       contents: read
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.config.os }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        version:
-          - '1.6'
-          - '1.10.2'
+        config:
+          - {os: ubuntu-latest, version: '1.6'}
+          # R crashes on ubuntu-latest with newer versions of Julia.
+          - {os: macos-latest, version: '1'}
 
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
         with:
-          version: ${{ matrix.version }}
+          version: ${{ matrix.config.version }}
       - uses: julia-actions/cache@v2.0.0
         with:
           cache-name: 'test-${{ matrix.os }}'
