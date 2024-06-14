@@ -156,6 +156,27 @@ function boston()
     return (X, y)
 end
 
+if !haskey(ENV, "REGISTERED_HEART_DISEASE")
+    name = "Heart Disease"
+    message = "UCI Heart Disease dataset"
+    remote_path = "https://github.com/rikhuijzer/heart-disease-dataset/releases/download/v1.0.0/heart-disease-dataset.csv"
+    checksum = "04e11d14886c6470fc4e347ca710136521d7184423238f28161c1d8022ce0c5d"
+    DataDeps.register(DataDep(name, message, remote_path, checksum))
+    ENV["REGISTERED_HEART_DISEASE"] = "true"
+end
+
+"""
+Return the Heart Disease dataset.
+"""
+function heart_disease()
+    dir = datadep"Heart Disease"
+    path = joinpath(dir, "heart-disease-dataset.csv")
+    df = CSV.read(path, DataFrame)
+    target = :target
+    df[!, target] = categorical(df[:, target])
+    y, X = MLJBase.unpack(df, ==(target))
+end
+
 function _SubClause(feature::Int, splitval::Float32, direction::Symbol)
     return S.SubClause(feature, string(feature), splitval, direction)
 end
@@ -193,6 +214,10 @@ datasets = Dict{String,Tuple}(
         df = haberman()
         X = MLJBase.table(MLJBase.matrix(df[:, Not(:survival)]))
         y = categorical(df.survival)
+        (X, y)
+    end,
+    "heart_disease" => let
+        y, X = heart_disease()
         (X, y)
     end,
     "iris" => let
