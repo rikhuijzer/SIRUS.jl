@@ -36,7 +36,7 @@ jobs:
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.config.version }}
-      - uses: julia-actions/cache@v2.0.0
+      - uses: julia-actions/cache@v2
         with:
           cache-name: 'test-${{ matrix.config.os }}-${{ matrix.config.version }}'
       - uses: r-lib/actions/setup-r@v2
