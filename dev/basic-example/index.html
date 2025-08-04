@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Basic Example · SIRUS.jl</title><meta name="title" content="Basic Example · SIRUS.jl"/><meta property="og:title" content="Basic Example · SIRUS.jl"/><meta property="twitter:title" content="Basic Example · SIRUS.jl"/><meta name="description" content="Documentation for SIRUS.jl."/><meta property="og:description" content="Documentation for SIRUS.jl."/><meta property="twitter:description" content="Documentation for SIRUS.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">SIRUS.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">SIRUS</a></li><li><span class="tocitem">Getting Started</span><ul><li class="is-active"><a class="tocitem" href>Basic Example</a></li><li><a class="tocitem" href="../binary-classification/">Advanced Example</a></li></ul></li><li><a class="tocitem" href="../implementation-overview/">Implementation Overview</a></li><li><a class="tocitem" href="../api/">API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Getting Started</a></li><li class="is-active"><a href>Basic Example</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Basic Example</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/rikhuijzer/SIRUS.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/rikhuijzer/SIRUS.jl/blob/main/docs/src/basic-example.jl" title="View source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><style>
+    #documenter-page table {
+        display: table !important;
+        margin: 2rem auto !important;
+        border-top: 2pt solid rgba(0,0,0,0.2);
+        border-bottom: 2pt solid rgba(0,0,0,0.2);
+    }
+
+    #documenter-page pre, #documenter-page div {
+        margin-top: 1.4rem !important;
+        margin-bottom: 1.4rem !important;
+    }
+
+    .code-output {
+        padding: 0.7rem 0.5rem !important;
+    }
+
+    .admonition-body {
+        padding: 0em 1.25em !important;
+    }
+</style>
+
+<!-- PlutoStaticHTML.Begin -->
+<!--
+    # This information is used for caching.
+    [PlutoStaticHTML.State]
+    input_sha = "7147d89b112f8d4096e83b9e13b5892ed7d86e0a081e11a266c23e9351440f75"
+    julia_version = "1.11.6"
+-->
+
+<div class="markdown"><h1 id="Basic-Example">Basic Example</h1><p>This page shows a basic example for using SIRUS.jl on a dataset via the Machine Learning Julia (MLJ.jl) interface. For more details on what SIRUS is and how it works, see the <a href="/dev/binary-classification">Advanced Example</a>.</p></div>
+
+
+
+
+
+
+
+<pre class='language-julia'><code class='language-julia'>begin
+    using CategoricalArrays: categorical
+    using CSV: CSV
+    using DataDeps: DataDeps, DataDep, @datadep_str
+    using DataFrames
+    using MLJ
+    using StableRNGs: StableRNG
+    using SIRUS: StableRulesClassifier
+end</code></pre>
+
+
+
+<div class="markdown"><p>To show the algorithm, we'll use Haberman's survival dataset. We load it via <code>DataDeps.jl</code> so that we can use a checksum for verification and to cache the dataset.</p></div>
+
+<pre class='language-julia'><code class='language-julia'>function register_haberman()
+    name = "Haberman"
+    message = "Haberman's Survival Data Set"
+    remote_path = "https://github.com/rikhuijzer/haberman-survival-dataset/releases/download/v1.0.0/haberman.csv"
+    checksum = "a7e9aeb249e11ac17c2b8ea4fdafd5c9392219d27cb819ffaeb8a869eb727a0f"
+    DataDeps.register(DataDep(name, message, remote_path, checksum))
+end;</code></pre>
+
+
+
+<div class="markdown"><p>We can call this registration function and then load the dataset:</p></div>
+
+<pre class='language-julia'><code class='language-julia'>function load_haberman()::DataFrame
+    register_haberman()
+    path = joinpath(datadep"Haberman", "haberman.csv")
+    df = CSV.read(path, DataFrame)
+    df[!, :survival] = categorical(df.survival)
+    df
+end;</code></pre>
+
+
+<pre class='language-julia'><code class='language-julia'>data = load_haberman()</code></pre>
+<table><tbody><tr><th></th><th>age</th><th>year</th><th>nodes</th><th>survival</th></tr><tr><td>1</td><td>30</td><td>1964</td><td>1</td><td>1</td></tr><tr><td>2</td><td>30</td><td>1962</td><td>3</td><td>1</td></tr><tr><td>3</td><td>30</td><td>1965</td><td>0</td><td>1</td></tr><tr><td>4</td><td>31</td><td>1959</td><td>2</td><td>1</td></tr><tr><td>5</td><td>31</td><td>1965</td><td>4</td><td>1</td></tr><tr><td>6</td><td>33</td><td>1958</td><td>10</td><td>1</td></tr><tr><td>7</td><td>33</td><td>1960</td><td>0</td><td>1</td></tr><tr><td>8</td><td>34</td><td>1959</td><td>0</td><td>0</td></tr><tr><td>9</td><td>34</td><td>1966</td><td>9</td><td>0</td></tr><tr><td>10</td><td>34</td><td>1958</td><td>30</td><td>1</td></tr><tr><td>...</td></tr><tr><td>306</td><td>83</td><td>1958</td><td>2</td><td>0</td></tr></tbody></table>
+
+
+<div class="markdown"><p>And split it into features (<code>X</code>) and outcomes (<code>y</code>):</p></div>
+
+<pre class='language-julia'><code class='language-julia'>X = select(data, Not(:survival));</code></pre>
+
+
+<pre class='language-julia'><code class='language-julia'>y = data.survival;</code></pre>
+
+
+
+<div class="markdown"><p>Next, we can load the model that we want to use. Since Haberman's outcome column (<code>survival</code>) contains 0's and 1's, we use the <code>StableRulesClassifier</code>.</p><p>Here, the hyperparameters were manually tuned for this dataset. On this dataset:</p><ul><li><p>The number of split points <code>q</code> was lowered to 4. This means that the random forest can choose from only 4 locations to split the data. With such a low number, the accuracy typically goes down, but the rules become more interpretable.</p></li><li><p>The max tree depth <code>max_depth</code> was set to 2. This is the highest that SIRUS can go, as is discussed in the original paper. The reason is that rules for greater tree depths do almost certainly not end up in the final rule set, so it's computationally cheaper to not determine them in the first place.</p></li><li><p>The <code>lambda</code> parameter was set to 1. This parameter is used with a ridge regression to determine the weights in the final rule set. SIRUS is very sensitive to the choice of this hyperparameter. Ensure that you try the full range from 10^-4 to 10^4 (e.g., 0.001, 0.01, ..., 100).</p></li><li><p>The max number of rules <code>max_rules</code> was set to 8. Typically, the model becomes more accurate with more rules, but less interpretable. When the model becomes less accurate with more rules, then ensure that you have set the right <code>lambda</code>.</p></li></ul></div>
+
+<pre class='language-julia'><code class='language-julia'>model = StableRulesClassifier(; rng=StableRNG(1), q=4, max_depth=2, lambda=1, max_rules=8);</code></pre>
+
+
+
+<div class="markdown"><p>Next, we will show two common use-cases:</p><ol><li><p>fit the model to the full dataset and</p></li><li><p>fit the model to cross-validation folds (to evaluate model performance).</p></li></ol></div>
+
+
+<div class="markdown"><h2 id="Fitting-to-the-full-dataset">Fitting to the full dataset</h2></div>
+
+<pre class='language-julia'><code class='language-julia'>mach = let
+    mach = machine(model, X, y)
+    MLJ.fit!(mach)
+end;</code></pre>
+
+
+
+<div class="markdown"><p>And inspect the fitted model:</p></div>
+
+<pre class='language-julia'><code class='language-julia'>mach.fitresult</code></pre>
+<pre class="code-output documenter-example-output" id="var-hash825461">StableRules model with 8 rules:
+ if X[i, :nodes] &lt; 7.0 then 0.238 else 0.046 +
+ if X[i, :nodes] &lt; 2.0 then 0.183 else 0.055 +
+ if X[i, :age] ≥ 62.0 &amp; X[i, :year] &lt; 1959.0 then 0.0 else 0.001 +
+ if X[i, :year] &lt; 1959.0 &amp; X[i, :nodes] ≥ 2.0 then 0.0 else 0.006 +
+ if X[i, :nodes] ≥ 7.0 &amp; X[i, :age] ≥ 62.0 then 0.0 else 0.008 +
+ if X[i, :year] &lt; 1959.0 &amp; X[i, :nodes] ≥ 7.0 then 0.0 else 0.003 +
+ if X[i, :year] ≥ 1966.0 &amp; X[i, :age] &lt; 42.0 then 0.0 else 0.008 +
+ if X[i, :nodes] ≥ 7.0 &amp; X[i, :age] ≥ 42.0 then 0.014 else 0.045
+and 2 classes: [0, 1]. 
+Note: showing only the probability for class 1 since class 0 has probability 1 - p.
+</pre>
+
+
+<div class="markdown"><p>This shows that the model contains 8 rules where the first rule, for example, can be interpreted as</p><p><em>If the number of detected axillary nodes is lower than 7, then take 0.238 and otherwise take 0.046.</em></p><p>This calculation is done for all 8 rules and the score is summed to get a prediction.</p></div>
+
+
+<div class="markdown"><p>The predictions are of the type <code>UnivariateFinite</code> from MLJ's <code>CategoricalDistributions.jl</code>:</p></div>
+
+<pre class='language-julia'><code class='language-julia'>predictions = predict(mach, X)</code></pre>
+<pre class="code-output documenter-example-output" id="var-predictions">306-element CategoricalDistributions.UnivariateFiniteVector{Multiclass{2}, Int64, UInt8, Float64}:
+ UnivariateFinite{ScientificTypesBase.Multiclass{2}}(0=&gt;0.105, 1=&gt;0.492)
+ UnivariateFinite{ScientificTypesBase.Multiclass{2}}(0=&gt;0.233, 1=&gt;0.365)
+ UnivariateFinite{ScientificTypesBase.Multiclass{2}}(0=&gt;0.105, 1=&gt;0.492)
+ UnivariateFinite{ScientificTypesBase.Multiclass{2}}(0=&gt;0.233, 1=&gt;0.365)
+ UnivariateFinite{ScientificTypesBase.Multiclass{2}}(0=&gt;0.233, 1=&gt;0.365)
+ UnivariateFinite{ScientificTypesBase.Multiclass{2}}(0=&gt;0.434, 1=&gt;0.163)
+ UnivariateFinite{ScientificTypesBase.Multiclass{2}}(0=&gt;0.105, 1=&gt;0.492)
+ ⋮
+ UnivariateFinite{ScientificTypesBase.Multiclass{2}}(0=&gt;0.105, 1=&gt;0.492)
+ UnivariateFinite{ScientificTypesBase.Multiclass{2}}(0=&gt;0.105, 1=&gt;0.492)
+ UnivariateFinite{ScientificTypesBase.Multiclass{2}}(0=&gt;0.105, 1=&gt;0.492)
+ UnivariateFinite{ScientificTypesBase.Multiclass{2}}(0=&gt;0.233, 1=&gt;0.365)
+ UnivariateFinite{ScientificTypesBase.Multiclass{2}}(0=&gt;0.105, 1=&gt;0.492)
+ UnivariateFinite{ScientificTypesBase.Multiclass{2}}(0=&gt;0.24, 1=&gt;0.358)</pre>
+
+
+<div class="markdown"><p>To get the underlying predictions out of these objects, use <code>pdf</code>. For example, to get the prediction for the class 0 for the first datapoint, use:</p></div>
+
+<pre class='language-julia'><code class='language-julia'>pdf(predictions[1], 0)</code></pre>
+<pre class="code-output documenter-example-output" id="var-hash160474">0.10530822372436523</pre>
+
+
+<div class="markdown"><p>See <a href="https://alan-turing-institute.github.io/MLJ.jl/dev/getting_started/#Fit-and-predict">https://alan-turing-institute.github.io/MLJ.jl/dev/getting_started/#Fit-and-predict</a> for more information.</p></div>
+
+
+<div class="markdown"><h2 id="Model-Evaluation-via-Cross-Validation">Model Evaluation via Cross-Validation</h2><p>Let's define our Cross-Validation (CV) strategy with 10 folds. Also, we enable shuffling to make it more likely that our model sees cases from both <code>survival</code> classes:</p></div>
+
+<pre class='language-julia'><code class='language-julia'>resampling = CV(; rng=StableRNG(1), nfolds=10, shuffle=true);</code></pre>
+
+
+
+<div class="markdown"><p>We use the Area Under the Curve (AUC) measure since that measure is appropriate for binary classification tasks. More specifically, the measure gives the area under the receiver operating characteristic curve. For this measure, a score of 0.5 means that our model is as good (or bad, actually) as random guessing, and a score of 0.0 means predicting all cases wrong and 1.0 means predicting all cases correctly.</p></div>
+
+<pre class='language-julia'><code class='language-julia'>evaluate(model, X, y; resampling, measure=auc)</code></pre>
+<pre class="code-output documenter-example-output" id="var-hash132458">PerformanceEvaluation object with these fields:
+  model, measure, operation,
+  measurement, per_fold, per_observation,
+  fitted_params_per_fold, report_per_fold,
+  train_test_rows, resampling, repeats
+Extract:
+┌──────────────────┬───────────┬─────────────┐
+│�[22m measure          �[0m│�[22m operation �[0m│�[22m measurement �[0m│
+├──────────────────┼───────────┼─────────────┤
+│ AreaUnderCurve() │ predict   │ 0.704       │
+└──────────────────┴───────────┴─────────────┘
+┌─────────────────────────────────────────────────────────────────────┬─────────┐
+│�[22m per_fold                                                            �[0m│�[22m 1.96*SE �[0m│
+├─────────────────────────────────────────────────────────────────────┼─────────┤
+│ [0.542, 0.771, 0.78, 0.598, 0.604, 0.88, 0.856, 0.72, 0.686, 0.605] │ 0.0762  │
+└─────────────────────────────────────────────────────────────────────┴─────────┘
+</pre>
+
+<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« SIRUS</a><a class="docs-footer-nextpage" href="../binary-classification/">Advanced Example »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Monday 4 August 2025 17:49">Monday 4 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
