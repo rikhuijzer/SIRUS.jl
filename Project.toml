@@ -18,7 +18,7 @@ Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
 
 [compat]
 AbstractTrees = "0.3, 0.4"
-CategoricalArrays = "0.10"
+CategoricalArrays = "0.10, 1"
 InlineStrings = "1"
 LinearAlgebra = "1"
 MLJBase = "0.21, 1"
