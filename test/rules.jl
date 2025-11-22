@@ -46,6 +46,7 @@ rules = S._rules!(node)
 
 n = 200
 X, y = make_moons(n; rng=_rng(), shuffle=true)
+y = unwrap.(y)
 model = StableForestClassifier(; rng=_rng())
 mach = machine(model, X, y)
 fit!(mach; verbosity=0)
