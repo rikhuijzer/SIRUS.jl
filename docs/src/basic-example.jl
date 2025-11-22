@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.42
+# v0.20.21
 
 using Markdown
 using InteractiveUtils
@@ -154,11 +154,6 @@ For example, to get the prediction for the class 0 for the first datapoint, use:
 # ╔═╡ ed969c5c-6f58-4b8c-825b-fcf04da74036
 pdf(predictions[1], 0)
 
-# ╔═╡ 1ca8a8b1-0623-47d7-8900-41056e0b21ee
-md"""
-See <https://alan-turing-institute.github.io/MLJ.jl/dev/getting_started/#Fit-and-predict> for more information.
-"""
-
 # ╔═╡ ece3f092-368e-41af-994a-e814f2267f48
 md"""
 ## Model Evaluation via Cross-Validation
@@ -206,7 +201,6 @@ evaluate(model, X, y; resampling, measure=auc)
 # ╠═e732756b-7aaa-4fcc-b90f-1b418208c5af
 # ╠═58711147-9f89-465a-9e21-ab1d64e03c2d
 # ╠═ed969c5c-6f58-4b8c-825b-fcf04da74036
-# ╠═1ca8a8b1-0623-47d7-8900-41056e0b21ee
 # ╠═ece3f092-368e-41af-994a-e814f2267f48
 # ╠═dfc6f708-3d26-4102-92c6-33cee32e438c
 # ╠═d2905680-552d-4a9a-b3f1-7dd27cbf703f
