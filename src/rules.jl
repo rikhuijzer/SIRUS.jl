@@ -510,7 +510,7 @@ This means we don't need to sort at all.
 
 For the sorting, note that the paper talks about sorting by frequency of the
 **path** (clause) and not the rule, that is, clause with then and otherwise
-probabalities.
+probabilities.
 """
 function _process_rules(
         rules::Vector{Rule},
