@@ -19,7 +19,7 @@ end
 
 # ╔═╡ 1c1bd75a-9266-4256-bfea-ad60dd1c1d1c
 begin
-	using CategoricalArrays: categorical, unwrap
+	using CategoricalArrays: categorical
 	using CSV: CSV
 	using DataDeps: DataDeps, DataDep, @datadep_str
 	using DataFrames
@@ -118,7 +118,7 @@ md"""
 # ╔═╡ c77e3efb-9170-4675-b053-b99cdb8db853
 # ╠═╡ show_logs = false
 mach = let
-	mach = machine(model, X, unwrap.(y))
+	mach = machine(model, X, y)
 	MLJ.fit!(mach)
 end;
 
