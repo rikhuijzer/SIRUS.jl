@@ -124,7 +124,7 @@ function fit(
         error("Expected a Table but got $(typeof(Xnew))")
     end
     df = DataFrame(X)
-    outcomes = get.(unwrap.(y))
+    outcomes = unwrap.(y)
     fitted_model = R"""
         fitted.model <- sirus.fit(
             $df,
