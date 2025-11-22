@@ -85,9 +85,6 @@ X = select(data, Not(:survival));
 # ╔═╡ 2f921f63-5148-4726-9839-c84217f60e0b
 y = data.survival;
 
-# ╔═╡ 6e1ba535-c46c-46ee-b55d-81a77f90f5f6
-y
-
 # ╔═╡ a1764625-4b7a-42f3-9e61-3d26122d86da
 md"""
 Next, we can load the model that we want to use.
@@ -192,7 +189,6 @@ evaluate(model, X, y; resampling, measure=auc)
 # ╠═08a4ca2b-bc65-4c29-9528-f4789272143a
 # ╠═e037d952-e489-41b6-afc9-317a8c17e6c4
 # ╠═2f921f63-5148-4726-9839-c84217f60e0b
-# ╠═6e1ba535-c46c-46ee-b55d-81a77f90f5f6
 # ╠═a1764625-4b7a-42f3-9e61-3d26122d86da
 # ╠═ccce5f3e-e396-4765-bf5f-6f79e905aca8
 # ╠═97c9ea2a-2897-472b-b15e-215f40049cf5
