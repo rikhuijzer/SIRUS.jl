@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.42
+# v0.20.21
 
 using Markdown
 using InteractiveUtils
@@ -19,7 +19,7 @@ end
 
 # ╔═╡ 1c1bd75a-9266-4256-bfea-ad60dd1c1d1c
 begin
-	using CategoricalArrays: categorical
+	using CategoricalArrays: categorical, unwrap
 	using CSV: CSV
 	using DataDeps: DataDeps, DataDep, @datadep_str
 	using DataFrames
@@ -85,6 +85,9 @@ X = select(data, Not(:survival));
 # ╔═╡ 2f921f63-5148-4726-9839-c84217f60e0b
 y = data.survival;
 
+# ╔═╡ 6e1ba535-c46c-46ee-b55d-81a77f90f5f6
+y
+
 # ╔═╡ a1764625-4b7a-42f3-9e61-3d26122d86da
 md"""
 Next, we can load the model that we want to use.
@@ -118,7 +121,7 @@ md"""
 # ╔═╡ c77e3efb-9170-4675-b053-b99cdb8db853
 # ╠═╡ show_logs = false
 mach = let
-	mach = machine(model, X, y)
+	mach = machine(model, X, unwrap.(y))
 	MLJ.fit!(mach)
 end;
 
@@ -153,11 +156,6 @@ For example, to get the prediction for the class 0 for the first datapoint, use:
 
 # ╔═╡ ed969c5c-6f58-4b8c-825b-fcf04da74036
 pdf(predictions[1], 0)
-
-# ╔═╡ 1ca8a8b1-0623-47d7-8900-41056e0b21ee
-md"""
-See <https://alan-turing-institute.github.io/MLJ.jl/dev/getting_started/#Fit-and-predict> for more information.
-"""
 
 # ╔═╡ ece3f092-368e-41af-994a-e814f2267f48
 md"""
@@ -194,6 +192,7 @@ evaluate(model, X, y; resampling, measure=auc)
 # ╠═08a4ca2b-bc65-4c29-9528-f4789272143a
 # ╠═e037d952-e489-41b6-afc9-317a8c17e6c4
 # ╠═2f921f63-5148-4726-9839-c84217f60e0b
+# ╠═6e1ba535-c46c-46ee-b55d-81a77f90f5f6
 # ╠═a1764625-4b7a-42f3-9e61-3d26122d86da
 # ╠═ccce5f3e-e396-4765-bf5f-6f79e905aca8
 # ╠═97c9ea2a-2897-472b-b15e-215f40049cf5
@@ -206,7 +205,6 @@ evaluate(model, X, y; resampling, measure=auc)
 # ╠═e732756b-7aaa-4fcc-b90f-1b418208c5af
 # ╠═58711147-9f89-465a-9e21-ab1d64e03c2d
 # ╠═ed969c5c-6f58-4b8c-825b-fcf04da74036
-# ╠═1ca8a8b1-0623-47d7-8900-41056e0b21ee
 # ╠═ece3f092-368e-41af-994a-e814f2267f48
 # ╠═dfc6f708-3d26-4102-92c6-33cee32e438c
 # ╠═d2905680-552d-4a9a-b3f1-7dd27cbf703f

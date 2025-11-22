@@ -273,7 +273,14 @@ Return an unique and sorted vector of classes based on `y`.
 The vector is sorted to ensure that class ordering is the same between cross-validations.
 This holds as long as each class is in each fold.
 """
-_classes(y::AbstractVector) = sort(unique(y); alg=Helpers.STABLE_SORT_ALG)
+function _classes(y::AbstractVector)
+    classes = sort(unique(y); alg=Helpers.STABLE_SORT_ALG)
+    if classes isa CategoricalArray
+        return unwrap.(classes)
+    else
+        return classes
+    end
+end
 
 const PARTIAL_SAMPLING_DEFAULT = 0.7
 const N_TREES_DEFAULT = 1_000

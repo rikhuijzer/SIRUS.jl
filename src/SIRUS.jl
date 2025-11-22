@@ -4,7 +4,7 @@ import AbstractTrees: children, nodevalue
 import Base
 
 using AbstractTrees: AbstractTrees, print_tree
-using CategoricalArrays: CategoricalValue, unwrap
+using CategoricalArrays: CategoricalValue, CategoricalArray, unwrap
 using InlineStrings: String255
 using LinearAlgebra: rank
 using MLJBase: mode
